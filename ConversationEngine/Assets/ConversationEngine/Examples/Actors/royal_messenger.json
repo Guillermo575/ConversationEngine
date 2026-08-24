@@ -1,0 +1,22 @@
+{
+  "Id": "actor_2",
+  "Path": "Assets/Art/Actors/RoyalMessenger",
+  "SoundEffectPaths": [
+    "Assets/Audio/SFX/royal_messenger_step_01.ogg",
+    "Assets/Audio/SFX/royal_messenger_cloth_01.ogg"
+  ],
+  "BodyParts": [
+    {
+      "Id": "main",
+      "AttachToPivotId": "",
+      "NestedResources": [
+        {
+          "Id": "main_default",
+          "Path": "Assets/Prefabs/Actors/RoyalMessenger/Main.prefab"
+        }
+      ],
+      "CurrentResourceId": "main_default",
+      "PivotPoints": []
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ConversationData>
+  <ResourceManager>
+    <SceneBackgrounds>
+      <SceneBackground>
+        <Id>bg_kingdom_gate</Id>
+        <Path>Assets/Art/Backgrounds/KingdomGate.png</Path>
+      </SceneBackground>
+    </SceneBackgrounds>
+    <AudioBackgrounds>
+      <AudioBackground>
+        <Id>bgm_intro_theme</Id>
+        <Path>Assets/Audio/BGM/IntroTheme.ogg</Path>
+        <AudioType>BackgroundMusic</AudioType>
+      </AudioBackground>
+    </AudioBackgrounds>
+    <Actors>
+      <Actor>
+        <Id>actor_1</Id>
+        <Path>Assets/Art/Actors/KnightAlden</Path>
+        <SoundEffectPaths>
+          <string>Assets/Audio/SFX/knight_armor_01.ogg</string>
+          <string>Assets/Audio/SFX/knight_step_01.ogg</string>
+        </SoundEffectPaths>
+        <BodyParts>
+          <BodyPart>
+            <Id>body</Id>
+            <AttachToPivotId />
+            <NestedResources>
+              <BodyPartResource>
+                <Id>body_default</Id>
+                <Path>Assets/Art/Actors/KnightAlden/body_default.png</Path>
+              </BodyPartResource>
+            </NestedResources>
+            <CurrentResourceId>body_default</CurrentResourceId>
+            <PivotPoints>
+              <PivotPoint>
+                <Id>neck_socket</Id>
+                <X>0</X>
+                <Y>1.25</Y>
+              </PivotPoint>
+            </PivotPoints>
+          </BodyPart>
+          <BodyPart>
+            <Id>head</Id>
+            <AttachToPivotId>neck_socket</AttachToPivotId>
+            <NestedResources>
+              <BodyPartResource>
+                <Id>head_default</Id>
+                <Path>Assets/Art/Actors/KnightAlden/head_default.png</Path>
+              </BodyPartResource>
+            </NestedResources>
+            <CurrentResourceId>head_default</CurrentResourceId>
+            <PivotPoints>
+              <PivotPoint>
+                <Id>eyes_socket</Id>
+                <X>0</X>
+                <Y>0.2</Y>
+              </PivotPoint>
+              <PivotPoint>
+                <Id>mouth_socket</Id>
+                <X>0</X>
+                <Y>-0.15</Y>
+              </PivotPoint>
+            </PivotPoints>
+          </BodyPart>
+          <BodyPart>
+            <Id>eyes</Id>
+            <AttachToPivotId>eyes_socket</AttachToPivotId>
+            <NestedResources>
+              <BodyPartResource>
+                <Id>eyes_serious</Id>
+                <Path>Assets/Prefabs/Actors/KnightAlden/EyesSerious.prefab</Path>
+              </BodyPartResource>
+              <BodyPartResource>
+                <Id>eyes_surprised</Id>
+                <Path>Assets/Prefabs/Actors/KnightAlden/EyesSurprised.prefab</Path>
+              </BodyPartResource>
+            </NestedResources>
+            <CurrentResourceId>eyes_serious</CurrentResourceId>
+            <PivotPoints />
+          </BodyPart>
+          <BodyPart>
+            <Id>mouth</Id>
+            <AttachToPivotId>mouth_socket</AttachToPivotId>
+            <NestedResources>
+              <BodyPartResource>
+                <Id>mouth_neutral</Id>
+                <Path>Assets/Prefabs/Actors/KnightAlden/MouthNeutral.prefab</Path>
+              </BodyPartResource>
+              <BodyPartResource>
+                <Id>mouth_talk</Id>
+                <Path>Assets/Prefabs/Actors/KnightAlden/MouthTalk.prefab</Path>
+              </BodyPartResource>
+            </NestedResources>
+            <CurrentResourceId>mouth_neutral</CurrentResourceId>
+            <PivotPoints />
+          </BodyPart>
+        </BodyParts>
+      </Actor>
+      <Actor>
+        <Id>actor_2</Id>
+        <Path>Assets/ConversationEngine/Examples/Actors/royal_messenger.json</Path>
+        <SoundEffectPaths />
+        <BodyParts />
+      </Actor>
+    </Actors>
+  </ResourceManager>
+  <ConversationManager>
+    <Nodes>
+      <ConversationNode>
+        <Id>node_1</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId />
+        <Text>Many years ago, in a distant land, an old kingdom stood against the shadows.</Text>
+        <NextNodeId>node_2</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions>
+          <ConversationFunction>
+            <MethodName>SetBackground</MethodName>
+            <Parameters>
+              <backgroundId>bg_kingdom_gate</backgroundId>
+            </Parameters>
+            <Timestamp>0</Timestamp>
+          </ConversationFunction>
+          <ConversationFunction>
+            <MethodName>PlayAudio</MethodName>
+            <Parameters>
+              <audioId>bgm_intro_theme</audioId>
+            </Parameters>
+            <Timestamp>0</Timestamp>
+          </ConversationFunction>
+        </Functions>
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_2</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId>actor_1</SpeakerActorId>
+        <Text>Greetings, traveler. You look troubled. Is something wrong?</Text>
+        <NextNodeId>node_3</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_3</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag>Rescate_princesa</ReferenceFlag>
+        <SpeakerActorId>actor_2</SpeakerActorId>
+        <Text>I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.</Text>
+        <NextNodeId>node_4</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_4</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId>actor_2</SpeakerActorId>
+        <Text>Will you accept this mission and help us rescue her?</Text>
+        <NextNodeId>node_5</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_5</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId />
+        <Text>What do you want to do?</Text>
+        <NextNodeId />
+        <NextReferenceFlag />
+        <Options>
+          <ConversationOption>
+            <Text>Yes</Text>
+            <TargetNodeId>node_6a</TargetNodeId>
+            <TargetReferenceFlag />
+            <Conditions />
+          </ConversationOption>
+          <ConversationOption>
+            <Text>Alright, but you will pay me double</Text>
+            <TargetNodeId>node_6b</TargetNodeId>
+            <TargetReferenceFlag />
+            <Conditions />
+          </ConversationOption>
+          <ConversationOption>
+            <Text>Can you repeat that again?</Text>
+            <TargetNodeId />
+            <TargetReferenceFlag>Rescate_princesa</TargetReferenceFlag>
+            <Conditions />
+          </ConversationOption>
+          <ConversationOption>
+            <Text>No thanks</Text>
+            <TargetNodeId>node_6c</TargetNodeId>
+            <TargetReferenceFlag />
+            <Conditions />
+          </ConversationOption>
+        </Options>
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_6a</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId>actor_2</SpeakerActorId>
+        <Text>Thank you, brave knight. We leave at first light.</Text>
+        <NextNodeId>node_7a</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_6b</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId>actor_2</SpeakerActorId>
+        <Text>I... understand. Very well. Deal.</Text>
+        <NextNodeId />
+        <NextReferenceFlag>Mision_aceptada</NextReferenceFlag>
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_6c</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId />
+        <Text>Without a word, the knight turns around and walks away.</Text>
+        <NextNodeId>node_7b</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_7a</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag>Mision_aceptada</ReferenceFlag>
+        <SpeakerActorId />
+        <Text>At sunrise, they depart toward the hideout where the princess was taken.</Text>
+        <NextNodeId>node_8</NextNodeId>
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_7b</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId />
+        <Text>THE END</Text>
+        <NextNodeId />
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+      <ConversationNode>
+        <Id>node_8</Id>
+        <NodeType>Dialogue</NodeType>
+        <ReferenceFlag />
+        <SpeakerActorId />
+        <Text>TO BE CONTINUED</Text>
+        <NextNodeId />
+        <NextReferenceFlag />
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId />
+        <DefaultBranchReferenceFlag />
+      </ConversationNode>
+    </Nodes>
+  </ConversationManager>
+</ConversationData>
