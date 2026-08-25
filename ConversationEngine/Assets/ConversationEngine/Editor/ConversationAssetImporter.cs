@@ -1,0 +1,88 @@
+using UnityEditor;
+using UnityEditor.AssetImporters;
+using UnityEditor.Callbacks;
+using System.IO;
+using ConversationScheme;
+using Newtonsoft.Json;
+using ConversationEditor;
+
+namespace ConversationEditor
+{
+    /// <summary>
+    /// Custom asset importer for conversation JSON files
+    /// Opens the conversation editor when double-clicking a valid conversation file
+    /// </summary>
+    [ScriptedImporter(1, "json")]
+    public class ConversationAssetImporter : ScriptedImporter
+    {
+        public override void OnImportAsset(AssetImportContext ctx)
+        {
+            // Read the JSON file
+            string jsonContent = File.ReadAllText(ctx.assetPath);
+
+            try
+            {
+                // Try to deserialize as ConversationData
+                var conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
+
+                // Check if it's a valid conversation file
+                if (conversationData != null && 
+                    conversationData.ConversationManager != null && 
+                    conversationData.ResourceManager != null)
+                {
+                    // Mark this as a conversation asset
+                    // We'll use a TextAsset to represent it in Unity
+                    var textAsset = new UnityEngine.TextAsset(jsonContent);
+                    ctx.AddObjectToAsset("conversation", textAsset);
+                    ctx.SetMainObject(textAsset);
+                }
+            }
+            catch
+            {
+                // If deserialization fails, it's not a conversation file
+                // Import as regular text asset
+                var textAsset = new UnityEngine.TextAsset(jsonContent);
+                ctx.AddObjectToAsset("text", textAsset);
+                ctx.SetMainObject(textAsset);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Custom callback handler for opening conversation files
+    /// </summary>
+    public class ConversationAssetHandler
+    {
+        [OnOpenAsset(1)]
+        public static bool OnOpenAsset(int instanceID, int line)
+        {
+            string assetPath = AssetDatabase.GetAssetPath(instanceID);
+
+            if (!assetPath.EndsWith(".json"))
+                return false;
+
+            // Try to load as conversation file
+            try
+            {
+                string jsonContent = File.ReadAllText(assetPath);
+                var conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
+
+                // Check if it's a valid conversation file
+                if (conversationData != null && 
+                    conversationData.ConversationManager != null && 
+                    conversationData.ResourceManager != null)
+                {
+                    // Open in conversation editor
+                    ConversationEditorWindow.OpenConversationFile(assetPath);
+                    return true;
+                }
+            }
+            catch
+            {
+                // Not a conversation file or invalid format
+            }
+
+            return false;
+        }
+    }
+}
