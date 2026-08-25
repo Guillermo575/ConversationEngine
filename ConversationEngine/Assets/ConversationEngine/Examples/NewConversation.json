@@ -1,49 +1,49 @@
 {
-  "ResourceManager": {
-    "SceneBackgrounds": [],
-    "AudioBackgrounds": [],
-    "Actors": []
-  },
-  "ConversationManager": {
-    "Nodes": [
-      {
-        "Id": 1,
-        "NodeType": 0,
-        "SpeakerActorId": null,
-        "Text": null,
-        "NextNodeId": 2,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "X": 0.0,
-          "Y": 0.0
-        },
-        "EditorSize": {
-          "X": 150.0,
-          "Y": 80.0
-        }
-      },
-      {
-        "Id": 2,
-        "NodeType": 4,
-        "SpeakerActorId": null,
-        "Text": null,
-        "NextNodeId": 0,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "X": 400.0,
-          "Y": 0.0
-        },
-        "EditorSize": {
-          "X": 150.0,
-          "Y": 80.0
-        }
-      }
-    ]
-  }
+    "ResourceManager": {
+        "SceneBackgrounds": [],
+        "AudioBackgrounds": [],
+        "Actors": []
+    },
+    "ConversationManager": {
+        "Nodes": [
+            {
+                "Id": 1,
+                "NodeType": 0,
+                "SpeakerActorId": "",
+                "Text": "",
+                "NextNodeId": 2,
+                "Options": [],
+                "Functions": [],
+                "ConditionalBranches": [],
+                "DefaultBranchNodeId": 0,
+                "EditorPosition": {
+                    "x": 349.0,
+                    "y": 318.0
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                }
+            },
+            {
+                "Id": 2,
+                "NodeType": 4,
+                "SpeakerActorId": "",
+                "Text": "",
+                "NextNodeId": 0,
+                "Options": [],
+                "Functions": [],
+                "ConditionalBranches": [],
+                "DefaultBranchNodeId": 0,
+                "EditorPosition": {
+                    "x": 968.0,
+                    "y": 430.0
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                }
+            }
+        ]
+    }
 }

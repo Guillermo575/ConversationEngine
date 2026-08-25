@@ -3,8 +3,6 @@ using UnityEditor.AssetImporters;
 using UnityEditor.Callbacks;
 using System.IO;
 using ConversationScheme;
-using Newtonsoft.Json;
-using ConversationEditor;
 
 namespace ConversationEditor
 {
@@ -12,7 +10,7 @@ namespace ConversationEditor
     /// Custom asset importer for conversation JSON files
     /// Opens the conversation editor when double-clicking a valid conversation file
     /// </summary>
-    [ScriptedImporter(1, "json")]
+    [ScriptedImporter(1, "conversation")]
     public class ConversationAssetImporter : ScriptedImporter
     {
         public override void OnImportAsset(AssetImportContext ctx)
@@ -58,7 +56,7 @@ namespace ConversationEditor
         {
             string assetPath = AssetDatabase.GetAssetPath(instanceID);
 
-            if (!assetPath.EndsWith(".json"))
+            if (!assetPath.EndsWith(".conversation"))
                 return false;
 
             // Try to load as conversation file

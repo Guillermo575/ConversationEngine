@@ -2,9 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using ConversationScheme;
-using Newtonsoft.Json;
 using BodyPartType = ConversationScheme.BodyPart;
-using System.Xml;
 
 namespace ConversationEditor
 {
