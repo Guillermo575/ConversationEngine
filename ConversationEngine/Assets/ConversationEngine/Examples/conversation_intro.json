@@ -16,93 +16,10 @@
     "Actors": [
       {
         "Id": "actor_1",
-        "Path": "Assets/Art/Actors/KnightAlden",
-        "IconPath": "Assets/Art/Actors/KnightAlden/icon.png",
-        "SoundEffectPaths": [
-          "Assets/Audio/SFX/knight_armor_01.ogg",
-          "Assets/Audio/SFX/knight_step_01.ogg"
-        ],
-        "BodyParts": [
-          {
-            "Id": "body",
-            "AttachToPivotId": "",
-            "NestedResources": [
-              {
-                "Id": "body_default",
-                "Path": "Assets/Art/Actors/KnightAlden/body_default.png",
-                "PivotPoints": []
-              }
-            ],
-            "CurrentResourceId": "body_default",
-            "PivotPoints": [
-              {
-                "Id": "neck_socket",
-                "X": 0.0,
-                "Y": 1.25
-              }
-            ]
-          },
-          {
-            "Id": "head",
-            "AttachToPivotId": "neck_socket",
-            "NestedResources": [
-              {
-                "Id": "head_default",
-                "Path": "Assets/Art/Actors/KnightAlden/head_default.png",
-                "PivotPoints": []
-              }
-            ],
-            "CurrentResourceId": "head_default",
-            "PivotPoints": [
-              {
-                "Id": "eyes_socket",
-                "X": 0.0,
-                "Y": 0.2
-              },
-              {
-                "Id": "mouth_socket",
-                "X": 0.0,
-                "Y": -0.15
-              }
-            ]
-          },
-          {
-            "Id": "eyes",
-            "AttachToPivotId": "eyes_socket",
-            "NestedResources": [
-              {
-                "Id": "eyes_serious",
-                "Path": "Assets/Prefabs/Actors/KnightAlden/EyesSerious.prefab",
-                "PivotPoints": []
-              },
-              {
-                "Id": "eyes_surprised",
-                "Path": "Assets/Prefabs/Actors/KnightAlden/EyesSurprised.prefab",
-                "PivotPoints": []
-              }
-            ],
-            "CurrentResourceId": "eyes_serious",
-            "PivotPoints": []
-          },
-          {
-            "Id": "mouth",
-            "AttachToPivotId": "mouth_socket",
-            "NestedResources": [
-              {
-                "Id": "mouth_neutral",
-                "Path": "Assets/Prefabs/Actors/KnightAlden/MouthNeutral.prefab",
-                "PivotPoints": []
-              },
-              {
-                "Id": "mouth_talk",
-                "Path": "Assets/Prefabs/Actors/KnightAlden/MouthTalk.prefab",
-                "PivotPoints": []
-              }
-            ],
-            "CurrentResourceId": "mouth_neutral",
-            "PivotPoints": []
-          }
-        ]
+        "Path": "Assets/ConversationEngine/Examples/Actors/actor_knight.json",
+        "IconPath": "",
+        "SoundEffectPaths": [],
+        "BodyParts": []
       },
       {
         "Id": "actor_2",
