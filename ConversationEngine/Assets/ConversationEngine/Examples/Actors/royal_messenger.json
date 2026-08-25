@@ -1,6 +1,7 @@
 {
   "Id": "actor_2",
   "Path": "Assets/Art/Actors/RoyalMessenger",
+  "IconPath": "Assets/Art/Actors/RoyalMessenger/icon.png",
   "SoundEffectPaths": [
     "Assets/Audio/SFX/royal_messenger_step_01.ogg",
     "Assets/Audio/SFX/royal_messenger_cloth_01.ogg"

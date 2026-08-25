@@ -16,13 +16,98 @@
     "Actors": [
       {
         "Id": "actor_1",
-        "Path": "Assets/ConversationEngine/Examples/Actors/actor_knight.json",
-        "SoundEffectPaths": [],
-        "BodyParts": []
+        "Path": "Assets/Art/Actors/KnightAlden",
+        "IconPath": "Assets/Art/Actors/KnightAlden/icon.png",
+        "SoundEffectPaths": [
+          "Assets/Audio/SFX/knight_armor_01.ogg",
+          "Assets/Audio/SFX/knight_step_01.ogg"
+        ],
+        "BodyParts": [
+          {
+            "Id": "body",
+            "AttachToPivotId": "",
+            "NestedResources": [
+              {
+                "Id": "body_default",
+                "Path": "Assets/Art/Actors/KnightAlden/body_default.png",
+                "PivotPoints": []
+              }
+            ],
+            "CurrentResourceId": "body_default",
+            "PivotPoints": [
+              {
+                "Id": "neck_socket",
+                "X": 0.0,
+                "Y": 1.25
+              }
+            ]
+          },
+          {
+            "Id": "head",
+            "AttachToPivotId": "neck_socket",
+            "NestedResources": [
+              {
+                "Id": "head_default",
+                "Path": "Assets/Art/Actors/KnightAlden/head_default.png",
+                "PivotPoints": []
+              }
+            ],
+            "CurrentResourceId": "head_default",
+            "PivotPoints": [
+              {
+                "Id": "eyes_socket",
+                "X": 0.0,
+                "Y": 0.2
+              },
+              {
+                "Id": "mouth_socket",
+                "X": 0.0,
+                "Y": -0.15
+              }
+            ]
+          },
+          {
+            "Id": "eyes",
+            "AttachToPivotId": "eyes_socket",
+            "NestedResources": [
+              {
+                "Id": "eyes_serious",
+                "Path": "Assets/Prefabs/Actors/KnightAlden/EyesSerious.prefab",
+                "PivotPoints": []
+              },
+              {
+                "Id": "eyes_surprised",
+                "Path": "Assets/Prefabs/Actors/KnightAlden/EyesSurprised.prefab",
+                "PivotPoints": []
+              }
+            ],
+            "CurrentResourceId": "eyes_serious",
+            "PivotPoints": []
+          },
+          {
+            "Id": "mouth",
+            "AttachToPivotId": "mouth_socket",
+            "NestedResources": [
+              {
+                "Id": "mouth_neutral",
+                "Path": "Assets/Prefabs/Actors/KnightAlden/MouthNeutral.prefab",
+                "PivotPoints": []
+              },
+              {
+                "Id": "mouth_talk",
+                "Path": "Assets/Prefabs/Actors/KnightAlden/MouthTalk.prefab",
+                "PivotPoints": []
+              }
+            ],
+            "CurrentResourceId": "mouth_neutral",
+            "PivotPoints": []
+          }
+        ]
       },
       {
         "Id": "actor_2",
         "Path": "Assets/ConversationEngine/Examples/Actors/royal_messenger.json",
+        "IconPath": "",
         "SoundEffectPaths": [],
         "BodyParts": []
       }
@@ -31,13 +116,30 @@
   "ConversationManager": {
     "Nodes": [
       {
-        "Id": "node_1",
-        "NodeType": "Dialogue",
-        "ReferenceFlag": "",
+        "Id": 1,
+        "NodeType": "Start",
         "SpeakerActorId": "",
-        "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
-        "NextNodeId": "node_2",
-        "NextReferenceFlag": "",
+        "Text": "",
+        "NextNodeId": 2,
+        "Options": [],
+        "Functions": [],
+        "ConditionalBranches": [],
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 0.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 150.0,
+          "Y": 80.0
+        }
+      },
+      {
+        "Id": 2,
+        "NodeType": "Function",
+        "SpeakerActorId": "",
+        "Text": "",
+        "NextNodeId": 3,
         "Options": [],
         "Functions": [
           {
@@ -56,173 +158,245 @@
           }
         ],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 200.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 180.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_2",
+        "Id": 3,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "",
+        "SpeakerActorId": "",
+        "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
+        "NextNodeId": 4,
+        "Options": [],
+        "Functions": [],
+        "ConditionalBranches": [],
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 420.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
+      },
+      {
+        "Id": 4,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "actor_1",
         "Text": "Greetings, traveler. You look troubled. Is something wrong?",
-        "NextNodeId": "node_3",
-        "NextReferenceFlag": "",
+        "NextNodeId": 5,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 660.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_3",
+        "Id": 5,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "Rescate_princesa",
         "SpeakerActorId": "actor_2",
         "Text": "I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.",
-        "NextNodeId": "node_4",
-        "NextReferenceFlag": "",
+        "NextNodeId": 6,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 900.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_4",
+        "Id": 6,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "",
         "SpeakerActorId": "actor_2",
         "Text": "Will you accept this mission and help us rescue her?",
-        "NextNodeId": "node_5",
-        "NextReferenceFlag": "",
+        "NextNodeId": 7,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1140.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_5",
+        "Id": 7,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "",
         "SpeakerActorId": "",
         "Text": "What do you want to do?",
-        "NextNodeId": "",
-        "NextReferenceFlag": "",
+        "NextNodeId": 0,
         "Options": [
           {
             "Text": "Yes",
-            "TargetNodeId": "node_6a",
-            "TargetReferenceFlag": "",
+            "NextNodeId": 8,
             "Conditions": []
           },
           {
             "Text": "Alright, but you will pay me double",
-            "TargetNodeId": "node_6b",
-            "TargetReferenceFlag": "",
+            "NextNodeId": 9,
             "Conditions": []
           },
           {
             "Text": "Can you repeat that again?",
-            "TargetNodeId": "",
-            "TargetReferenceFlag": "Rescate_princesa",
+            "NextNodeId": 5,
             "Conditions": []
           },
           {
             "Text": "No thanks",
-            "TargetNodeId": "node_6c",
-            "TargetReferenceFlag": "",
+            "NextNodeId": 10,
             "Conditions": []
           }
         ],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1380.0,
+          "Y": 0.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 150.0
+        }
       },
       {
-        "Id": "node_6a",
+        "Id": 8,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "",
         "SpeakerActorId": "actor_2",
         "Text": "Thank you, brave knight. We leave at first light.",
-        "NextNodeId": "node_7a",
-        "NextReferenceFlag": "",
+        "NextNodeId": 11,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1620.0,
+          "Y": -150.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_6b",
+        "Id": 9,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "",
         "SpeakerActorId": "actor_2",
         "Text": "I... understand. Very well. Deal.",
-        "NextNodeId": "",
-        "NextReferenceFlag": "Mision_aceptada",
+        "NextNodeId": 11,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1620.0,
+          "Y": -30.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_6c",
+        "Id": 10,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "",
         "SpeakerActorId": "",
         "Text": "Without a word, the knight turns around and walks away.",
-        "NextNodeId": "node_7b",
-        "NextReferenceFlag": "",
+        "NextNodeId": 12,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1620.0,
+          "Y": 150.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_7a",
+        "Id": 11,
         "NodeType": "Dialogue",
-        "ReferenceFlag": "Mision_aceptada",
         "SpeakerActorId": "",
         "Text": "At sunrise, they depart toward the hideout where the princess was taken.",
-        "NextNodeId": "node_8",
-        "NextReferenceFlag": "",
+        "NextNodeId": 13,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1860.0,
+          "Y": -90.0
+        },
+        "EditorSize": {
+          "X": 200.0,
+          "Y": 100.0
+        }
       },
       {
-        "Id": "node_7b",
-        "NodeType": "Dialogue",
-        "ReferenceFlag": "",
+        "Id": 12,
+        "NodeType": "End",
         "SpeakerActorId": "",
         "Text": "THE END",
-        "NextNodeId": "",
-        "NextReferenceFlag": "",
+        "NextNodeId": 0,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 1860.0,
+          "Y": 150.0
+        },
+        "EditorSize": {
+          "X": 150.0,
+          "Y": 80.0
+        }
       },
       {
-        "Id": "node_8",
-        "NodeType": "Dialogue",
-        "ReferenceFlag": "",
+        "Id": 13,
+        "NodeType": "End",
         "SpeakerActorId": "",
         "Text": "TO BE CONTINUED",
-        "NextNodeId": "",
-        "NextReferenceFlag": "",
+        "NextNodeId": 0,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
-        "DefaultBranchNodeId": "",
-        "DefaultBranchReferenceFlag": ""
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 2100.0,
+          "Y": -90.0
+        },
+        "EditorSize": {
+          "X": 150.0,
+          "Y": 80.0
+        }
       }
     ]
   }

@@ -18,6 +18,7 @@
       <Actor>
         <Id>actor_1</Id>
         <Path>Assets/Art/Actors/KnightAlden</Path>
+        <IconPath>Assets/Art/Actors/KnightAlden/icon.png</IconPath>
         <SoundEffectPaths>
           <string>Assets/Audio/SFX/knight_armor_01.ogg</string>
           <string>Assets/Audio/SFX/knight_step_01.ogg</string>
@@ -30,6 +31,7 @@
               <BodyPartResource>
                 <Id>body_default</Id>
                 <Path>Assets/Art/Actors/KnightAlden/body_default.png</Path>
+                <PivotPoints />
               </BodyPartResource>
             </NestedResources>
             <CurrentResourceId>body_default</CurrentResourceId>
@@ -48,6 +50,7 @@
               <BodyPartResource>
                 <Id>head_default</Id>
                 <Path>Assets/Art/Actors/KnightAlden/head_default.png</Path>
+                <PivotPoints />
               </BodyPartResource>
             </NestedResources>
             <CurrentResourceId>head_default</CurrentResourceId>
@@ -71,10 +74,12 @@
               <BodyPartResource>
                 <Id>eyes_serious</Id>
                 <Path>Assets/Prefabs/Actors/KnightAlden/EyesSerious.prefab</Path>
+                <PivotPoints />
               </BodyPartResource>
               <BodyPartResource>
                 <Id>eyes_surprised</Id>
                 <Path>Assets/Prefabs/Actors/KnightAlden/EyesSurprised.prefab</Path>
+                <PivotPoints />
               </BodyPartResource>
             </NestedResources>
             <CurrentResourceId>eyes_serious</CurrentResourceId>
@@ -87,10 +92,12 @@
               <BodyPartResource>
                 <Id>mouth_neutral</Id>
                 <Path>Assets/Prefabs/Actors/KnightAlden/MouthNeutral.prefab</Path>
+                <PivotPoints />
               </BodyPartResource>
               <BodyPartResource>
                 <Id>mouth_talk</Id>
                 <Path>Assets/Prefabs/Actors/KnightAlden/MouthTalk.prefab</Path>
+                <PivotPoints />
               </BodyPartResource>
             </NestedResources>
             <CurrentResourceId>mouth_neutral</CurrentResourceId>
@@ -101,6 +108,7 @@
       <Actor>
         <Id>actor_2</Id>
         <Path>Assets/ConversationEngine/Examples/Actors/royal_messenger.json</Path>
+        <IconPath />
         <SoundEffectPaths />
         <BodyParts />
       </Actor>
@@ -109,13 +117,30 @@
   <ConversationManager>
     <Nodes>
       <ConversationNode>
-        <Id>node_1</Id>
-        <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
+        <Id>1</Id>
+        <NodeType>Start</NodeType>
         <SpeakerActorId />
-        <Text>Many years ago, in a distant land, an old kingdom stood against the shadows.</Text>
-        <NextNodeId>node_2</NextNodeId>
-        <NextReferenceFlag />
+        <Text />
+        <NextNodeId>2</NextNodeId>
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>0</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>150</X>
+          <Y>80</Y>
+        </EditorSize>
+      </ConversationNode>
+      <ConversationNode>
+        <Id>2</Id>
+        <NodeType>Function</NodeType>
+        <SpeakerActorId />
+        <Text />
+        <NextNodeId>3</NextNodeId>
         <Options />
         <Functions>
           <ConversationFunction>
@@ -134,173 +159,245 @@
           </ConversationFunction>
         </Functions>
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>200</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>180</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_2</Id>
+        <Id>3</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
+        <SpeakerActorId />
+        <Text>Many years ago, in a distant land, an old kingdom stood against the shadows.</Text>
+        <NextNodeId>4</NextNodeId>
+        <Options />
+        <Functions />
+        <ConditionalBranches />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>420</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
+      </ConversationNode>
+      <ConversationNode>
+        <Id>4</Id>
+        <NodeType>Dialogue</NodeType>
         <SpeakerActorId>actor_1</SpeakerActorId>
         <Text>Greetings, traveler. You look troubled. Is something wrong?</Text>
-        <NextNodeId>node_3</NextNodeId>
-        <NextReferenceFlag />
+        <NextNodeId>5</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>660</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_3</Id>
+        <Id>5</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag>Rescate_princesa</ReferenceFlag>
         <SpeakerActorId>actor_2</SpeakerActorId>
         <Text>I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.</Text>
-        <NextNodeId>node_4</NextNodeId>
-        <NextReferenceFlag />
+        <NextNodeId>6</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>900</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_4</Id>
+        <Id>6</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
         <SpeakerActorId>actor_2</SpeakerActorId>
         <Text>Will you accept this mission and help us rescue her?</Text>
-        <NextNodeId>node_5</NextNodeId>
-        <NextReferenceFlag />
+        <NextNodeId>7</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1140</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_5</Id>
+        <Id>7</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
         <SpeakerActorId />
         <Text>What do you want to do?</Text>
-        <NextNodeId />
-        <NextReferenceFlag />
+        <NextNodeId>0</NextNodeId>
         <Options>
           <ConversationOption>
             <Text>Yes</Text>
-            <TargetNodeId>node_6a</TargetNodeId>
-            <TargetReferenceFlag />
+            <NextNodeId>8</NextNodeId>
             <Conditions />
           </ConversationOption>
           <ConversationOption>
             <Text>Alright, but you will pay me double</Text>
-            <TargetNodeId>node_6b</TargetNodeId>
-            <TargetReferenceFlag />
+            <NextNodeId>9</NextNodeId>
             <Conditions />
           </ConversationOption>
           <ConversationOption>
             <Text>Can you repeat that again?</Text>
-            <TargetNodeId />
-            <TargetReferenceFlag>Rescate_princesa</TargetReferenceFlag>
+            <NextNodeId>5</NextNodeId>
             <Conditions />
           </ConversationOption>
           <ConversationOption>
             <Text>No thanks</Text>
-            <TargetNodeId>node_6c</TargetNodeId>
-            <TargetReferenceFlag />
+            <NextNodeId>10</NextNodeId>
             <Conditions />
           </ConversationOption>
         </Options>
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1380</X>
+          <Y>0</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>150</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_6a</Id>
+        <Id>8</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
         <SpeakerActorId>actor_2</SpeakerActorId>
         <Text>Thank you, brave knight. We leave at first light.</Text>
-        <NextNodeId>node_7a</NextNodeId>
-        <NextReferenceFlag />
+        <NextNodeId>11</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1620</X>
+          <Y>-150</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_6b</Id>
+        <Id>9</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
         <SpeakerActorId>actor_2</SpeakerActorId>
         <Text>I... understand. Very well. Deal.</Text>
-        <NextNodeId />
-        <NextReferenceFlag>Mision_aceptada</NextReferenceFlag>
+        <NextNodeId>11</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1620</X>
+          <Y>-30</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_6c</Id>
+        <Id>10</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
         <SpeakerActorId />
         <Text>Without a word, the knight turns around and walks away.</Text>
-        <NextNodeId>node_7b</NextNodeId>
-        <NextReferenceFlag />
+        <NextNodeId>12</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1620</X>
+          <Y>150</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_7a</Id>
+        <Id>11</Id>
         <NodeType>Dialogue</NodeType>
-        <ReferenceFlag>Mision_aceptada</ReferenceFlag>
         <SpeakerActorId />
         <Text>At sunrise, they depart toward the hideout where the princess was taken.</Text>
-        <NextNodeId>node_8</NextNodeId>
-        <NextReferenceFlag />
+        <NextNodeId>13</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1860</X>
+          <Y>-90</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>200</X>
+          <Y>100</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_7b</Id>
-        <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
+        <Id>12</Id>
+        <NodeType>End</NodeType>
         <SpeakerActorId />
         <Text>THE END</Text>
-        <NextNodeId />
-        <NextReferenceFlag />
+        <NextNodeId>0</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>1860</X>
+          <Y>150</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>150</X>
+          <Y>80</Y>
+        </EditorSize>
       </ConversationNode>
       <ConversationNode>
-        <Id>node_8</Id>
-        <NodeType>Dialogue</NodeType>
-        <ReferenceFlag />
+        <Id>13</Id>
+        <NodeType>End</NodeType>
         <SpeakerActorId />
         <Text>TO BE CONTINUED</Text>
-        <NextNodeId />
-        <NextReferenceFlag />
+        <NextNodeId>0</NextNodeId>
         <Options />
         <Functions />
         <ConditionalBranches />
-        <DefaultBranchNodeId />
-        <DefaultBranchReferenceFlag />
+        <DefaultBranchNodeId>0</DefaultBranchNodeId>
+        <EditorPosition>
+          <X>2100</X>
+          <Y>-90</Y>
+        </EditorPosition>
+        <EditorSize>
+          <X>150</X>
+          <Y>80</Y>
+        </EditorSize>
       </ConversationNode>
     </Nodes>
   </ConversationManager>

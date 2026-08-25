@@ -52,6 +52,7 @@ namespace ConversationScheme
     [Serializable]
     public class Actor : Resource
     {
+        public string IconPath;
         public List<string> SoundEffectPaths = new List<string>();
         public List<BodyPart> BodyParts = new List<BodyPart>();
     }
@@ -69,6 +70,7 @@ namespace ConversationScheme
     [Serializable]
     public class BodyPartResource : Resource
     {
+        public List<PivotPoint> PivotPoints = new List<PivotPoint>();
     }
 
     [Serializable]
@@ -88,32 +90,33 @@ namespace ConversationScheme
     [Serializable]
     public class ConversationNode
     {
-        public string Id;
+        public int Id;
         public ConversationNodeType NodeType = ConversationNodeType.Dialogue;
-        public string ReferenceFlag;
         public string SpeakerActorId;
         public string Text;
-        public string NextNodeId;
-        public string NextReferenceFlag;
+        public int NextNodeId;
         public List<ConversationOption> Options = new List<ConversationOption>();
         public List<ConversationFunction> Functions = new List<ConversationFunction>();
         public List<ConditionalBranch> ConditionalBranches = new List<ConditionalBranch>();
-        public string DefaultBranchNodeId;
-        public string DefaultBranchReferenceFlag;
+        public int DefaultBranchNodeId;
+        public Vector2 EditorPosition;
+        public Vector2 EditorSize = new Vector2(200, 100);
     }
 
     public enum ConversationNodeType
     {
+        Start,
         Dialogue,
-        Conditional
+        Conditional,
+        Function,
+        End
     }
 
     [Serializable]
     public class ConversationOption
     {
         public string Text;
-        public string TargetNodeId;
-        public string TargetReferenceFlag;
+        public int NextNodeId;
         public List<ConditionRule> Conditions = new List<ConditionRule>();
     }
 
@@ -121,8 +124,8 @@ namespace ConversationScheme
     public class ConditionalBranch
     {
         public List<ConditionRule> Conditions = new List<ConditionRule>();
-        public string TargetNodeId;
-        public string TargetReferenceFlag;
+        public int NextNodeIdTrue;
+        public int NextNodeIdFalse;
     }
 
     [Serializable]
@@ -130,7 +133,9 @@ namespace ConversationScheme
     {
         public string VariableName;
         public ComparisonOperator Operator = ComparisonOperator.Equal;
+        public ValueType ValueDataType = ValueType.String;
         public string Value;
+        public bool IsValueVariable = false;
     }
 
     public enum ComparisonOperator
@@ -141,6 +146,14 @@ namespace ConversationScheme
         GreaterOrEqual,
         LessThan,
         LessOrEqual
+    }
+
+    public enum ValueType
+    {
+        String,
+        Integer,
+        Decimal,
+        Boolean
     }
 
     [Serializable]

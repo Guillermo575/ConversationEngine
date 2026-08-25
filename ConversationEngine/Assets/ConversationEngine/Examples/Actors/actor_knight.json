@@ -1,6 +1,7 @@
 {
 	"Id": "actor_1",
 	"Path": "Assets/Art/Actors/KnightAlden",
+	"IconPath": "Assets/Art/Actors/KnightAlden/icon.png",
 	"SoundEffectPaths": [
 	  "Assets/Audio/SFX/knight_armor_01.ogg",
 	  "Assets/Audio/SFX/knight_step_01.ogg"
