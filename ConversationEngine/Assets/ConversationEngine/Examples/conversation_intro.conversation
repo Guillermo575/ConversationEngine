@@ -279,10 +279,10 @@
       },
       {
         "Id": 12,
-        "NodeType": "End",
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "THE END",
-        "NextNodeId": 0,
+        "NextNodeId": 14,
         "Options": [],
         "Functions": [],
         "ConditionalBranches": [],
@@ -298,9 +298,28 @@
       },
       {
         "Id": 13,
-        "NodeType": "End",
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "TO BE CONTINUED",
+        "NextNodeId": 14,
+        "Options": [],
+        "Functions": [],
+        "ConditionalBranches": [],
+        "DefaultBranchNodeId": 0,
+        "EditorPosition": {
+          "X": 2100.0,
+          "Y": -90.0
+        },
+        "EditorSize": {
+          "X": 150.0,
+          "Y": 80.0
+        }
+      },
+      {
+        "Id": 14,
+        "NodeType": "End",
+        "SpeakerActorId": "",
+        "Text": "",
         "NextNodeId": 0,
         "Options": [],
         "Functions": [],
