@@ -21,6 +21,7 @@ namespace ConversationEditor
         private float zoom = 1.0f;
         private const float minZoom = 0.5f;
         private const float maxZoom = 2.0f;
+        private bool isZoomMode = false;
 
         // Selection and interaction
         private ConversationNode selectedNode;
@@ -519,11 +520,19 @@ namespace ConversationEditor
         {
             Event e = Event.current;
 
+            // Exit zoom mode on any mouse click
+            if (e.type == EventType.MouseDown && isZoomMode)
+            {
+                isZoomMode = false;
+                Repaint();
+            }
+
             // Zoom with mouse wheel
             if (e.type == EventType.ScrollWheel && graphRect.Contains(e.mousePosition))
             {
                 float zoomDelta = -e.delta.y * 0.05f;
                 zoom = Mathf.Clamp(zoom + zoomDelta, minZoom, maxZoom);
+                isZoomMode = true;
                 e.Use();
                 Repaint();
             }
@@ -531,6 +540,12 @@ namespace ConversationEditor
             // Left click on empty space - deselect and hide inspector, or cancel connection
             if (e.type == EventType.MouseDown && e.button == 0 && graphRect.Contains(e.mousePosition))
             {
+                // Skip processing if in zoom mode
+                if (isZoomMode)
+                {
+                    return;
+                }
+
                 if (isRightClickMenuActive)
                 {
                     isRightClickMenuActive = false;
@@ -602,9 +617,39 @@ namespace ConversationEditor
             // Right-click context menu
             if (e.type == EventType.ContextClick && graphRect.Contains(e.mousePosition))
             {
-                contextMenuPosition = (e.mousePosition - panOffset) / zoom;
-                ShowContextMenu();
-                e.Use();
+                // Skip if in zoom mode
+                if (isZoomMode)
+                {
+                    isZoomMode = false;
+                    Repaint();
+                    return;
+                }
+
+                // Check if we're clicking on a node
+                bool clickedOnNode = false;
+                Vector2 mouseWorldPos = (e.mousePosition - graphRect.position - panOffset) / zoom;
+
+                if (conversationData?.ConversationManager?.Nodes != null)
+                {
+                    foreach (var node in conversationData.ConversationManager.Nodes)
+                    {
+                        Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+                        if (nodeRect.Contains(mouseWorldPos))
+                        {
+                            clickedOnNode = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Only show context menu if not on a node
+                if (!clickedOnNode)
+                {
+                    // Calculate the position in graph space
+                    contextMenuPosition = mouseWorldPos;
+                    ShowContextMenu();
+                    e.Use();
+                }
             }
         }
 
@@ -767,6 +812,12 @@ namespace ConversationEditor
             {
                 if (e.button == 0) // Left click
                 {
+                    // Don't process if in zoom mode
+                    if (isZoomMode)
+                    {
+                        return;
+                    }
+
                     // Don't process if right-click menu is active
                     if (isRightClickMenuActive)
                     {
@@ -807,6 +858,13 @@ namespace ConversationEditor
                 }
                 else if (e.button == 1) // Right click
                 {
+                    // Exit zoom mode on right click
+                    if (isZoomMode)
+                    {
+                        isZoomMode = false;
+                        Repaint();
+                    }
+
                     if (node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
                     {
                         selectedNode = node;
@@ -818,7 +876,7 @@ namespace ConversationEditor
             }
 
             // Drag node
-            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode)
+            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode && !isZoomMode)
             {
                 Undo.RecordObject(this, "Move Node");
                 node.EditorPosition += e.delta / zoom;
@@ -1613,6 +1671,8 @@ namespace ConversationEditor
             menu.AddItem(new GUIContent("Create Node/Function"), false, () => CreateNode(ConversationNodeType.Function));
             menu.AddItem(new GUIContent("Create Node/Dialogue with Options"), false, () => CreateNodeWithOptions());
             menu.AddItem(new GUIContent("Create Node/Conditional"), false, () => CreateNode(ConversationNodeType.Conditional));
+            menu.AddSeparator("");
+            menu.AddItem(new GUIContent("Auto-Layout Nodes"), false, () => AutoLayoutNodes());
             menu.ShowAsContext();
         }
 
@@ -1943,6 +2003,126 @@ namespace ConversationEditor
         private void MarkDirty()
         {
             isDirty = true;
+        }
+
+        private void AutoLayoutNodes()
+        {
+            if (conversationData?.ConversationManager?.Nodes == null || conversationData.ConversationManager.Nodes.Count == 0)
+                return;
+
+            Undo.RecordObject(this, "Auto-Layout Nodes");
+
+            // Find the Start node
+            var startNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
+            if (startNode == null)
+            {
+                EditorUtility.DisplayDialog("Error", "No Start node found.", "OK");
+                return;
+            }
+
+            // Build a graph of node connections
+            var visited = new HashSet<int>();
+            var levels = new Dictionary<int, int>(); // nodeId -> level
+            var levelNodes = new Dictionary<int, List<ConversationNode>>(); // level -> nodes
+
+            // BFS to determine levels
+            Queue<(ConversationNode node, int level)> queue = new Queue<(ConversationNode, int)>();
+            queue.Enqueue((startNode, 0));
+            visited.Add(startNode.Id);
+            levels[startNode.Id] = 0;
+
+            while (queue.Count > 0)
+            {
+                var (currentNode, level) = queue.Dequeue();
+
+                if (!levelNodes.ContainsKey(level))
+                    levelNodes[level] = new List<ConversationNode>();
+                levelNodes[level].Add(currentNode);
+
+                // Get all connected nodes
+                var connectedNodes = new List<int>();
+
+                if (currentNode.NextNodeId > 0)
+                    connectedNodes.Add(currentNode.NextNodeId);
+
+                if (currentNode.Options != null)
+                {
+                    foreach (var option in currentNode.Options)
+                    {
+                        if (option.NextNodeId > 0)
+                            connectedNodes.Add(option.NextNodeId);
+                    }
+                }
+
+                if (currentNode.ConditionalBranches != null)
+                {
+                    foreach (var branch in currentNode.ConditionalBranches)
+                    {
+                        if (branch.NextNodeIdTrue > 0)
+                            connectedNodes.Add(branch.NextNodeIdTrue);
+                        if (branch.NextNodeIdFalse > 0)
+                            connectedNodes.Add(branch.NextNodeIdFalse);
+                    }
+                }
+
+                if (currentNode.DefaultBranchNodeId > 0)
+                    connectedNodes.Add(currentNode.DefaultBranchNodeId);
+
+                // Add connected nodes to queue
+                foreach (var nodeId in connectedNodes)
+                {
+                    if (!visited.Contains(nodeId))
+                    {
+                        var nextNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == nodeId);
+                        if (nextNode != null)
+                        {
+                            visited.Add(nodeId);
+                            levels[nodeId] = level + 1;
+                            queue.Enqueue((nextNode, level + 1));
+                        }
+                    }
+                }
+            }
+
+            // Position orphaned nodes (not connected to Start)
+            int orphanLevel = levels.Count > 0 ? levels.Values.Max() + 2 : 2;
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                if (!visited.Contains(node.Id))
+                {
+                    if (!levelNodes.ContainsKey(orphanLevel))
+                        levelNodes[orphanLevel] = new List<ConversationNode>();
+                    levelNodes[orphanLevel].Add(node);
+                    levels[node.Id] = orphanLevel;
+                }
+            }
+
+            // Layout nodes by level
+            float horizontalSpacing = autoLayoutSpacing;
+            float verticalSpacing = 150f;
+            float startX = 50f;
+            float startY = 50f;
+
+            foreach (var kvp in levelNodes.OrderBy(l => l.Key))
+            {
+                int level = kvp.Key;
+                var nodesInLevel = kvp.Value;
+
+                float levelX = startX + level * horizontalSpacing;
+                float totalHeight = (nodesInLevel.Count - 1) * verticalSpacing;
+                float currentY = startY - totalHeight / 2;
+
+                foreach (var node in nodesInLevel)
+                {
+                    node.EditorPosition = new Vector2(levelX, currentY);
+                    currentY += verticalSpacing;
+                }
+            }
+
+            MarkDirty();
+            Repaint();
+
+            EditorUtility.DisplayDialog("Auto-Layout", "Nodes have been automatically arranged.", "OK");
         }
     }
 }

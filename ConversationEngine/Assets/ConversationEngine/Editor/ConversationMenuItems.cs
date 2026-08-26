@@ -47,13 +47,13 @@ namespace ConversationEditor
             string json = ConversationJsonSettings.Serialize(conversationData);
 
             // Find unique filename
-            string fileName = "NewConversation.json";
+            string fileName = "NewConversation.conversation";
             string fullPath = Path.Combine(path, fileName);
             int counter = 1;
 
             while (File.Exists(fullPath))
             {
-                fileName = $"NewConversation{counter}.json";
+                fileName = $"NewConversation{counter}.conversation";
                 fullPath = Path.Combine(path, fileName);
                 counter++;
             }

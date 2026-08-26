@@ -56,7 +56,7 @@ namespace ConversationEditor
                 sb.AppendLine("      {");
                 sb.AppendLine($"        \"Id\": \"{EscapeString(audio.Id)}\",");
                 sb.AppendLine($"        \"Path\": \"{EscapeString(audio.Path)}\",");
-                sb.AppendLine($"        \"AudioType\": \"{audio.AudioType}\"");
+                sb.AppendLine($"        \"AudioType\": {(int)audio.AudioType}");
                 sb.Append("      }");
                 if (i < rm.AudioBackgrounds.Count - 1) sb.Append(",");
                 sb.AppendLine();
@@ -95,7 +95,7 @@ namespace ConversationEditor
         {
             sb.AppendLine("      {");
             sb.AppendLine($"        \"Id\": {node.Id},");
-            sb.AppendLine($"        \"NodeType\": \"{node.NodeType}\",");
+            sb.AppendLine($"        \"NodeType\": {(int)node.NodeType},");
             sb.AppendLine($"        \"SpeakerActorId\": \"{EscapeString(node.SpeakerActorId)}\",");
             sb.AppendLine($"        \"Text\": \"{EscapeString(node.Text)}\",");
             sb.AppendLine($"        \"NextNodeId\": {node.NextNodeId},");
@@ -175,7 +175,11 @@ namespace ConversationEditor
 
         public static ConversationData Deserialize(string json)
         {
-            // Use Unity's JsonUtility as fallback
+            // First, normalize the JSON to handle both "X"/"Y" (old format) and "x"/"y" (Unity format)
+            // and convert enum strings to numbers for Unity's JsonUtility
+            json = NormalizeJsonForUnity(json);
+
+            // Use Unity's JsonUtility
             try
             {
                 return JsonUtility.FromJson<ConversationData>(json);
@@ -185,6 +189,28 @@ namespace ConversationEditor
                 Debug.LogError($"Failed to deserialize conversation data: {ex.Message}");
                 return null;
             }
+        }
+
+        private static string NormalizeJsonForUnity(string json)
+        {
+            // Replace "X": with "x": and "Y": with "y": for EditorPosition and EditorSize
+            json = json.Replace("\"X\":", "\"x\":");
+            json = json.Replace("\"Y\":", "\"y\":");
+
+            // Convert NodeType enum strings to numbers
+            // ConversationNodeType: Start=0, Dialogue=1, Conditional=2, Function=3, End=4
+            json = json.Replace("\"NodeType\": \"Start\"", "\"NodeType\": 0");
+            json = json.Replace("\"NodeType\": \"Dialogue\"", "\"NodeType\": 1");
+            json = json.Replace("\"NodeType\": \"Conditional\"", "\"NodeType\": 2");
+            json = json.Replace("\"NodeType\": \"Function\"", "\"NodeType\": 3");
+            json = json.Replace("\"NodeType\": \"End\"", "\"NodeType\": 4");
+
+            // Convert AudioType enum strings to numbers
+            // AudioType: BackgroundMusic=0, SoundEffect=1
+            json = json.Replace("\"AudioType\": \"BackgroundMusic\"", "\"AudioType\": 0");
+            json = json.Replace("\"AudioType\": \"SoundEffect\"", "\"AudioType\": 1");
+
+            return json;
         }
     }
 }
