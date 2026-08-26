@@ -56,7 +56,7 @@ namespace ConversationEditor
                 sb.AppendLine("      {");
                 sb.AppendLine($"        \"Id\": \"{EscapeString(audio.Id)}\",");
                 sb.AppendLine($"        \"Path\": \"{EscapeString(audio.Path)}\",");
-                sb.AppendLine($"        \"AudioType\": {(int)audio.AudioType}");
+                sb.AppendLine($"        \"AudioType\": \"{audio.AudioType}\"");
                 sb.Append("      }");
                 if (i < rm.AudioBackgrounds.Count - 1) sb.Append(",");
                 sb.AppendLine();
@@ -95,7 +95,7 @@ namespace ConversationEditor
         {
             sb.AppendLine("      {");
             sb.AppendLine($"        \"Id\": {node.Id},");
-            sb.AppendLine($"        \"NodeType\": {(int)node.NodeType},");
+            sb.AppendLine($"        \"NodeType\": \"{node.NodeType}\",");
             sb.AppendLine($"        \"SpeakerActorId\": \"{EscapeString(node.SpeakerActorId)}\",");
             sb.AppendLine($"        \"Text\": \"{EscapeString(node.Text)}\",");
             sb.AppendLine($"        \"NextNodeId\": {node.NextNodeId},");
@@ -197,19 +197,20 @@ namespace ConversationEditor
             json = json.Replace("\"X\":", "\"x\":");
             json = json.Replace("\"Y\":", "\"y\":");
 
-            // Convert NodeType enum strings to numbers
+            // Convert NodeType enum strings to numbers for Unity's JsonUtility
             // ConversationNodeType: Start=0, Dialogue=1, Conditional=2, Function=3, End=4
-            json = json.Replace("\"NodeType\": \"Start\"", "\"NodeType\": 0");
-            json = json.Replace("\"NodeType\": \"Dialogue\"", "\"NodeType\": 1");
-            json = json.Replace("\"NodeType\": \"Conditional\"", "\"NodeType\": 2");
-            json = json.Replace("\"NodeType\": \"Function\"", "\"NodeType\": 3");
-            json = json.Replace("\"NodeType\": \"End\"", "\"NodeType\": 4");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Start\"", "\"NodeType\": 0");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Dialogue\"", "\"NodeType\": 1");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Conditional\"", "\"NodeType\": 2");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Function\"", "\"NodeType\": 3");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"End\"", "\"NodeType\": 4");
 
-            // Convert AudioType enum strings to numbers
-            // AudioType: BackgroundMusic=0, SoundEffect=1
-            json = json.Replace("\"AudioType\": \"BackgroundMusic\"", "\"AudioType\": 0");
-            json = json.Replace("\"AudioType\": \"SoundEffect\"", "\"AudioType\": 1");
-
+            // Convert AudioType enum strings to numbers for Unity's JsonUtility
+            // AudioType: BackgroundMusic=0, SoundEffect=1, Voice=2
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"AudioType\":\\s*\"BackgroundMusic\"", "\"AudioType\": 0");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"AudioType\":\\s*\"SoundEffect\"", "\"AudioType\": 1");
+            json = System.Text.RegularExpressions.Regex.Replace(json, "\"AudioType\":\\s*\"Voice\"", "\"AudioType\": 2");
+            
             return json;
         }
     }

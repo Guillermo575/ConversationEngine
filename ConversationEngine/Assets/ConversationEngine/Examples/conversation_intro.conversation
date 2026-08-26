@@ -10,7 +10,7 @@
       {
         "Id": "bgm_intro_theme",
         "Path": "Assets/Audio/BGM/IntroTheme.ogg",
-        "AudioType": 0
+        "AudioType": "BackgroundMusic"
       }
     ],
     "Actors": [
@@ -34,7 +34,7 @@
     "Nodes": [
       {
         "Id": 1,
-        "NodeType": 0,
+        "NodeType": "Start",
         "SpeakerActorId": "",
         "Text": "",
         "NextNodeId": 2,
@@ -53,7 +53,7 @@
       },
       {
         "Id": 2,
-        "NodeType": 3,
+        "NodeType": "Function",
         "SpeakerActorId": "",
         "Text": "",
         "NextNodeId": 3,
@@ -87,7 +87,7 @@
       },
       {
         "Id": 3,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
         "NextNodeId": 4,
@@ -106,7 +106,7 @@
       },
       {
         "Id": 4,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "actor_1",
         "Text": "Greetings, traveler. You look troubled. Is something wrong?",
         "NextNodeId": 5,
@@ -125,7 +125,7 @@
       },
       {
         "Id": 5,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.",
         "NextNodeId": 6,
@@ -144,7 +144,7 @@
       },
       {
         "Id": 6,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "Will you accept this mission and help us rescue her?",
         "NextNodeId": 7,
@@ -163,7 +163,7 @@
       },
       {
         "Id": 7,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "What do you want to do?",
         "NextNodeId": 0,
@@ -203,7 +203,7 @@
       },
       {
         "Id": 8,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "Thank you, brave knight. We leave at first light.",
         "NextNodeId": 11,
@@ -222,7 +222,7 @@
       },
       {
         "Id": 9,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "I... understand. Very well. Deal.",
         "NextNodeId": 11,
@@ -241,7 +241,7 @@
       },
       {
         "Id": 10,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "Without a word, the knight turns around and walks away.",
         "NextNodeId": 12,
@@ -260,7 +260,7 @@
       },
       {
         "Id": 11,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "At sunrise, they depart toward the hideout where the princess was taken.",
         "NextNodeId": 13,
@@ -279,7 +279,7 @@
       },
       {
         "Id": 12,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "THE END",
         "NextNodeId": 14,
@@ -298,7 +298,7 @@
       },
       {
         "Id": 13,
-        "NodeType": 1,
+        "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "TO BE CONTINUED",
         "NextNodeId": 14,
@@ -317,7 +317,7 @@
       },
       {
         "Id": 14,
-        "NodeType": 4,
+        "NodeType": "End",
         "SpeakerActorId": "",
         "Text": "",
         "NextNodeId": 0,
