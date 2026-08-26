@@ -328,6 +328,13 @@ namespace ConversationEditor
             {
                 SaveConversationAs();
             }
+
+            GUILayout.Space(10);
+
+            if (GUILayout.Button("Auto-Layout", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            {
+                AutoLayoutNodes();
+            }
             GUI.enabled = true;
 
             GUILayout.FlexibleSpace();
@@ -615,13 +622,14 @@ namespace ConversationEditor
             }
 
             // Right-click context menu
-            if (e.type == EventType.ContextClick && graphRect.Contains(e.mousePosition))
+            if (e.type == EventType.MouseDown && e.button == 1 && graphRect.Contains(e.mousePosition))
             {
                 // Skip if in zoom mode
                 if (isZoomMode)
                 {
                     isZoomMode = false;
                     Repaint();
+                    e.Use();
                     return;
                 }
 
@@ -1671,8 +1679,7 @@ namespace ConversationEditor
             menu.AddItem(new GUIContent("Create Node/Function"), false, () => CreateNode(ConversationNodeType.Function));
             menu.AddItem(new GUIContent("Create Node/Dialogue with Options"), false, () => CreateNodeWithOptions());
             menu.AddItem(new GUIContent("Create Node/Conditional"), false, () => CreateNode(ConversationNodeType.Conditional));
-            menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Auto-Layout Nodes"), false, () => AutoLayoutNodes());
+            isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
 
@@ -1755,6 +1762,8 @@ namespace ConversationEditor
 
             conversationData.ConversationManager.Nodes.Add(newNode);
             selectedNode = newNode;
+            showInspector = true;
+            isRightClickMenuActive = false;
             MarkDirty();
             Repaint();
         }
@@ -1778,6 +1787,8 @@ namespace ConversationEditor
 
             conversationData.ConversationManager.Nodes.Add(newNode);
             selectedNode = newNode;
+            showInspector = true;
+            isRightClickMenuActive = false;
             MarkDirty();
             Repaint();
         }
