@@ -1,17 +1,40 @@
 # Conversation Editor - Visual Node-Based Editor
 
 ## Overview
-The Conversation Editor is a powerful visual tool for creating and managing conversation files in Unity. It provides an intuitive node-based interface similar to Unity's Animator window, making it easy to create complex branching dialogues, conditional logic, and interactive narratives.
+The Conversation Editor is a powerful visual tool for creating and managing conversation files in Unity. It provides an intuitive node-based interface with a three-panel layout, making it easy to create complex branching dialogues, conditional logic, and interactive narratives.
+
+## Interface Layout
+
+The editor features a three-panel layout:
+- **Left Panel (Resources)**: Manage scene backgrounds, audio, and actors
+- **Center Panel (Graph)**: Visual node-based conversation flow editor
+- **Right Panel (Inspector)**: Edit properties of selected nodes, shown only when a node is selected
+
+All panels are resizable by dragging the splitter bars between them.
+
+## File Management
+
+### Supported File Types
+- **.conversation**: New standardfile extension for conversation files
+- **.json**: Legacy format, still fully supported
+
+### File Operations
+- **New** (Ctrl+N): Create a new conversation with Start and End nodes (not auto-linked)
+- **Open** (Ctrl+O): Load existing .conversation or .json files
+- **Save** (Ctrl+S): Save changes to current file
+- **Save As**: Save to a new .conversation file
 
 ## Features
 
 ### Visual Node-Based Editing
-- **Animator-like Interface**: Familiar visual graph editor with drag-and-drop functionality
+- **Three-Panel Interface**: Resources (left) | Graph (center) | Inspector (right)
+- **Resizable Panels**: Drag splitter bars to adjust panel widths
 - **Multiple Node Types**: Support for Start, Dialogue, Function, Conditional, and End nodes
-- **Visual Connections**: Draw connections between nodes by Ctrl+click dragging
+- **Smart Connections**: Create connections via right-click menu, not Ctrl+click
 - **Color-Coded Nodes**: Each node type has a distinct color for easy identification
 - **Resizable Nodes**: Adjust node size to fit content
 - **Grid Background**: Aligned grid for precise node placement
+- **Infinite Canvas**: Auto-expanding workspace as nodes are added
 
 ### Node Types
 
@@ -20,13 +43,14 @@ The Conversation Editor is a powerful visual tool for creating and managing conv
 - Automatically created if missing
 - Cannot be deleted or duplicated
 - Only one allowed per conversation
+- **NextNodeId is editable** - can be cleared to 0
 - Displays "START" text
 
 #### End Node (Red)
 - Terminal node marking conversation end
 - Automatically created if missing
 - Cannot be deleted or duplicated
-- Auto-linked when nodes have no next connection
+- **NOT auto-linked** to other nodes
 - Displays "END" text
 
 #### Dialogue Node (Green)
@@ -51,8 +75,78 @@ The Conversation Editor is a powerful visual tool for creating and managing conv
 - **Main Connection**: White line from node to next node
 - **Option Connections**: Cyan lines from player options
 - **Conditional Branches**: Green (TRUE) and Red (FALSE) lines
-- **Interactive Creation**: Ctrl+click drag from source to target
+- **Thicker Lines**: Connection lines are now thicker (5px) for easier interaction
+- **Interactive Creation**: Right-click on node > "Connect to Node" > click target node
+- **Clear Connections**: Right-click on a connection line to clear it
 - **Auto-routing**: Automatic connection cleanup when nodes are deleted
+
+### Mouse Controls
+
+#### Left Click
+- **On Node**: Select node and show inspector panel
+- **On Empty Space**: Deselect node and hide inspector panel
+- **Drag on Node**: Move the node
+- **Drag on Empty Space**: Pan the camera/canvas view
+- **On Connection Line + Drag**: Move the nearest connected node
+
+#### Right Click
+- **On Node**: Show node context menu
+- **On Empty Space**: Show creation menu (new nodes)
+- **On Connection Line**: Show menu to clear connection
+
+#### Middle Mouse / Alt+Left Click
+- **Drag**: Pan the camera view
+
+#### Mouse Wheel
+- **Scroll**: Zoom in/out (50% - 200%)
+
+### Keyboard Shortcuts
+- **Ctrl+S**: Save conversation
+- **Ctrl+N**: New conversation
+- **Delete**: Delete selected node
+- **F**: Frame/focus selected node
+- **Escape**: Cancel connection mode or close menus
+
+### Node Inspector Panel
+
+The inspector panel appears on the right when a node is selected and shows:
+
+#### All Node Properties
+- **ID**: Auto-generated, read-only unique identifier
+- **Node Type**: Node type selector (read-only for Start/End)
+
+#### Start Node Properties
+- **Next Node**: Dropdown selector for connected node
+
+#### Dialogue/Function Node Properties
+- **Speaker Actor**: Dropdown of available actors
+- **Text**: Multi-line text area for dialogue content
+- **Next Node**: Dropdown selector (not manual ID entry)
+- **Options** (Dialogue only): Player choice management
+  - Add/remove options
+  - Per-option text and Next Node dropdown
+  - Condition rules for option visibility
+- **Functions**: Timed function execution
+  - Predefined function library
+  - Custom function support
+  - Parameter configuration
+  - Timestamp for text synchronization
+- **Editor Properties**: Position and size
+
+#### Conditional Node Properties
+- **Conditional Branches**: Multiple branch support
+  - TRUE path - dropdown selector
+  - FALSE path - dropdown selector
+  - Condition rule list per branch
+- **Default Branch Node**: Fallback dropdown selector
+
+### Next Node Dropdown
+
+All Next Node ID fields now use dropdowns instead of manual text entry:
+- **First Option**: "NINGUNO" (represents ID 0, no connection)
+- **Format**: `ID - ActorId - TextPreview [NodeType]`
+- **Example**: `5 - actor_knight - Greetings, traveler... [END]`
+- **Valid Targets**: Excludes Start nodes and the current node itself
 
 ### Resource Management
 
@@ -73,31 +167,91 @@ The Conversation Editor is a powerful visual tool for creating and managing conv
 - Sound effect associations
 - Body part composition system (for complex character assembly)
 
-### Node Inspector Panel
-Located on the right side, the inspector shows detailed properties for the selected node:
+### Auto-Layout (Planned Feature)
+- Automatic node arrangement based on conversation flow
+- Horizontal or vertical layout options
+- Adjustable spacing between nodes
 
-#### Dialogue Node Properties
-- **ID**: Auto-generated, read-only unique identifier
-- **Node Type**: Node type selector (read-only for Start/End)
-- **Speaker Actor**: Dropdown of available actors
-- **Text**: Multi-line text area for dialogue content
-- **Next Node ID**: Manual node connection option
-- **Options**: Player choice management
-  - Add/remove options
-  - Per-option text and target node
-  - Condition rules for option visibility
-- **Functions**: Timed function execution
-  - Predefined function library
-  - Custom function support
-  - Parameter configuration
-  - Timestamp for text synchronization
-- **Editor Properties**: Position and size
+## Workflow Best Practices
 
-#### Conditional Node Properties
-- **Conditional Branches**: Multiple branch support
-  - TRUE path node ID
-  - FALSE path node ID
-  - Condition rule list per branch
+1. **Start with Resources**: Define your actors and assets first in the left panel
+2. **Build the Flow**: Create nodes in the graph panel (center)
+3. **Connect Nodes**: Right-click on source node > "Connect to Node" > click target
+4. **Configure Details**: Select nodes to edit properties in the inspector (right)
+5. **Test Flow**: Follow connections visually to verify conversation logic
+6. **Save Often**: Use Ctrl+S frequently to save your work
+
+## Tips and Tricks
+
+- Use the **F key** to quickly center view on selected node
+- **Frame important nodes** by selecting them and pressing F
+- **Hide the inspector** by clicking on empty space to get more screen real estate
+- **Pan with empty space drag** to navigate large conversations easily
+- **Use the grid** as a visual guide for alignment
+- **Color coordination**: Match your node colors to your mental model of the conversation flow
+
+## Troubleshooting
+
+### Nodes appear outside visible area
+- Press F with node selected to frame it
+- Pan the view by dragging on empty space
+- Check node's Editor Position in inspector
+
+### Can't connect nodes
+- Ensure you're using right-click > "Connect to Node", not Ctrl+click
+- Press Escape if stuck in connection mode
+- Verify target node is valid (not a Start node)
+
+### Inspector panel won't show
+- Click on a node to select it
+- Check that you're not clicking on empty space immediately after
+
+### Changes not saving
+- File name shows asterisk (*) when dirty
+- Use Ctrl+S or click Save button
+- Check file permissions if save fails
+
+## Technical Notes
+
+### Node ID System
+- IDs are auto-generated starting from 1
+- Start node typically has ID 1
+- End node typically has ID 2
+- IDs are permanent once assigned
+- Deleting a node removes all references to that ID
+
+### Connection Logic
+- Nodes can have multiple outgoing connections (via Options or Conditional Branches)
+- A node with no explicit next connection and no options/branches will not auto-link
+- Orphaned nodes (no incoming connections) are valid but may be unreachable in gameplay
+
+### File Format
+- JSON-based structure
+- Human-readable and VCS-friendly
+- Contains both ResourceManager and ConversationManager sections
+- Editor properties (Position, Size) are stored in the file
+
+## Version History
+
+### Latest Version
+- Three-panel resizable layout
+- Support for .conversation file extension
+- Next Node dropdown system with formatted options
+- Improved mouse controls (camera panning, node selection)
+- Thicker connection lines for easier interaction
+- Right-click connection creation and clearing
+- Start node NextNodeId is now editable
+- No auto-linking between Start and End nodes
+- Inspector panel hides when clicking empty space
+- Escape key cancels connection mode
+- Better canvas handling without artificial bounds
+
+### Previous Features
+- Visual node-based editing
+- Multiple node types
+- Resource management
+- Undo/Redo support
+- Predefined function library
 - **Default Branch**: Fallback node when no conditions match
 - **Condition Rules**:
   - Variable name

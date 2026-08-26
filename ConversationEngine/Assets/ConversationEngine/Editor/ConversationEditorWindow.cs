@@ -34,12 +34,24 @@ namespace ConversationEditor
         private ConversationOption connectingFromOption;
         private ConditionalBranch connectingFromBranch;
         private int connectingBranchIndex = 0;
+        private ConversationNode draggedNode = null;
+        private bool isMouseOverNode = false;
+        private bool isRightClickMenuActive = false;
 
         // UI state
-        private int selectedTab = 0;
         private Vector2 resourceScrollPos;
         private Vector2 nodeScrollPos;
         private Vector2 inspectorScrollPos;
+
+        // Panel sizes
+        private float leftPanelWidth = 250f;
+        private float rightPanelWidth = 300f;
+        private bool isDraggingLeftSplitter = false;
+        private bool isDraggingRightSplitter = false;
+        private bool showInspector = false;
+
+        // Auto-layout
+        private float autoLayoutSpacing = 250f;
 
         // Context menu
         private Vector2 contextMenuPosition;
@@ -181,16 +193,71 @@ namespace ConversationEditor
                 return;
             }
 
-            // Main content area with tabs
-            selectedTab = GUILayout.Toolbar(selectedTab, new string[] { "Resources", "Conversation Graph" });
+            // Three-panel layout: Resources | Graph | Inspector
+            DrawThreePanelLayout();
+        }
 
-            if (selectedTab == 0)
+        private void DrawThreePanelLayout()
+        {
+            float toolbarHeight = 40f;
+            float totalWidth = position.width;
+            float totalHeight = position.height - toolbarHeight;
+
+            // Left panel - Resources
+            Rect leftPanelRect = new Rect(0, toolbarHeight, leftPanelWidth, totalHeight);
+            GUILayout.BeginArea(leftPanelRect);
+            DrawResourceManager();
+            GUILayout.EndArea();
+
+            // Left splitter
+            Rect leftSplitterRect = new Rect(leftPanelWidth, toolbarHeight, 5, totalHeight);
+            DrawSplitter(leftSplitterRect, ref isDraggingLeftSplitter, ref leftPanelWidth, 150f, totalWidth * 0.5f);
+
+            // Center panel - Graph
+            float centerWidth = showInspector ? totalWidth - leftPanelWidth - rightPanelWidth - 10 : totalWidth - leftPanelWidth - 5;
+            Rect centerPanelRect = new Rect(leftPanelWidth + 5, toolbarHeight, centerWidth, totalHeight);
+            GUILayout.BeginArea(centerPanelRect);
+            DrawConversationGraph();
+            GUILayout.EndArea();
+
+            // Right splitter and panel (only if inspector is visible)
+            if (showInspector)
             {
-                DrawResourceManager();
+                float rightSplitterX = leftPanelWidth + 5 + centerWidth;
+                Rect rightSplitterRect = new Rect(rightSplitterX, toolbarHeight, 5, totalHeight);
+                DrawSplitter(rightSplitterRect, ref isDraggingRightSplitter, ref rightPanelWidth, 200f, totalWidth * 0.5f);
+
+                // Right panel - Inspector
+                Rect rightPanelRect = new Rect(rightSplitterX + 5, toolbarHeight, rightPanelWidth, totalHeight);
+                GUILayout.BeginArea(rightPanelRect);
+                DrawInspectorPanel();
+                GUILayout.EndArea();
             }
-            else if (selectedTab == 1)
+        }
+
+        private void DrawSplitter(Rect splitterRect, ref bool isDragging, ref float panelWidth, float minWidth, float maxWidth)
+        {
+            EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeHorizontal);
+            GUI.Box(splitterRect, "", EditorStyles.toolbar);
+
+            Event e = Event.current;
+
+            if (e.type == EventType.MouseDown && e.button == 0 && splitterRect.Contains(e.mousePosition))
             {
-                DrawConversationGraph();
+                isDragging = true;
+                e.Use();
+            }
+            else if (e.type == EventType.MouseUp && e.button == 0 && isDragging)
+            {
+                isDragging = false;
+                e.Use();
+            }
+            else if (e.type == EventType.MouseDrag && isDragging)
+            {
+                panelWidth += e.delta.x;
+                panelWidth = Mathf.Clamp(panelWidth, minWidth, maxWidth);
+                e.Use();
+                Repaint();
             }
         }
 
@@ -222,6 +289,16 @@ namespace ConversationEditor
                 {
                     FrameNode(selectedNode);
                     e.Use();
+                }
+                // Escape to cancel connecting mode
+                else if (e.keyCode == KeyCode.Escape && isConnecting)
+                {
+                    isConnecting = false;
+                    connectingFromNode = null;
+                    connectingFromOption = null;
+                    connectingFromBranch = null;
+                    e.Use();
+                    Repaint();
                 }
             }
         }
@@ -423,11 +500,19 @@ namespace ConversationEditor
             // Reset scaling
             GUIUtility.ScaleAroundPivot(Vector2.one / zoom, graphRect.size / 2);
 
-            // Draw inspector panel on the right
-            DrawInspectorPanel();
-
-            // Draw zoom slider
-            DrawZoomControls();
+            // Draw zoom slider at bottom of graph area
+            Rect zoomRect = new Rect(graphRect.x + 10, graphRect.yMax - 30, 200, 20);
+            GUILayout.BeginArea(zoomRect);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label($"Zoom: {(zoom * 100):F0}%", GUILayout.Width(80));
+            float newZoom = GUILayout.HorizontalSlider(zoom, minZoom, maxZoom);
+            if (newZoom != zoom)
+            {
+                zoom = newZoom;
+                Repaint();
+            }
+            EditorGUILayout.EndHorizontal();
+            GUILayout.EndArea();
         }
 
         private void HandleGraphInput(Rect graphRect)
@@ -443,7 +528,59 @@ namespace ConversationEditor
                 Repaint();
             }
 
-            // Pan view with middle mouse or Alt+left mouse
+            // Left click on empty space - deselect and hide inspector, or cancel connection
+            if (e.type == EventType.MouseDown && e.button == 0 && graphRect.Contains(e.mousePosition))
+            {
+                if (isRightClickMenuActive)
+                {
+                    isRightClickMenuActive = false;
+                    e.Use();
+                    return;
+                }
+
+                if (isConnecting)
+                {
+                    // Cancel connection mode
+                    isConnecting = false;
+                    connectingFromNode = null;
+                    connectingFromOption = null;
+                    connectingFromBranch = null;
+                    e.Use();
+                    Repaint();
+                    return;
+                }
+
+                // Check if we clicked on empty space (not on a node)
+                bool clickedOnNode = false;
+                if (conversationData?.ConversationManager?.Nodes != null)
+                {
+                    Vector2 mousePos = (e.mousePosition - panOffset) / zoom;
+                    foreach (var node in conversationData.ConversationManager.Nodes)
+                    {
+                        Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+                        if (nodeRect.Contains(mousePos))
+                        {
+                            clickedOnNode = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!clickedOnNode)
+                {
+                    // Hide inspector and deselect
+                    selectedNode = null;
+                    selectedOption = null;
+                    selectedBranch = null;
+                    showInspector = false;
+                    isDraggingView = true;
+                    dragStartPos = e.mousePosition;
+                    e.Use();
+                    Repaint();
+                }
+            }
+
+            // Pan view with middle mouse, Alt+left mouse, or left drag on empty space
             if (e.type == EventType.MouseDown && (e.button == 2 || (e.button == 0 && e.alt)) && graphRect.Contains(e.mousePosition))
             {
                 isDraggingView = true;
@@ -456,7 +593,7 @@ namespace ConversationEditor
                 e.Use();
                 Repaint();
             }
-            else if (e.type == EventType.MouseUp && isDraggingView)
+            else if (e.type == EventType.MouseUp)
             {
                 isDraggingView = false;
                 e.Use();
@@ -630,30 +767,50 @@ namespace ConversationEditor
             {
                 if (e.button == 0) // Left click
                 {
-                    if (e.control || e.command)
+                    // Don't process if right-click menu is active
+                    if (isRightClickMenuActive)
                     {
-                        // Start connecting
-                        isConnecting = true;
-                        connectingFromNode = node;
-                        connectingFromOption = null;
-                        connectingFromBranch = null;
-                        e.Use();
+                        isRightClickMenuActive = false;
+                        return;
                     }
-                    else
+
+                    // Complete connection if in connecting mode
+                    if (isConnecting)
                     {
-                        // Select node
-                        selectedNode = node;
-                        selectedOption = null;
-                        selectedBranch = null;
-                        GUI.FocusControl(null);
+                        // Can't connect to Start nodes or to self
+                        if (node.NodeType != ConversationNodeType.Start && node != connectingFromNode)
+                        {
+                            CompleteConnection(node);
+                        }
+                        else
+                        {
+                            // Invalid target, cancel connection
+                            isConnecting = false;
+                            connectingFromNode = null;
+                            connectingFromOption = null;
+                            connectingFromBranch = null;
+                        }
                         e.Use();
                         Repaint();
+                        return;
                     }
+
+                    // Select node and show inspector
+                    selectedNode = node;
+                    selectedOption = null;
+                    selectedBranch = null;
+                    showInspector = true;
+                    isMouseOverNode = true;
+                    GUI.FocusControl(null);
+                    e.Use();
+                    Repaint();
                 }
                 else if (e.button == 1) // Right click
                 {
                     if (node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
                     {
+                        selectedNode = node;
+                        showInspector = true;
                         ShowNodeContextMenu(node);
                         e.Use();
                     }
@@ -661,7 +818,7 @@ namespace ConversationEditor
             }
 
             // Drag node
-            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0)
+            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode)
             {
                 Undo.RecordObject(this, "Move Node");
                 node.EditorPosition += e.delta / zoom;
@@ -670,11 +827,9 @@ namespace ConversationEditor
                 Repaint();
             }
 
-            // Complete connection
-            if (e.type == EventType.MouseUp && e.button == 0 && isConnecting && nodeRect.Contains(e.mousePosition))
+            if (e.type == EventType.MouseUp && e.button == 0)
             {
-                CompleteConnection(node);
-                e.Use();
+                isMouseOverNode = false;
             }
         }
 
@@ -965,14 +1120,14 @@ namespace ConversationEditor
             Handles.color = color;
             Vector2 startTangent = start + Vector2.right * 50;
             Vector2 endTangent = end + Vector2.left * 50;
-            Handles.DrawBezier(start, end, startTangent, endTangent, color, null, 3f);
+            Handles.DrawBezier(start, end, startTangent, endTangent, color, null, 5f);  // Increased from 3f to 5f
 
             // Draw arrow at end
             Vector2 direction = (end - endTangent).normalized;
             Vector2 arrowPoint1 = end - direction * 10 + new Vector2(-direction.y, direction.x) * 5;
             Vector2 arrowPoint2 = end - direction * 10 - new Vector2(-direction.y, direction.x) * 5;
-            Handles.DrawAAPolyLine(3f, end, arrowPoint1);
-            Handles.DrawAAPolyLine(3f, end, arrowPoint2);
+            Handles.DrawAAPolyLine(5f, end, arrowPoint1);  // Increased from 3f to 5f
+            Handles.DrawAAPolyLine(5f, end, arrowPoint2);  // Increased from 3f to 5f
         }
 
         private void DrawConnectionFromOption(ConversationNode node, ConversationOption option, Rect optionRect)
@@ -1075,8 +1230,8 @@ namespace ConversationEditor
 
         private void DrawInspectorPanel()
         {
-            Rect inspectorRect = new Rect(position.width - 300, 60, 300, position.height - 60);
-            GUILayout.BeginArea(inspectorRect, "", "box");
+            // This is now called from within a GUILayout.BeginArea in DrawThreePanelLayout
+            // So we don't need to create our own area here
 
             inspectorScrollPos = EditorGUILayout.BeginScrollView(inspectorScrollPos);
 
@@ -1098,8 +1253,6 @@ namespace ConversationEditor
             }
 
             EditorGUILayout.EndScrollView();
-
-            GUILayout.EndArea();
         }
 
         private void DrawNodeInspector(ConversationNode node)
@@ -1117,7 +1270,14 @@ namespace ConversationEditor
             node.NodeType = (ConversationNodeType)EditorGUILayout.EnumPopup("Node Type", node.NodeType);
             EditorGUI.EndDisabledGroup();
 
-            if (node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
+            // Allow Start node to edit NextNodeId too
+            if (node.NodeType == ConversationNodeType.Start)
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("Connection", EditorStyles.boldLabel);
+                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node);
+            }
+            else if (node.NodeType != ConversationNodeType.End)
             {
                 // Speaker Actor
                 if (conversationData.ResourceManager.Actors.Count > 0)
@@ -1140,8 +1300,8 @@ namespace ConversationEditor
                 EditorGUILayout.LabelField("Text:");
                 node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60));
 
-                // Next Node ID
-                node.NextNodeId = EditorGUILayout.IntField("Next Node ID", node.NextNodeId);
+                // Next Node ID with dropdown
+                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node);
 
                 // Options
                 if (node.NodeType == ConversationNodeType.Dialogue)
@@ -1157,7 +1317,7 @@ namespace ConversationEditor
                         EditorGUILayout.BeginVertical("box");
                         EditorGUILayout.LabelField($"Option {i + 1}");
                         node.Options[i].Text = EditorGUILayout.TextField("Text", node.Options[i].Text);
-                        node.Options[i].NextNodeId = EditorGUILayout.IntField("Next Node ID", node.Options[i].NextNodeId);
+                        node.Options[i].NextNodeId = DrawNodeIdDropdown("Next Node", node.Options[i].NextNodeId, node);
 
                         if (GUILayout.Button("Remove Option"))
                         {
@@ -1201,8 +1361,8 @@ namespace ConversationEditor
                         EditorGUILayout.LabelField($"Branch {i + 1}");
 
                         var branch = node.ConditionalBranches[i];
-                        branch.NextNodeIdTrue = EditorGUILayout.IntField("Next Node (True)", branch.NextNodeIdTrue);
-                        branch.NextNodeIdFalse = EditorGUILayout.IntField("Next Node (False)", branch.NextNodeIdFalse);
+                        branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, node);
+                        branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, node);
 
                         // Conditions
                         DrawConditionList(branch.Conditions);
@@ -1225,7 +1385,7 @@ namespace ConversationEditor
                     }
 
                     // Default Branch
-                    node.DefaultBranchNodeId = EditorGUILayout.IntField("Default Branch Node ID", node.DefaultBranchNodeId);
+                    node.DefaultBranchNodeId = DrawNodeIdDropdown("Default Branch Node", node.DefaultBranchNodeId, node);
                 }
             }
 
@@ -1242,7 +1402,7 @@ namespace ConversationEditor
             EditorGUILayout.Space();
 
             option.Text = EditorGUILayout.TextField("Text", option.Text);
-            option.NextNodeId = EditorGUILayout.IntField("Next Node ID", option.NextNodeId);
+            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, selectedNode);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
@@ -1254,12 +1414,50 @@ namespace ConversationEditor
             EditorGUILayout.LabelField("Branch Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            branch.NextNodeIdTrue = EditorGUILayout.IntField("Next Node (True)", branch.NextNodeIdTrue);
-            branch.NextNodeIdFalse = EditorGUILayout.IntField("Next Node (False)", branch.NextNodeIdFalse);
+            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, selectedNode);
+            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, selectedNode);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(branch.Conditions);
+        }
+
+        private int DrawNodeIdDropdown(string label, int currentNodeId, ConversationNode excludeNode)
+        {
+            // Build list of available nodes
+            var nodeOptions = new List<string>();
+            var nodeIds = new List<int>();
+
+            // Add "NINGUNO" option
+            nodeOptions.Add("NINGUNO");
+            nodeIds.Add(0);
+
+            // Add all valid target nodes
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                // Skip Start nodes and the node itself (but allow selecting End nodes)
+                if (node.NodeType == ConversationNodeType.Start || node == excludeNode)
+                    continue;
+
+                // Use helper to format node text
+                nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
+                nodeIds.Add(node.Id);
+            }
+
+            // Find current selection
+            int currentIndex = nodeIds.IndexOf(currentNodeId);
+            if (currentIndex < 0) currentIndex = 0;
+
+            // Draw dropdown
+            int newIndex = EditorGUILayout.Popup(label, currentIndex, nodeOptions.ToArray());
+            int newNodeId = nodeIds[newIndex];
+
+            if (newNodeId != currentNodeId)
+            {
+                MarkDirty();
+            }
+
+            return newNodeId;
         }
 
         private void DrawConditionList(List<ConditionRule> conditions)
@@ -1422,6 +1620,20 @@ namespace ConversationEditor
         {
             GenericMenu menu = new GenericMenu();
 
+            // Add connection option for all node types except End
+            if (node.NodeType != ConversationNodeType.End)
+            {
+                menu.AddItem(new GUIContent("Connect to Node"), false, () => {
+                    isConnecting = true;
+                    connectingFromNode = node;
+                    connectingFromOption = null;
+                    connectingFromBranch = null;
+                    isRightClickMenuActive = false;
+                    Repaint();
+                });
+                menu.AddSeparator("");
+            }
+
             if (node.NodeType == ConversationNodeType.Dialogue)
             {
                 menu.AddItem(new GUIContent("Add Option"), false, () => {
@@ -1429,13 +1641,21 @@ namespace ConversationEditor
                     if (node.Options == null) node.Options = new List<ConversationOption>();
                     node.Options.Add(new ConversationOption());
                     MarkDirty();
+                    isRightClickMenuActive = false;
                 });
             }
 
-            menu.AddItem(new GUIContent("Duplicate Node"), false, () => DuplicateNode(node));
+            menu.AddItem(new GUIContent("Duplicate Node"), false, () => {
+                DuplicateNode(node);
+                isRightClickMenuActive = false;
+            });
             menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Delete Node"), false, () => DeleteNode(node));
+            menu.AddItem(new GUIContent("Delete Node"), false, () => {
+                DeleteNode(node);
+                isRightClickMenuActive = false;
+            });
 
+            isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
 
@@ -1596,6 +1816,7 @@ namespace ConversationEditor
             {
                 Id = 1,
                 NodeType = ConversationNodeType.Start,
+                NextNodeId = 0,  // Don't auto-link to End node
                 EditorPosition = new Vector2(0, 0),
                 EditorSize = new Vector2(150, 80)
             };
@@ -1608,8 +1829,6 @@ namespace ConversationEditor
                 EditorPosition = new Vector2(400, 0),
                 EditorSize = new Vector2(150, 80)
             };
-
-            startNode.NextNodeId = endNode.Id;
 
             conversationData.ConversationManager.Nodes.Add(startNode);
             conversationData.ConversationManager.Nodes.Add(endNode);
@@ -1625,7 +1844,8 @@ namespace ConversationEditor
 
         private void OpenConversationDialog()
         {
-            string path = EditorUtility.OpenFilePanel("Open Conversation", "Assets", "json");
+            string path = EditorUtility.OpenFilePanelWithFilters("Open Conversation", "Assets", 
+                new string[] { "Conversation Files", "conversation,json", "All Files", "*" });
             if (!string.IsNullOrEmpty(path))
             {
                 LoadConversation(path);
@@ -1692,7 +1912,7 @@ namespace ConversationEditor
 
         private void SaveConversationAs()
         {
-            string path = EditorUtility.SaveFilePanel("Save Conversation", "Assets", "conversation", "json");
+            string path = EditorUtility.SaveFilePanel("Save Conversation", "Assets", "conversation", "conversation");
             if (!string.IsNullOrEmpty(path))
             {
                 currentFilePath = path;
@@ -1704,20 +1924,7 @@ namespace ConversationEditor
         {
             try
             {
-                // Fill in End node references for any nodes with NextNodeId = 0
-                var endNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.End);
-                if (endNode != null)
-                {
-                    foreach (var node in conversationData.ConversationManager.Nodes)
-                    {
-                        if (node.NodeType != ConversationNodeType.End && node.NextNodeId == 0 && 
-                            (node.Options == null || node.Options.Count == 0) &&
-                            (node.ConditionalBranches == null || node.ConditionalBranches.Count == 0))
-                        {
-                            node.NextNodeId = endNode.Id;
-                        }
-                    }
-                }
+                // Don't auto-link nodes to End node - let user decide connections
 
                 string json = ConversationJsonSettings.Serialize(conversationData);
                 File.WriteAllText(filePath, json);
