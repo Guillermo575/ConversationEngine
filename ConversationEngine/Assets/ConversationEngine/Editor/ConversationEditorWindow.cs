@@ -21,7 +21,7 @@ namespace ConversationEditor
         private float zoom = 1.0f;
         private const float minZoom = 0.5f;
         private const float maxZoom = 2.0f;
-        private bool isZoomMode = false;
+        private Rect currentGraphRect;
 
         // Selection and interaction
         private ConversationNode selectedNode;
@@ -482,7 +482,9 @@ namespace ConversationEditor
         {
             if (conversationData?.ConversationManager?.Nodes == null) return;
 
-            Rect graphRect = GUILayoutUtility.GetRect(position.width, position.height - 60);
+            // Calculate required canvas size based on node positions and zoom
+            Rect graphRect = CalculateGraphRect();
+            currentGraphRect = graphRect; // Store for mouse coordinate transformation
 
             // Handle view panning and zooming
             HandleGraphInput(graphRect);
@@ -523,23 +525,73 @@ namespace ConversationEditor
             GUILayout.EndArea();
         }
 
+        private Rect CalculateGraphRect()
+        {
+            // Start with the available window space
+            Rect baseRect = GUILayoutUtility.GetRect(position.width, position.height - 60);
+
+            // Calculate bounds of all nodes
+            if (conversationData?.ConversationManager?.Nodes != null && conversationData.ConversationManager.Nodes.Count > 0)
+            {
+                float minX = float.MaxValue;
+                float minY = float.MaxValue;
+                float maxX = float.MinValue;
+                float maxY = float.MinValue;
+
+                foreach (var node in conversationData.ConversationManager.Nodes)
+                {
+                    minX = Mathf.Min(minX, node.EditorPosition.x);
+                    minY = Mathf.Min(minY, node.EditorPosition.y);
+                    maxX = Mathf.Max(maxX, node.EditorPosition.x + node.EditorSize.x + 200); // +200 for options/branches
+                    maxY = Mathf.Max(maxY, node.EditorPosition.y + node.EditorSize.y);
+                }
+
+                // Add padding
+                float padding = 500f;
+                minX -= padding;
+                minY -= padding;
+                maxX += padding;
+                maxY += padding;
+
+                // Calculate required size with zoom
+                float requiredWidth = (maxX - minX) * zoom;
+                float requiredHeight = (maxY - minY) * zoom;
+
+                // Use the larger of the base rect or the required size
+                float finalWidth = Mathf.Max(baseRect.width, requiredWidth);
+                float finalHeight = Mathf.Max(baseRect.height, requiredHeight);
+
+                return new Rect(baseRect.x, baseRect.y, finalWidth, finalHeight);
+            }
+
+            return baseRect;
+        }
+
+        /// <summary>
+        /// Transforms mouse position from screen space to world space considering zoom and pan
+        /// This matches the transformation used in HandleGraphInput: (mousePos - panOffset) / zoom
+        /// But since we're inside the transformed context, we need to apply the inverse of ScaleAroundPivot first
+        /// </summary>
+        private Vector2 ScreenToWorld(Vector2 screenPos)
+        {
+            // Get the pivot point used in ScaleAroundPivot (center of the graph rect)
+            Vector2 pivot = currentGraphRect.size / 2;
+
+            // Inverse of ScaleAroundPivot: worldPos = pivot + (screenPos - pivot) / zoom
+            Vector2 worldPos = pivot + (screenPos - pivot) / zoom;
+
+            return worldPos;
+        }
+
         private void HandleGraphInput(Rect graphRect)
         {
             Event e = Event.current;
-
-            // Exit zoom mode on any mouse click
-            if (e.type == EventType.MouseDown && isZoomMode)
-            {
-                isZoomMode = false;
-                Repaint();
-            }
 
             // Zoom with mouse wheel
             if (e.type == EventType.ScrollWheel && graphRect.Contains(e.mousePosition))
             {
                 float zoomDelta = -e.delta.y * 0.05f;
                 zoom = Mathf.Clamp(zoom + zoomDelta, minZoom, maxZoom);
-                isZoomMode = true;
                 e.Use();
                 Repaint();
             }
@@ -547,11 +599,6 @@ namespace ConversationEditor
             // Left click on empty space - deselect and hide inspector, or cancel connection
             if (e.type == EventType.MouseDown && e.button == 0 && graphRect.Contains(e.mousePosition))
             {
-                // Skip processing if in zoom mode
-                if (isZoomMode)
-                {
-                    return;
-                }
 
                 if (isRightClickMenuActive)
                 {
@@ -624,14 +671,6 @@ namespace ConversationEditor
             // Right-click context menu
             if (e.type == EventType.MouseDown && e.button == 1 && graphRect.Contains(e.mousePosition))
             {
-                // Skip if in zoom mode
-                if (isZoomMode)
-                {
-                    isZoomMode = false;
-                    Repaint();
-                    e.Use();
-                    return;
-                }
 
                 // Check if we're clicking on a node
                 bool clickedOnNode = false;
@@ -704,6 +743,7 @@ namespace ConversationEditor
 
         private void DrawNode(ConversationNode node)
         {
+            // Node rect in world space with panOffset (zoom is applied by GUIUtility.ScaleAroundPivot)
             Rect nodeRect = new Rect(
                 node.EditorPosition.x + panOffset.x,
                 node.EditorPosition.y + panOffset.y,
@@ -816,15 +856,13 @@ namespace ConversationEditor
         {
             Event e = Event.current;
 
-            if (e.type == EventType.MouseDown && nodeRect.Contains(e.mousePosition))
+            // Transform mouse position to world space to account for zoom
+            Vector2 mouseWorldPos = ScreenToWorld(e.mousePosition);
+
+            if (e.type == EventType.MouseDown && nodeRect.Contains(mouseWorldPos))
             {
                 if (e.button == 0) // Left click
                 {
-                    // Don't process if in zoom mode
-                    if (isZoomMode)
-                    {
-                        return;
-                    }
 
                     // Don't process if right-click menu is active
                     if (isRightClickMenuActive)
@@ -866,13 +904,6 @@ namespace ConversationEditor
                 }
                 else if (e.button == 1) // Right click
                 {
-                    // Exit zoom mode on right click
-                    if (isZoomMode)
-                    {
-                        isZoomMode = false;
-                        Repaint();
-                    }
-
                     if (node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
                     {
                         selectedNode = node;
@@ -884,10 +915,15 @@ namespace ConversationEditor
             }
 
             // Drag node
-            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode && !isZoomMode)
+            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode)
             {
                 Undo.RecordObject(this, "Move Node");
                 node.EditorPosition += e.delta / zoom;
+
+                // Keep node within reasonable bounds (min 0, max 10000)
+                node.EditorPosition.x = Mathf.Max(0, Mathf.Min(10000, node.EditorPosition.x));
+                node.EditorPosition.y = Mathf.Max(0, Mathf.Min(10000, node.EditorPosition.y));
+
                 MarkDirty();
                 e.Use();
                 Repaint();
@@ -936,7 +972,10 @@ namespace ConversationEditor
         {
             Event e = Event.current;
 
-            if (e.type == EventType.MouseDown && optionRect.Contains(e.mousePosition))
+            // Transform mouse position to world space to account for zoom
+            Vector2 mouseWorldPos = ScreenToWorld(e.mousePosition);
+
+            if (e.type == EventType.MouseDown && optionRect.Contains(mouseWorldPos))
             {
                 if (e.button == 0 && (e.control || e.command))
                 {
@@ -964,7 +1003,7 @@ namespace ConversationEditor
 
             // Complete connection to option
             if (e.type == EventType.MouseUp && e.button == 0 && isConnecting && 
-                connectingFromOption == null && optionRect.Contains(e.mousePosition))
+                connectingFromOption == null && optionRect.Contains(mouseWorldPos))
             {
                 // Cannot connect TO an option, only FROM an option
                 isConnecting = false;
@@ -1001,7 +1040,7 @@ namespace ConversationEditor
                 // Draw FALSE branch
                 Rect falseRect = new Rect(
                     nodeRect.xMax + spacing,
-                    nodeRect.y + i * (branchHeight * 2 + spacing) + branchHeight + 5,
+                    nodeRect.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2,
                     branchWidth,
                     branchHeight
                 );
@@ -1024,8 +1063,11 @@ namespace ConversationEditor
         {
             Event e = Event.current;
 
+            // Transform mouse position to world space to account for zoom
+            Vector2 mouseWorldPos = ScreenToWorld(e.mousePosition);
+
             // Handle TRUE branch
-            if (e.type == EventType.MouseDown && trueRect.Contains(e.mousePosition))
+            if (e.type == EventType.MouseDown && trueRect.Contains(mouseWorldPos))
             {
                 if (e.button == 0 && (e.control || e.command))
                 {
@@ -1047,7 +1089,7 @@ namespace ConversationEditor
             }
 
             // Handle FALSE branch
-            if (e.type == EventType.MouseDown && falseRect.Contains(e.mousePosition))
+            if (e.type == EventType.MouseDown && falseRect.Contains(mouseWorldPos))
             {
                 if (e.button == 0 && (e.control || e.command))
                 {
@@ -1075,7 +1117,10 @@ namespace ConversationEditor
             EditorGUIUtility.AddCursorRect(handleRect, MouseCursor.ResizeUpLeft);
 
             Event e = Event.current;
-            if (e.type == EventType.MouseDown && handleRect.Contains(e.mousePosition))
+            // Transform mouse position to world space to account for zoom
+            Vector2 mouseWorldPos = ScreenToWorld(e.mousePosition);
+
+            if (e.type == EventType.MouseDown && handleRect.Contains(mouseWorldPos))
             {
                 // Start resizing (not implemented in detail for brevity)
                 e.Use();
