@@ -134,7 +134,7 @@ namespace ConversationEditor
         {
             if (stylesInitialized) return;
 
-            int borderWidth = 12;
+            int borderWidth = 2;
 
             // Basic node style (green for dialogue)
             nodeStyle = new GUIStyle("box");
@@ -180,13 +180,13 @@ namespace ConversationEditor
 
             // Function node style (white)
             functionNodeStyle = new GUIStyle(nodeStyle);
-            functionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.8f, 0.8f, 0.9f), Color.black, borderWidth);
+            functionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.black, borderWidth);
 
             functionNodeSelectedStyle = new GUIStyle(functionNodeStyle);
-            functionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.8f, 0.8f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
+            functionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
 
             functionNodeDraggingStyle = new GUIStyle(functionNodeStyle);
-            functionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.8f, 0.8f, 0.9f), Color.white, borderWidth);
+            functionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.white, borderWidth);
 
             // Option node style (light blue)
             optionNodeStyle = new GUIStyle(nodeStyle);
@@ -862,6 +862,12 @@ namespace ConversationEditor
                 case ConversationNodeType.End:
                     GUILayout.FlexibleSpace();
                     GUILayout.Label("END", nodeHeaderStyle);
+                    GUILayout.FlexibleSpace();
+                    break;
+
+                case ConversationNodeType.Function:
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label("FUNCTION", nodeHeaderStyle);
                     GUILayout.FlexibleSpace();
                     break;
 
