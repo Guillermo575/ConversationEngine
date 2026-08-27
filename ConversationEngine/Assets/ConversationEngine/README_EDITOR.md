@@ -32,6 +32,7 @@ All panels are resizable by dragging the splitter bars between them.
 - **Multiple Node Types**: Support for Start, Dialogue, Function, Conditional, and End nodes
 - **Smart Connections**: Create connections via right-click menu, not Ctrl+click
 - **Color-Coded Nodes**: Each node type has a distinct color for easy identification
+- **Visual Feedback**: Nodes have thick black borders that turn golden when selected, white while dragging
 - **Resizable Nodes**: Adjust node size to fit content
 - **Grid Background**: Aligned grid for precise node placement
 - **Infinite Canvas**: Auto-expanding workspace as nodes are added
@@ -71,6 +72,17 @@ All panels are resizable by dragging the splitter bars between them.
 - Multiple condition rules with AND/OR logic
 - Fallback default branch
 
+### Node Visual States
+
+All nodes provide clear visual feedback through border colors:
+
+- **Default State (Black Border)**: Normal node state when not selected
+- **Selected State (Golden Border)**: Node is selected and inspector panel is showing its properties
+- **Dragging State (White Border)**: Node is being moved with mouse drag
+- **Border Thickness**: All borders are prominently visible (3x thicker than standard) for better visibility
+
+The thick borders ensure clear visual distinction between states without obscuring node content.
+
 ### Connection System
 - **Main Connection**: White line from node to next node
 - **Option Connections**: Cyan lines from player options
@@ -83,15 +95,15 @@ All panels are resizable by dragging the splitter bars between them.
 ### Mouse Controls
 
 #### Left Click
-- **On Node**: Select node and show inspector panel
-- **On Empty Space**: Deselect node and hide inspector panel
-- **Drag on Node**: Move the node
+- **On Node**: Select node and show inspector panel (border turns golden)
+- **On Empty Space**: Pan the canvas view (does not deselect node)
+- **Drag on Node**: Move the node (border turns white while dragging)
 - **Drag on Empty Space**: Pan the camera/canvas view
 - **On Connection Line + Drag**: Move the nearest connected node
 
 #### Right Click
 - **On Node**: Show node context menu
-- **On Empty Space**: Show creation menu (new nodes)
+- **On Empty Space**: Show creation and auto-layout menu
 - **On Connection Line**: Show menu to clear connection
 
 #### Middle Mouse / Alt+Left Click
@@ -110,7 +122,7 @@ All panels are resizable by dragging the splitter bars between them.
 - **Ctrl+N**: New conversation
 - **Delete**: Delete selected node
 - **F**: Frame/focus selected node
-- **Escape**: Cancel connection mode or close menus
+- **Escape**: Deselect node or cancel connection mode
 
 ### Node Inspector Panel
 
@@ -172,10 +184,31 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 - Sound effect associations
 - Body part composition system (for complex character assembly)
 
-### Auto-Layout (Planned Feature)
-- Automatic node arrangement based on conversation flow
-- Horizontal or vertical layout options
-- Adjustable spacing between nodes
+### Auto-Layout
+
+The editor includes intelligent auto-layout functionality accessible from:
+- **Toolbar Button**: "Auto-Layout" button shows menu with Horizontal/Vertical options
+- **Right-Click Menu**: Available when right-clicking on empty canvas space
+
+#### Horizontal Layout
+- Start node positioned at center-left
+- Nodes flow from left to right following connections
+- Branch nodes (options/conditionals) arrange vertically
+- Maintains consistent horizontal alignment for clarity
+- Preserves vertical spacing for branching paths
+
+#### Vertical Layout
+- Start node positioned at top-center
+- Nodes flow from top to bottom following connections
+- Branch nodes (options/conditionals) arrange horizontally
+- Maintains consistent vertical alignment for clarity
+- Preserves horizontal spacing for branching paths
+
+Both layouts intelligently handle:
+- Multiple dialogue options creating branches
+- Conditional true/false paths
+- Default branch fallbacks
+- Complex conversation trees with multiple levels
 
 ## Workflow Best Practices
 
@@ -190,7 +223,10 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 
 - Use the **F key** to quickly center view on selected node
 - **Frame important nodes** by selecting them and pressing F
-- **Hide the inspector** by clicking on empty space to get more screen real estate
+- **Persistent Selection**: Nodes stay selected when panning the view, allowing easier multi-step editing
+- **Press Escape** to deselect the current node
+- **Visual Feedback**: Golden border = selected, White border = dragging, Black border = default
+- **Auto-Layout Options**: Use horizontal layout for left-to-right flow, vertical for top-to-bottom
 - **Pan with empty space drag** to navigate large conversations easily
 - **Use the grid** as a visual guide for alignment
 - **Color coordination**: Match your node colors to your mental model of the conversation flow
