@@ -72,6 +72,9 @@ namespace ConversationEditor
         private const float gridSpacing = 20f;
         private Color gridColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
 
+        // Zoom controls
+        private const float zoomControlScale = 1.5f;
+
         [MenuItem("Window/ConversationEngine/Conversation Editor")]
         public static void ShowWindow()
         {
@@ -532,6 +535,13 @@ namespace ConversationEditor
 
             if (!graphRect.Contains(e.mousePosition) && e.type != EventType.MouseUp)
                 return;
+
+            Rect zoomControlsRect = GetZoomControlsRect(graphRect);
+            bool isPointerOverZoomControls = zoomControlsRect.Contains(e.mousePosition);
+            if (isPointerOverZoomControls && !isDraggingView)
+            {
+                return;
+            }
 
             if (e.type == EventType.ScrollWheel)
             {
@@ -1619,13 +1629,18 @@ namespace ConversationEditor
 
         private void DrawZoomControls(Rect area)
         {
-            Rect containerRect = new Rect(area.xMax - 42f, area.y + 8f, 34f, 180f);
+            Rect containerRect = GetZoomControlsRect(area);
             EditorGUI.DrawRect(containerRect, new Color(0f, 0f, 0f, 0.4f));
 
-            Rect labelRect = new Rect(containerRect.x, containerRect.y + 4f, containerRect.width, 20f);
+            Rect labelRect = new Rect(containerRect.x, containerRect.y + (4f * zoomControlScale), containerRect.width, 20f * zoomControlScale);
             GUI.Label(labelRect, $"{zoom:F1}x", EditorStyles.centeredGreyMiniLabel);
 
-            Rect zoomSliderRect = new Rect(containerRect.x + 10f, containerRect.y + 28f, 14f, containerRect.height - 36f);
+            Rect zoomSliderRect = new Rect(
+                containerRect.x + (10f * zoomControlScale),
+                containerRect.y + (28f * zoomControlScale),
+                14f * zoomControlScale,
+                containerRect.height - (36f * zoomControlScale));
+
             float newZoom = GUI.VerticalSlider(zoomSliderRect, zoom, maxZoom, minZoom);
             if (!Mathf.Approximately(newZoom, zoom))
             {
@@ -1633,6 +1648,15 @@ namespace ConversationEditor
                 SaveEditorZoomSetting();
                 Repaint();
             }
+        }
+
+        private Rect GetZoomControlsRect(Rect area)
+        {
+            float width = 34f * zoomControlScale;
+            float height = 180f * zoomControlScale;
+            float marginRight = 8f;
+            float marginTop = 8f;
+            return new Rect(area.xMax - width - marginRight, area.y + marginTop, width, height);
         }
 
         private void EnsureEditorSettings()
