@@ -98,7 +98,12 @@ All panels are resizable by dragging the splitter bars between them.
 - **Drag**: Pan the camera view
 
 #### Mouse Wheel
-- **Scroll**: Zoom in/out (50% - 200%)
+- **Scroll**: Zoom in/out (10% - 500%) centered on the current pointer position
+
+### Zoom Controls
+- **Vertical Zoom Slider**: Available in the top-right corner of the graph panel
+- **Range Validation**: Minimum `0.1x` and maximum `5.0x`
+- **Persistent Zoom**: Current zoom value is saved in the conversation file and restored when reopened
 
 ### Keyboard Shortcuts
 - **Ctrl+S**: Save conversation
@@ -228,8 +233,9 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 ### File Format
 - JSON-based structure
 - Human-readable and VCS-friendly
-- Contains both ResourceManager and ConversationManager sections
+- Contains `ResourceManager`, `ConversationManager`, and `EditorSettings`
 - Editor properties (Position, Size) are stored in the file
+- `EditorSettings.Zoom` stores the graph zoom used in the editor
 
 ## Version History
 
@@ -245,6 +251,8 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 - Inspector panel hides when clicking empty space
 - Escape key cancels connection mode
 - Better canvas handling without artificial bounds
+- Zoom interaction reworked to scale graph elements with consistent hit detection
+- Vertical zoom slider at top-right (`0.1x` to `5.0x`) with persisted zoom per file
 
 ### Previous Features
 - Visual node-based editing
@@ -349,7 +357,7 @@ The editor includes a comprehensive library of common functions organized by cat
 
 ### Navigation Controls
 - **Pan View**: Middle mouse button or Alt+Left mouse drag
-- **Zoom**: Mouse wheel or zoom slider (bottom-left)
+- **Zoom**: Mouse wheel or vertical zoom slider (top-right)
 - **Frame Selection**: Press F to center on selected node
 - **Grid**: Aligned background grid for precision
 
@@ -399,12 +407,12 @@ The editor includes a comprehensive library of common functions organized by cat
 4. **Build Conversation**:
    - Switch to Conversation Graph tab
    - Right-click to create nodes
-   - Connect nodes by Ctrl+click dragging
+   - Connect nodes from context menu: right-click source node > "Connect to Node" > click target
    - Configure node properties in Inspector
 
 5. **Save**:
    - Press Ctrl+S or click Save button
-   - Empty Next Node IDs automatically connect to End node
+   - Connections are saved exactly as configured (no automatic End linking)
 
 ### Creating Branching Dialogue
 
@@ -481,9 +489,9 @@ The Conversation Editor generates files that will be consumed by the Conversatio
 ## Troubleshooting
 
 ### Nodes Not Connecting
-- Ensure you're Ctrl+clicking when dragging
+- Ensure you are using right-click on source node > "Connect to Node"
 - Check that source and target are valid node types
-- Verify you're not connecting incompatible elements
+- Verify target node is not a `Start` node
 
 ### Functions Not Appearing
 - Check spelling of function names

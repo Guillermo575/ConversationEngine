@@ -10,6 +10,7 @@ namespace ConversationScheme
     {
         public ResourceManager ResourceManager = new ResourceManager();
         public ConversationManager ConversationManager = new ConversationManager();
+        public ConversationEditorSettings EditorSettings = new ConversationEditorSettings();
     }
 
     [Serializable]
@@ -162,5 +163,11 @@ namespace ConversationScheme
         public string MethodName;
         public Dictionary<string, string> Parameters = new Dictionary<string, string>();
         public int Timestamp = 0;
+    }
+
+    [Serializable]
+    public class ConversationEditorSettings
+    {
+        public float Zoom = 1f;
     }
 }

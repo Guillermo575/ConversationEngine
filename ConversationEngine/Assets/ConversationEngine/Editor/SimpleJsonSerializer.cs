@@ -26,6 +26,12 @@ namespace ConversationEditor
             // ConversationManager
             sb.AppendLine("  \"ConversationManager\": {");
             SerializeConversationManager(sb, data.ConversationManager);
+            sb.AppendLine("  },");
+
+            // EditorSettings
+            sb.AppendLine("  \"EditorSettings\": {");
+            float zoom = data.EditorSettings != null ? data.EditorSettings.Zoom : 1f;
+            sb.AppendLine($"    \"Zoom\": {zoom}");
             sb.AppendLine("  }");
 
             sb.AppendLine("}");
@@ -182,7 +188,12 @@ namespace ConversationEditor
             // Use Unity's JsonUtility
             try
             {
-                return JsonUtility.FromJson<ConversationData>(json);
+                var data = JsonUtility.FromJson<ConversationData>(json);
+                if (data != null && data.EditorSettings == null)
+                {
+                    data.EditorSettings = new ConversationEditorSettings();
+                }
+                return data;
             }
             catch (Exception ex)
             {
