@@ -134,7 +134,7 @@ namespace ConversationEditor
         {
             if (stylesInitialized) return;
 
-            int borderWidth = 2;
+            int borderWidth = 4;
 
             // Basic node style (green for dialogue)
             nodeStyle = new GUIStyle("box");
@@ -204,6 +204,7 @@ namespace ConversationEditor
 
             // Node header style
             nodeHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
+            nodeHeaderStyle.padding = new RectOffset(borderWidth + 4, borderWidth + 4, borderWidth + 4, borderWidth + 4);
             nodeHeaderStyle.fontSize = 11;
             nodeHeaderStyle.normal.textColor = Color.white;
 
@@ -243,9 +244,10 @@ namespace ConversationEditor
                     }
                 }
             }
-
-            Texture2D texture = new Texture2D(totalWidth, totalHeight);
+            Texture2D texture = new Texture2D(totalWidth, totalHeight, TextureFormat.RGBA32, false);
             texture.SetPixels(pixels);
+            texture.filterMode = FilterMode.Point; // Sin suavizado
+            texture.wrapMode = TextureWrapMode.Clamp; // Modo de envoltura
             texture.Apply();
             return texture;
         }
