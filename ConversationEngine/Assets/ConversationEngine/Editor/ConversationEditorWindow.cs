@@ -207,6 +207,7 @@ namespace ConversationEditor
             nodeHeaderStyle.padding = new RectOffset(borderWidth + 4, borderWidth + 4, borderWidth + 4, borderWidth + 4);
             nodeHeaderStyle.fontSize = 11;
             nodeHeaderStyle.normal.textColor = Color.white;
+            nodeHeaderStyle.fontStyle = FontStyle.Bold;
 
             stylesInitialized = true;
         }
@@ -896,7 +897,9 @@ namespace ConversationEditor
                     if (!string.IsNullOrEmpty(node.Text))
                     {
                         string preview = node.Text.Length > 100 ? node.Text.Substring(0, 100) + "..." : node.Text;
-                        GUILayout.Label(preview, EditorStyles.wordWrappedLabel);
+                        var styleNode = EditorStyles.wordWrappedLabel;
+                        styleNode.fontStyle = FontStyle.Bold;
+                        GUILayout.Label(preview, styleNode);
                     }
                     break;
             }
@@ -1326,7 +1329,7 @@ namespace ConversationEditor
 
             Handles.BeginGUI();
             Handles.color = Color.yellow;
-            Handles.DrawLine(WorldToGraph(startPos), WorldToGraph(endPos));
+            Handles.DrawAAPolyLine(5f, WorldToGraph(startPos), WorldToGraph(endPos));
             Handles.EndGUI();
 
             Repaint();
