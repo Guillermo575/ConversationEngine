@@ -1401,14 +1401,18 @@ namespace ConversationEditor
             EditorGUILayout.LabelField("Node Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
+            // Set label width to be proportional to inspector panel width
+            float oldLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 100f; // Fixed label width for consistency
+
             // ID (read-only)
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.IntField("ID", node.Id);
+            EditorGUILayout.IntField("ID", node.Id, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
 
             // Node Type (read-only for Start/End)
             EditorGUI.BeginDisabledGroup(node.NodeType == ConversationNodeType.Start || node.NodeType == ConversationNodeType.End);
-            node.NodeType = (ConversationNodeType)EditorGUILayout.EnumPopup("Node Type", node.NodeType);
+            node.NodeType = (ConversationNodeType)EditorGUILayout.EnumPopup("Node Type", node.NodeType, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
 
             // Allow Start node to edit NextNodeId too
@@ -1429,17 +1433,17 @@ namespace ConversationEditor
                         actorIds.IndexOf(node.SpeakerActorId);
                     if (currentIndex < 0) currentIndex = 0;
 
-                    int newIndex = EditorGUILayout.Popup("Speaker Actor", currentIndex, actorIds.ToArray());
+                    int newIndex = EditorGUILayout.Popup("Speaker Actor", currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
                     node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
                 }
                 else
                 {
-                    node.SpeakerActorId = EditorGUILayout.TextField("Speaker Actor ID", node.SpeakerActorId);
+                    node.SpeakerActorId = EditorGUILayout.TextField("Speaker Actor ID", node.SpeakerActorId, GUILayout.ExpandWidth(true));
                 }
 
                 // Text
                 EditorGUILayout.LabelField("Text:");
-                node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60));
+                node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
 
                 // Next Node ID with dropdown
                 node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node);
@@ -1462,7 +1466,7 @@ namespace ConversationEditor
                         if (node.Options[i].Conditions == null)
                             node.Options[i].Conditions = new List<ConditionRule>();
 
-                        node.Options[i].Text = EditorGUILayout.TextField("Text", node.Options[i].Text ?? "");
+                        node.Options[i].Text = EditorGUILayout.TextField("Text", node.Options[i].Text ?? "", GUILayout.ExpandWidth(true));
                         node.Options[i].NextNodeId = DrawNodeIdDropdown("Next Node", node.Options[i].NextNodeId, node);
 
                         if (GUILayout.Button("Remove Option", GUILayout.ExpandWidth(true)))
@@ -1550,8 +1554,11 @@ namespace ConversationEditor
             // Editor Position and Size
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
-            node.EditorPosition = EditorGUILayout.Vector2Field("Position", node.EditorPosition);
-            node.EditorSize = EditorGUILayout.Vector2Field("Size", node.EditorSize);
+            node.EditorPosition = EditorGUILayout.Vector2Field("Position", node.EditorPosition, GUILayout.ExpandWidth(true));
+            node.EditorSize = EditorGUILayout.Vector2Field("Size", node.EditorSize, GUILayout.ExpandWidth(true));
+
+            // Restore original label width
+            EditorGUIUtility.labelWidth = oldLabelWidth;
         }
 
         private void DrawOptionInspector(ConversationOption option)
@@ -1559,12 +1566,17 @@ namespace ConversationEditor
             EditorGUILayout.LabelField("Option Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            option.Text = EditorGUILayout.TextField("Text", option.Text);
+            float oldLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 100f;
+
+            option.Text = EditorGUILayout.TextField("Text", option.Text, GUILayout.ExpandWidth(true));
             option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, selectedNode);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(option.Conditions);
+
+            EditorGUIUtility.labelWidth = oldLabelWidth;
         }
 
         private void DrawBranchInspector(ConditionalBranch branch)
@@ -1572,12 +1584,17 @@ namespace ConversationEditor
             EditorGUILayout.LabelField("Branch Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
+            float oldLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 100f;
+
             branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, selectedNode);
             branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, selectedNode);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(branch.Conditions);
+
+            EditorGUIUtility.labelWidth = oldLabelWidth;
         }
 
         private int DrawNodeIdDropdown(string label, int currentNodeId, ConversationNode excludeNode)
@@ -1629,10 +1646,10 @@ namespace ConversationEditor
 
                 EditorGUILayout.LabelField($"Condition {i + 1}", EditorStyles.boldLabel);
 
-                condition.VariableName = EditorGUILayout.TextField("Variable", condition.VariableName ?? "");
-                condition.Operator = (ComparisonOperator)EditorGUILayout.EnumPopup("Operator", condition.Operator);
-                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup("Value Type", condition.ValueDataType);
-                condition.Value = EditorGUILayout.TextField("Value", condition.Value ?? "");
+                condition.VariableName = EditorGUILayout.TextField("Variable", condition.VariableName ?? "", GUILayout.ExpandWidth(true));
+                condition.Operator = (ComparisonOperator)EditorGUILayout.EnumPopup("Operator", condition.Operator, GUILayout.ExpandWidth(true));
+                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup("Value Type", condition.ValueDataType, GUILayout.ExpandWidth(true));
+                condition.Value = EditorGUILayout.TextField("Value", condition.Value ?? "", GUILayout.ExpandWidth(true));
                 condition.IsValueVariable = EditorGUILayout.Toggle("Is Value Variable", condition.IsValueVariable);
 
                 if (GUILayout.Button("Remove Condition", GUILayout.ExpandWidth(true)))
@@ -1682,12 +1699,12 @@ namespace ConversationEditor
                 int currentIndex = System.Array.IndexOf(predefinedFunctions, func.MethodName);
                 if (currentIndex < 0) currentIndex = predefinedFunctions.Length - 1; // "Custom"
 
-                int newIndex = EditorGUILayout.Popup("Function", currentIndex, predefinedFunctions);
+                int newIndex = EditorGUILayout.Popup("Function", currentIndex, predefinedFunctions, GUILayout.ExpandWidth(true));
                 string selectedFunction = predefinedFunctions[newIndex];
 
                 if (selectedFunction == "Custom")
                 {
-                    func.MethodName = EditorGUILayout.TextField("Method Name", func.MethodName ?? "");
+                    func.MethodName = EditorGUILayout.TextField("Method Name", func.MethodName ?? "", GUILayout.ExpandWidth(true));
                 }
                 else
                 {
@@ -1705,7 +1722,7 @@ namespace ConversationEditor
                         if (!func.Parameters.ContainsKey(param.Key))
                             func.Parameters[param.Key] = "";
 
-                        func.Parameters[param.Key] = EditorGUILayout.TextField(param.Key, func.Parameters[param.Key]);
+                        func.Parameters[param.Key] = EditorGUILayout.TextField(param.Key, func.Parameters[param.Key], GUILayout.ExpandWidth(true));
                     }
                 }
                 else
@@ -1717,7 +1734,7 @@ namespace ConversationEditor
                     foreach (var key in keys)
                     {
                         EditorGUILayout.BeginHorizontal();
-                        string newValue = EditorGUILayout.TextField(key, func.Parameters[key] ?? "");
+                        string newValue = EditorGUILayout.TextField(key, func.Parameters[key] ?? "", GUILayout.ExpandWidth(true));
                         if (newValue != func.Parameters[key])
                         {
                             func.Parameters[key] = newValue;
@@ -1738,7 +1755,7 @@ namespace ConversationEditor
                     }
                 }
 
-                func.Timestamp = EditorGUILayout.IntField("Timestamp", func.Timestamp);
+                func.Timestamp = EditorGUILayout.IntField("Timestamp", func.Timestamp, GUILayout.ExpandWidth(true));
 
                 if (GUILayout.Button("Remove Function", GUILayout.ExpandWidth(true)))
                 {
