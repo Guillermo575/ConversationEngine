@@ -1456,11 +1456,16 @@ namespace ConversationEditor
                     for (int i = 0; i < node.Options.Count; i++)
                     {
                         EditorGUILayout.BeginVertical("box");
-                        EditorGUILayout.LabelField($"Option {i + 1}");
-                        node.Options[i].Text = EditorGUILayout.TextField("Text", node.Options[i].Text);
+                        EditorGUILayout.LabelField($"Option {i + 1}", EditorStyles.boldLabel);
+
+                        // Ensure the option has a valid Conditions list
+                        if (node.Options[i].Conditions == null)
+                            node.Options[i].Conditions = new List<ConditionRule>();
+
+                        node.Options[i].Text = EditorGUILayout.TextField("Text", node.Options[i].Text ?? "");
                         node.Options[i].NextNodeId = DrawNodeIdDropdown("Next Node", node.Options[i].NextNodeId, node);
 
-                        if (GUILayout.Button("Remove Option"))
+                        if (GUILayout.Button("Remove Option", GUILayout.ExpandWidth(true)))
                         {
                             Undo.RecordObject(this, "Remove Option");
                             node.Options.RemoveAt(i);
@@ -1470,10 +1475,16 @@ namespace ConversationEditor
                         EditorGUILayout.EndVertical();
                     }
 
-                    if (GUILayout.Button("Add Option"))
+                    if (GUILayout.Button("Add Option", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
                     {
                         Undo.RecordObject(this, "Add Option");
-                        node.Options.Add(new ConversationOption());
+                        var newOption = new ConversationOption
+                        {
+                            Text = "New Option",
+                            NextNodeId = 0,
+                            Conditions = new List<ConditionRule>()
+                        };
+                        node.Options.Add(newOption);
                         MarkDirty();
                     }
                 }
@@ -1518,10 +1529,16 @@ namespace ConversationEditor
                         EditorGUILayout.EndVertical();
                     }
 
-                    if (GUILayout.Button("Add Branch"))
+                    if (GUILayout.Button("Add Branch", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
                     {
                         Undo.RecordObject(this, "Add Branch");
-                        node.ConditionalBranches.Add(new ConditionalBranch());
+                        var newBranch = new ConditionalBranch
+                        {
+                            Conditions = new List<ConditionRule>(),
+                            NextNodeIdTrue = 0,
+                            NextNodeIdFalse = 0
+                        };
+                        node.ConditionalBranches.Add(newBranch);
                         MarkDirty();
                     }
 
@@ -1610,13 +1627,15 @@ namespace ConversationEditor
                 EditorGUILayout.BeginVertical("box");
                 var condition = conditions[i];
 
-                condition.VariableName = EditorGUILayout.TextField("Variable", condition.VariableName);
+                EditorGUILayout.LabelField($"Condition {i + 1}", EditorStyles.boldLabel);
+
+                condition.VariableName = EditorGUILayout.TextField("Variable", condition.VariableName ?? "");
                 condition.Operator = (ComparisonOperator)EditorGUILayout.EnumPopup("Operator", condition.Operator);
                 condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup("Value Type", condition.ValueDataType);
-                condition.Value = EditorGUILayout.TextField("Value", condition.Value);
+                condition.Value = EditorGUILayout.TextField("Value", condition.Value ?? "");
                 condition.IsValueVariable = EditorGUILayout.Toggle("Is Value Variable", condition.IsValueVariable);
 
-                if (GUILayout.Button("Remove Condition"))
+                if (GUILayout.Button("Remove Condition", GUILayout.ExpandWidth(true)))
                 {
                     Undo.RecordObject(this, "Remove Condition");
                     conditions.RemoveAt(i);
@@ -1627,10 +1646,18 @@ namespace ConversationEditor
                 EditorGUILayout.EndVertical();
             }
 
-            if (GUILayout.Button("Add Condition"))
+            if (GUILayout.Button("Add Condition", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
             {
                 Undo.RecordObject(this, "Add Condition");
-                conditions.Add(new ConditionRule());
+                var newCondition = new ConditionRule
+                {
+                    VariableName = "newVariable",
+                    Operator = ComparisonOperator.Equal,
+                    ValueDataType = ValueType.String,
+                    Value = "",
+                    IsValueVariable = false
+                };
+                conditions.Add(newCondition);
                 MarkDirty();
             }
         }
@@ -1644,6 +1671,12 @@ namespace ConversationEditor
                 EditorGUILayout.BeginVertical("box");
                 var func = functions[i];
 
+                // Ensure function has valid parameters dictionary
+                if (func.Parameters == null)
+                    func.Parameters = new Dictionary<string, string>();
+
+                EditorGUILayout.LabelField($"Function {i + 1}", EditorStyles.boldLabel);
+
                 // Predefined function dropdown
                 string[] predefinedFunctions = ConversationFunctionLibrary.GetFunctionNames();
                 int currentIndex = System.Array.IndexOf(predefinedFunctions, func.MethodName);
@@ -1654,7 +1687,7 @@ namespace ConversationEditor
 
                 if (selectedFunction == "Custom")
                 {
-                    func.MethodName = EditorGUILayout.TextField("Method Name", func.MethodName);
+                    func.MethodName = EditorGUILayout.TextField("Method Name", func.MethodName ?? "");
                 }
                 else
                 {
@@ -1667,9 +1700,6 @@ namespace ConversationEditor
                 {
                     EditorGUILayout.LabelField("Parameters:", EditorStyles.boldLabel);
 
-                    if (func.Parameters == null)
-                        func.Parameters = new Dictionary<string, string>();
-
                     foreach (var param in paramDef)
                     {
                         if (!func.Parameters.ContainsKey(param.Key))
@@ -1681,15 +1711,13 @@ namespace ConversationEditor
                 else
                 {
                     // Custom parameters
-                    EditorGUILayout.LabelField("Parameters (key=value):");
-                    if (func.Parameters == null)
-                        func.Parameters = new Dictionary<string, string>();
+                    EditorGUILayout.LabelField("Parameters (key=value):", EditorStyles.boldLabel);
 
                     var keys = func.Parameters.Keys.ToList();
                     foreach (var key in keys)
                     {
                         EditorGUILayout.BeginHorizontal();
-                        string newValue = EditorGUILayout.TextField(key, func.Parameters[key]);
+                        string newValue = EditorGUILayout.TextField(key, func.Parameters[key] ?? "");
                         if (newValue != func.Parameters[key])
                         {
                             func.Parameters[key] = newValue;
@@ -1703,7 +1731,7 @@ namespace ConversationEditor
                         EditorGUILayout.EndHorizontal();
                     }
 
-                    if (GUILayout.Button("Add Parameter"))
+                    if (GUILayout.Button("Add Parameter", GUILayout.ExpandWidth(true)))
                     {
                         func.Parameters["newParam"] = "";
                         MarkDirty();
@@ -1712,7 +1740,7 @@ namespace ConversationEditor
 
                 func.Timestamp = EditorGUILayout.IntField("Timestamp", func.Timestamp);
 
-                if (GUILayout.Button("Remove Function"))
+                if (GUILayout.Button("Remove Function", GUILayout.ExpandWidth(true)))
                 {
                     Undo.RecordObject(this, "Remove Function");
                     functions.RemoveAt(i);
@@ -1723,10 +1751,16 @@ namespace ConversationEditor
                 EditorGUILayout.EndVertical();
             }
 
-            if (GUILayout.Button("Add Function"))
+            if (GUILayout.Button("Add Function", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
             {
                 Undo.RecordObject(this, "Add Function");
-                functions.Add(new ConversationFunction());
+                var newFunction = new ConversationFunction
+                {
+                    MethodName = "Custom",
+                    Parameters = new Dictionary<string, string>(),
+                    Timestamp = 0
+                };
+                functions.Add(newFunction);
                 MarkDirty();
             }
         }
