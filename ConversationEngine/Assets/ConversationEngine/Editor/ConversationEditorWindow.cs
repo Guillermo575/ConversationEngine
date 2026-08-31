@@ -570,6 +570,7 @@ namespace ConversationEditor
             Rect graphRect = CalculateGraphRect();
             currentGraphRect = graphRect;
 
+            // Handle non-node input first (zoom, pan, right-click menu)
             HandleGraphInput(graphRect);
 
             GUI.Box(graphRect, GUIContent.none);
@@ -654,17 +655,7 @@ namespace ConversationEditor
                     return;
                 }
 
-                if (isConnecting)
-                {
-                    isConnecting = false;
-                    connectingFromNode = null;
-                    connectingFromOption = null;
-                    connectingFromBranch = null;
-                    e.Use();
-                    Repaint();
-                    return;
-                }
-
+                // Check if clicking on a node (including when in connecting mode)
                 bool clickedOnNode = false;
                 Vector2 mouseWorldPos = WindowToWorld(e.mousePosition);
 
@@ -681,14 +672,30 @@ namespace ConversationEditor
                     }
                 }
 
-                if (!clickedOnNode)
+                // If clicked on node, DON'T consume event - let node interaction handle it
+                if (clickedOnNode)
                 {
-                    isDraggingView = true;
-                    dragStartPos = e.mousePosition;
+                    return; // Don't use the event, let it propagate to nodes
+                }
+
+                // Only cancel connecting mode and drag view if NOT clicking on a node
+                if (isConnecting)
+                {
+                    // Cancel connecting mode when clicking on empty space
+                    isConnecting = false;
+                    connectingFromNode = null;
+                    connectingFromOption = null;
+                    connectingFromBranch = null;
                     e.Use();
                     Repaint();
                     return;
                 }
+
+                isDraggingView = true;
+                dragStartPos = e.mousePosition;
+                e.Use();
+                Repaint();
+                return;
             }
 
             if (e.type == EventType.MouseDown && (e.button == 2 || (e.button == 0 && e.alt)))
