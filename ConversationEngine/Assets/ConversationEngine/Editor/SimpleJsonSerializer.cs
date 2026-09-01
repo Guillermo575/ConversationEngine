@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using ConversationScheme;
 
@@ -207,21 +208,36 @@ namespace ConversationEditor
             // Replace "X": with "x": and "Y": with "y": for EditorPosition and EditorSize
             json = json.Replace("\"X\":", "\"x\":");
             json = json.Replace("\"Y\":", "\"y\":");
+            json = ConvertEnumsToNumbers(json);
+            return json;
+        }
 
-            // Convert NodeType enum strings to numbers for Unity's JsonUtility
-            // ConversationNodeType: Start=0, Dialogue=1, Conditional=2, Function=3, End=4
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Start\"", "\"NodeType\": 0");
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Dialogue\"", "\"NodeType\": 1");
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Conditional\"", "\"NodeType\": 2");
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"Function\"", "\"NodeType\": 3");
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"NodeType\":\\s*\"End\"", "\"NodeType\": 4");
+        private static string ConvertEnumsToNumbers(string json)
+        {
+            var enumMappings = new Dictionary<Type, string>
+            {
+                { typeof(ConversationNodeType), "NodeType" },
+                { typeof(AudioChannelType), "AudioType" },
+                { typeof(ComparisonOperator), "Operator" },
+                { typeof(ConversationScheme.ValueType), "ValueDataType" }
+            };
 
-            // Convert AudioType enum strings to numbers for Unity's JsonUtility
-            // AudioType: BackgroundMusic=0, SoundEffect=1, Voice=2
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"AudioType\":\\s*\"BackgroundMusic\"", "\"AudioType\": 0");
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"AudioType\":\\s*\"SoundEffect\"", "\"AudioType\": 1");
-            json = System.Text.RegularExpressions.Regex.Replace(json, "\"AudioType\":\\s*\"Voice\"", "\"AudioType\": 2");
-            
+            foreach (var mapping in enumMappings)
+            {
+                var enumType = mapping.Key;
+                var jsonPropertyName = mapping.Value;
+                var enumNames = Enum.GetNames(enumType);
+                var enumValues = Enum.GetValues(enumType);
+
+                for (int i = 0; i < enumNames.Length; i++)
+                {
+                    string enumName = enumNames[i];
+                    int enumValue = (int)enumValues.GetValue(i);
+                    string pattern = $"\"{jsonPropertyName}\":\\s*\"{enumName}\"";
+                    string replacement = $"\"{jsonPropertyName}\": {enumValue}";
+                    json = System.Text.RegularExpressions.Regex.Replace(json, pattern, replacement);
+                }
+            }
             return json;
         }
     }

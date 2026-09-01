@@ -113,6 +113,7 @@ namespace ConversationEditor
         {
             var window = GetWindow<ConversationEditorWindow>("Conversation Editor");
             window.LoadConversation(filePath);
+            window.maximized = true;
             window.Show();
             window.Focus();
         }
