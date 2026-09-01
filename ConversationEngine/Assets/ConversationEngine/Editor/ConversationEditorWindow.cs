@@ -85,6 +85,8 @@ namespace ConversationEditor
         private GUIStyle conditionalNodeSelectedStyle;
         private GUIStyle conditionalNodeDraggingStyle;
         private GUIStyle nodeHeaderStyle;
+        private GUIStyle nodeBodyTextStyle;
+        private GUIStyle nodeActorTextStyle;
         private bool stylesInitialized = false;
         #endregion
 
@@ -95,6 +97,9 @@ namespace ConversationEditor
 
         #region Zoom Controls
         private const float zoomControlScale = 1.5f;
+        private const int minNodeFontSize = 8;
+        private const int nodeHeaderBaseFontSize = 11;
+        private const int nodeBodyBaseFontSize = 12;
         #endregion
 
         #region Unity Menu Items
@@ -202,10 +207,22 @@ namespace ConversationEditor
             conditionalNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), Color.white, borderWidth);
             nodeHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
             nodeHeaderStyle.padding = new RectOffset(borderWidth + 4, borderWidth + 4, borderWidth + 4, borderWidth + 4);
-            nodeHeaderStyle.fontSize = 11;
+            nodeHeaderStyle.fontSize = nodeHeaderBaseFontSize;
             nodeHeaderStyle.normal.textColor = Color.white;
             nodeHeaderStyle.fontStyle = FontStyle.Bold;
+            nodeBodyTextStyle = new GUIStyle(EditorStyles.wordWrappedLabel);
+            nodeBodyTextStyle.fontStyle = FontStyle.Bold;
+            nodeBodyTextStyle.fontSize = nodeBodyBaseFontSize;
+            nodeBodyTextStyle.normal.textColor = Color.white;
+            nodeActorTextStyle = new GUIStyle(EditorStyles.label);
+            nodeActorTextStyle.wordWrap = true;
+            nodeActorTextStyle.fontSize = nodeBodyBaseFontSize;
+            nodeActorTextStyle.normal.textColor = Color.white;
             stylesInitialized = true;
+        }
+        private int GetScaledNodeFontSize(int baseFontSize)
+        {
+            return Mathf.Max(minNodeFontSize, Mathf.RoundToInt(baseFontSize * zoom));
         }
         private Texture2D MakeTexture(int width, int height, Color color)
         {
@@ -697,6 +714,9 @@ namespace ConversationEditor
 
         private void DrawNodeContent(ConversationNode node)
         {
+            nodeHeaderStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
+            nodeBodyTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+            nodeActorTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
             switch (node.NodeType)
             {
                 case ConversationNodeType.Start:
@@ -721,19 +741,17 @@ namespace ConversationEditor
                         var actor = conversationData.ResourceManager.Actors.FirstOrDefault(a => a.Id == node.SpeakerActorId);
                         if (actor != null && !string.IsNullOrEmpty(actor.IconPath))
                         {
-                            GUILayout.Label($"?? {node.SpeakerActorId}");
+                            GUILayout.Label($"?? {node.SpeakerActorId}", nodeActorTextStyle);
                         }
                         else
                         {
-                            GUILayout.Label($"Actor: {node.SpeakerActorId}");
+                            GUILayout.Label($"Actor: {node.SpeakerActorId}", nodeActorTextStyle);
                         }
                     }
                     if (!string.IsNullOrEmpty(node.Text))
                     {
                         string preview = node.Text.Length > 100 ? node.Text.Substring(0, 100) + "..." : node.Text;
-                        var styleNode = EditorStyles.wordWrappedLabel;
-                        styleNode.fontStyle = FontStyle.Bold;
-                        GUILayout.Label(preview, styleNode);
+                        GUILayout.Label(preview, nodeBodyTextStyle);
                     }
                     break;
             }
@@ -1704,9 +1722,34 @@ namespace ConversationEditor
             menu.ShowAsContext();
         }
 
+        private bool HasOnlyStartAndEndNodes()
+        {
+            if (conversationData?.ConversationManager?.Nodes == null) return false;
+            var nodes = conversationData.ConversationManager.Nodes;
+            if (nodes.Count != 2) return false;
+            bool hasStart = false;
+            bool hasEnd = false;
+            foreach (var node in nodes)
+            {
+                if (node.NodeType == ConversationNodeType.Start) hasStart = true;
+                else if (node.NodeType == ConversationNodeType.End) hasEnd = true;
+                else return false;
+            }
+            return hasStart && hasEnd;
+        }
+
+        private void TryAutoLinkStartNode(ConversationNode newNode)
+        {
+            if (conversationData?.ConversationManager?.Nodes == null || newNode == null) return;
+            var startNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
+            if (startNode == null) return;
+            startNode.NextNodeId = newNode.Id;
+        }
+
         private void CreateNode(ConversationNodeType nodeType)
         {
             Undo.RecordObject(this, "Create Node");
+            bool shouldAutoLinkStart = HasOnlyStartAndEndNodes();
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
@@ -1715,6 +1758,7 @@ namespace ConversationEditor
                 EditorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100)
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
+            if (shouldAutoLinkStart) TryAutoLinkStartNode(newNode);
             selectedNode = newNode;
             showInspector = true;
             isRightClickMenuActive = false;
@@ -1725,6 +1769,7 @@ namespace ConversationEditor
         private void CreateNodeWithOptions()
         {
             Undo.RecordObject(this, "Create Node with Options");
+            bool shouldAutoLinkStart = HasOnlyStartAndEndNodes();
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
@@ -1738,6 +1783,7 @@ namespace ConversationEditor
                 }
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
+            if (shouldAutoLinkStart) TryAutoLinkStartNode(newNode);
             selectedNode = newNode;
             showInspector = true;
             isRightClickMenuActive = false;

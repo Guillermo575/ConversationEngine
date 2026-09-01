@@ -16,6 +16,7 @@ All panels are resizable by dragging the splitter bars between them.
 
 ### Supported File Types
 - **.conversation**: New standardfile extension for conversation files
+- **.actor**: Actor definition file extension
 - **.json**: Legacy format, still fully supported
 
 ### File Operations
@@ -33,6 +34,7 @@ All panels are resizable by dragging the splitter bars between them.
 - **Smart Connections**: Create connections via right-click menu, not Ctrl+click
 - **Color-Coded Nodes**: Each node type has a distinct color for easy identification
 - **Visual Feedback**: Nodes have thick black borders that turn golden when selected, white while dragging
+- **Zoom-Aware Text**: Node text and headers scale with graph zoom
 - **Resizable Nodes**: Adjust node size to fit content
 - **Grid Background**: Aligned grid for precise node placement
 - **Infinite Canvas**: Auto-expanding workspace as nodes are added
@@ -45,6 +47,7 @@ All panels are resizable by dragging the splitter bars between them.
 - Cannot be deleted or duplicated
 - Only one allowed per conversation
 - **NextNodeId is editable** - can be cleared to 0
+- **Auto-links to the first created node** when only Start and End nodes exist
 - Displays "START" text
 
 #### End Node (Red)
@@ -116,6 +119,7 @@ The thick borders ensure clear visual distinction between states without obscuri
 - **Vertical Zoom Slider**: Available in the top-right corner of the graph panel
 - **Range Validation**: Minimum `0.1x` and maximum `5.0x`
 - **Persistent Zoom**: Current zoom value is saved in the conversation file and restored when reopened
+- **Scaled Node Fonts**: Node text and headers scale with the current zoom value
 
 ### Keyboard Shortcuts
 - **Ctrl+S**: Save conversation
@@ -179,7 +183,7 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 - Per-resource audio type configuration
 
 #### Actors
-- Actor definition via JSON files
+- Actor definition via `.actor` or legacy `.json` files
 - Icon paths for visual representation
 - Sound effect associations
 - Body part composition system (for complex character assembly)
@@ -272,6 +276,7 @@ Both layouts intelligently handle:
 - Contains `ResourceManager`, `ConversationManager`, and `EditorSettings`
 - Editor properties (Position, Size) are stored in the file
 - `EditorSettings.Zoom` stores the graph zoom used in the editor
+- Project window uses custom icons for `.conversation` and `.actor` files
 
 ## Version History
 

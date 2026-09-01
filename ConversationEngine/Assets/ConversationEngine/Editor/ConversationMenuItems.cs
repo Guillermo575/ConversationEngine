@@ -105,13 +105,13 @@ namespace ConversationEditor
             string json = ConversationJsonSettings.Serialize(actor);
 
             // Find unique filename
-            string fileName = "NewActor.json";
+            string fileName = "NewActor.actor";
             string fullPath = Path.Combine(path, fileName);
             int counter = 1;
 
             while (File.Exists(fullPath))
             {
-                fileName = $"NewActor{counter}.json";
+                fileName = $"NewActor{counter}.actor";
                 fullPath = Path.Combine(path, fileName);
                 counter++;
             }

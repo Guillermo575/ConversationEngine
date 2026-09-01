@@ -1,6 +1,8 @@
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEditor.Callbacks;
+using UnityEngine;
+using System;
 using System.IO;
 using ConversationScheme;
 
@@ -81,6 +83,51 @@ namespace ConversationEditor
             }
 
             return false;
+        }
+    }
+
+    [InitializeOnLoad]
+    public static class ConversationProjectIconHandler
+    {
+        private const string ConversationIconPath = "Assets/ConversationEngine/Icons/conversation.png";
+        private const string ActorIconPath = "Assets/ConversationEngine/Icons/actor.png";
+        private static Texture2D conversationIcon;
+        private static Texture2D actorIcon;
+        static ConversationProjectIconHandler()
+        {
+            EditorApplication.projectWindowItemOnGUI += OnProjectWindowItemGUI;
+            LoadIcons();
+        }
+        private static void LoadIcons()
+        {
+            if (conversationIcon == null) conversationIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(ConversationIconPath);
+            if (actorIcon == null) actorIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(ActorIconPath);
+        }
+        private static void OnProjectWindowItemGUI(string guid, Rect selectionRect)
+        {
+            LoadIcons();
+            string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            if (string.IsNullOrEmpty(assetPath)) return;
+            Texture2D icon = GetIconForAssetPath(assetPath);
+            if (icon == null) return;
+            Rect iconRect = GetProjectIconRect(selectionRect);
+            if (iconRect.width <= 0f || iconRect.height <= 0f) return;
+            GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit, true);
+        }
+        private static Texture2D GetIconForAssetPath(string assetPath)
+        {
+            if (assetPath.EndsWith(".conversation", StringComparison.OrdinalIgnoreCase)) return conversationIcon;
+            if (assetPath.EndsWith(".actor", StringComparison.OrdinalIgnoreCase)) return actorIcon;
+            return null;
+        }
+        private static Rect GetProjectIconRect(Rect selectionRect)
+        {
+            bool isListMode = selectionRect.height <= 20f;
+            if (isListMode) return new Rect(selectionRect.x, selectionRect.y, 16f, 16f);
+            float size = Mathf.Min(32f, selectionRect.width - 6f);
+            float x = selectionRect.x + (selectionRect.width - size) * 0.5f;
+            float y = selectionRect.y + 2f;
+            return new Rect(x, y, size, size);
         }
     }
 }
