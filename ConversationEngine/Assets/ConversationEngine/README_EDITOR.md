@@ -24,6 +24,7 @@ All panels are resizable by dragging the splitter bars between them.
 - **Open** (Ctrl+O): Load existing .conversation or .json files
 - **Save** (Ctrl+S): Save changes to current file
 - **Save As**: Save to a new .conversation file
+- **Inspector Preview**: Selecting a `.conversation` file in the Project window shows a read-only graph preview in the Inspector so the conversation can be examined without opening the editor
 
 ## Features
 

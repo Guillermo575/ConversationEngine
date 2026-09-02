@@ -29,6 +29,10 @@
 			-	if (x < 0) return;
 		-	Si en la condicional no vas a usar corchetes "{ }" el codigo que se ejecuta al cumplirse la condicional estara en la misma linea ejemplo:
 			-	if (x < 0) y = true;
+	*   Cuando trabajes sobre ventanas, GUI, o cualquier codigo que involucre agregar botones, campos de texto, dropdowns, etc. verifica si tiene funciones nativas para agregar leyendas tooltip para que al posicionar el puntero sobre el componente se muestre un mensaje explicativo
+		-   En caso de tenerla siempre coloca un tooltip en cada componente que hagas o edites
+			-   No agregues tooltips en codigo que no estes tocando a menos que yo te lo indique
+		-   En caso contrario no implementes funciones o metodos externas para desplegar el tooltip a menos que yo te lo indique 
 	*	Con lo anterior descrito solo aplicaras estas reglas con el codigo que este creando o editando, no con el codigo que ya existe y que no estas tocando
 		-	La excepciones a lo anterior y puedas aplicar las reglas anteriores seian:
 			-	A menos que yo lo indique

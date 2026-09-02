@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 namespace ConversationEditor
 {
+    using System.Collections.Generic;
     public class ConversationGraphView
     {
         #region Core Data
@@ -106,24 +107,15 @@ namespace ConversationEditor
             ClearSelection();
             panOffset = Vector2.zero;
         }
-
-        public void SetReadOnlyMode(bool readOnly)
-        {
-            isReadOnly = readOnly;
-            if (isReadOnly)
-            {
-                isConnecting = false;
-                connectingFromNode = null;
-                connectingFromOption = null;
-                connectingFromBranch = null;
-            }
-        }
-
         public void Draw()
+        {
+            Rect graphRect = CalculateGraphRect();
+            Draw(graphRect);
+        }
+        public void Draw(Rect graphRect)
         {
             InitializeStyles();
             if (conversationData?.ConversationManager?.Nodes == null) return;
-            Rect graphRect = CalculateGraphRect();
             currentGraphRect = graphRect;
             HandleGraphInput(graphRect);
             GUI.Box(graphRect, GUIContent.none);
@@ -136,7 +128,6 @@ namespace ConversationEditor
             DrawZoomControls(localRect);
             GUI.EndGroup();
         }
-
         public void ShowAutoLayoutMenu()
         {
             if (isReadOnly) return;
@@ -144,6 +135,34 @@ namespace ConversationEditor
             menu.AddItem(new GUIContent("Horizontal"), false, () => AutoLayoutNodes(true));
             menu.AddItem(new GUIContent("Vertical"), false, () => AutoLayoutNodes(false));
             menu.ShowAsContext();
+        }
+        public void FrameAllNodes(Rect graphRect)
+        {
+            if (conversationData?.ConversationManager?.Nodes == null || conversationData.ConversationManager.Nodes.Count == 0) return;
+            Rect bounds = GetConversationBounds();
+            if (bounds.width <= 0f || bounds.height <= 0f) return;
+            currentGraphRect = graphRect;
+            float padding = 40f;
+            float availableWidth = Mathf.Max(1f, graphRect.width - padding * 2f);
+            float availableHeight = Mathf.Max(1f, graphRect.height - padding * 2f);
+            float zoomX = availableWidth / bounds.width;
+            float zoomY = availableHeight / bounds.height;
+            zoom = Mathf.Clamp(Mathf.Min(zoomX, zoomY), minZoom, maxZoom);
+            Vector2 graphCenter = new Vector2(graphRect.width, graphRect.height) * 0.5f;
+            panOffset = graphCenter / zoom - bounds.center;
+            if (!isReadOnly) SaveEditorZoomSetting();
+        }
+
+        public void SetReadOnlyMode(bool readOnly)
+        {
+            isReadOnly = readOnly;
+            if (isReadOnly)
+            {
+                isConnecting = false;
+                connectingFromNode = null;
+                connectingFromOption = null;
+                connectingFromBranch = null;
+            }
         }
 
         public void DeleteSelectedNode()
@@ -311,7 +330,7 @@ namespace ConversationEditor
                     Vector2 worldMouse = (graphLocalMouse / oldZoom) - panOffset;
                     zoom = newZoom;
                     panOffset = (graphLocalMouse / zoom) - worldMouse;
-                    SaveEditorZoomSetting();
+                    if (!isReadOnly) SaveEditorZoomSetting();
                 }
                 e.Use();
                 RequestRepaint();
@@ -848,7 +867,7 @@ namespace ConversationEditor
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
             if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node");
-            bool shouldAutoLinkStart = HasOnlyStartAndEndNodes();
+            bool shouldAutoLink = HasOnlyStartAndEndNodes();
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
@@ -857,7 +876,7 @@ namespace ConversationEditor
                 EditorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100)
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
-            if (shouldAutoLinkStart) TryAutoLinkStartNode(newNode);
+            if (shouldAutoLink) TryAutoLinkStartNode(newNode);
             SetSelection(newNode, null, null);
             isRightClickMenuActive = false;
             MarkDirty();
@@ -868,7 +887,7 @@ namespace ConversationEditor
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
             if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node with Options");
-            bool shouldAutoLinkStart = HasOnlyStartAndEndNodes();
+            bool shouldAutoLink = HasOnlyStartAndEndNodes();
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
@@ -882,7 +901,7 @@ namespace ConversationEditor
                 }
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
-            if (shouldAutoLinkStart) TryAutoLinkStartNode(newNode);
+            if (shouldAutoLink) TryAutoLinkStartNode(newNode);
             SetSelection(newNode, null, null);
             isRightClickMenuActive = false;
             MarkDirty();
@@ -957,6 +976,63 @@ namespace ConversationEditor
         #endregion
 
         #region Layout
+        private Rect GetConversationBounds()
+        {
+            bool hasBounds = false;
+            Rect bounds = default;
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                Rect nodeBounds = GetNodeVisualBounds(node);
+                if (!hasBounds)
+                {
+                    bounds = nodeBounds;
+                    hasBounds = true;
+                    continue;
+                }
+                bounds = EncapsulateRect(bounds, nodeBounds);
+            }
+            return hasBounds ? bounds : new Rect(0f, 0f, 1f, 1f);
+        }
+
+        private Rect GetNodeVisualBounds(ConversationNode node)
+        {
+            Rect bounds = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+            if (node.Options != null && node.Options.Count > 0)
+            {
+                float optionHeight = 60f;
+                float optionWidth = 150f;
+                float spacing = 10f;
+                for (int i = 0; i < node.Options.Count; i++)
+                {
+                    Rect optionRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (optionHeight + spacing), optionWidth, optionHeight);
+                    bounds = EncapsulateRect(bounds, optionRect);
+                }
+            }
+            if (node.NodeType == ConversationNodeType.Conditional && node.ConditionalBranches != null && node.ConditionalBranches.Count > 0)
+            {
+                float branchHeight = 40f;
+                float branchWidth = 100f;
+                float spacing = 10f;
+                for (int i = 0; i < node.ConditionalBranches.Count; i++)
+                {
+                    Rect trueRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing), branchWidth, branchHeight);
+                    Rect falseRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2f, branchWidth, branchHeight);
+                    bounds = EncapsulateRect(bounds, trueRect);
+                    bounds = EncapsulateRect(bounds, falseRect);
+                }
+            }
+            return bounds;
+        }
+
+        private Rect EncapsulateRect(Rect a, Rect b)
+        {
+            float xMin = Mathf.Min(a.xMin, b.xMin);
+            float yMin = Mathf.Min(a.yMin, b.yMin);
+            float xMax = Mathf.Max(a.xMax, b.xMax);
+            float yMax = Mathf.Max(a.yMax, b.yMax);
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
         private void AutoLayoutNodes(bool horizontal)
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null || conversationData.ConversationManager.Nodes.Count == 0) return;
@@ -1073,13 +1149,13 @@ namespace ConversationEditor
             Rect containerRect = GetZoomControlsRect(area);
             EditorGUI.DrawRect(containerRect, new Color(0f, 0f, 0f, 0.4f));
             Rect labelRect = new Rect(containerRect.x, containerRect.y + (4f * zoomControlScale), containerRect.width, 20f * zoomControlScale);
-            GUI.Label(labelRect, $"{zoom:F1}x", EditorStyles.centeredGreyMiniLabel);
+            GUI.Label(labelRect, new GUIContent($"{zoom:F1}x", "Current graph zoom level."), EditorStyles.centeredGreyMiniLabel);
             Rect zoomSliderRect = new Rect(containerRect.x + (10f * zoomControlScale), containerRect.y + (28f * zoomControlScale), 14f * zoomControlScale, containerRect.height - (36f * zoomControlScale));
             float newZoom = GUI.VerticalSlider(zoomSliderRect, zoom, maxZoom, minZoom);
             if (!Mathf.Approximately(newZoom, zoom))
             {
                 zoom = Mathf.Clamp(newZoom, minZoom, maxZoom);
-                SaveEditorZoomSetting();
+                if (!isReadOnly) SaveEditorZoomSetting();
                 RequestRepaint();
             }
         }
