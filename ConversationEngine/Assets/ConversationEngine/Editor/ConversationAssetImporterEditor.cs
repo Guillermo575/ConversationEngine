@@ -35,11 +35,13 @@ namespace ConversationEditor
             if (!isValidConversation)
             {
                 DrawInvalidState();
+                ApplyRevertGUI();
                 return;
             }
             DrawSummary();
             DrawGraphPreview();
             DrawActions();
+            ApplyRevertGUI();
         }
         #endregion
         #region Setup
