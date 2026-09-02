@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ConversationEditor
 {
@@ -336,6 +337,34 @@ namespace ConversationEditor
             names.Sort();
             names.Add("Custom");
             return names.ToArray();
+        }
+
+        /// <summary>
+        /// Gets all available function category names including "Custom" option
+        /// </summary>
+        public static string[] GetFunctionCategoryNames()
+        {
+            return GetFunctionsByCategory()
+                .Keys
+                .OrderBy(category => category)
+                .Concat(new[] { "Custom" })
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Gets all functions for a specific category
+        /// </summary>
+        /// <param name="category">Category name</param>
+        /// <returns>Array of function names in the category</returns>
+        public static string[] GetFunctionsForCategory(string category)
+        {
+            if (string.IsNullOrWhiteSpace(category) || category == "Custom") return new string[0];
+            var categories = GetFunctionsByCategory();
+            if (!categories.TryGetValue(category, out var functions)) return new string[0];
+            return functions
+                .Where(functionDefinitions.ContainsKey)
+                .OrderBy(functionName => functionName)
+                .ToArray();
         }
 
         /// <summary>

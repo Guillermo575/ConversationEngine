@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using ConversationScheme;
@@ -49,6 +50,37 @@ namespace ConversationEditor
         private Vector2 resourceScrollPos;
         private Vector2 nodeScrollPos;
         private Vector2 inspectorScrollPos;
+        #endregion
+
+        #region Inspector Drafts
+        private string selectedFunctionCategory = "Custom";
+        private string selectedFunctionName = "";
+        private string customFunctionName = "";
+        private Dictionary<string, string> pendingFunctionParameters = new Dictionary<string, string>();
+        private string pendingCustomParameterName = "";
+        private string pendingCustomParameterValue = "";
+        private int pendingFunctionTimestamp = 0;
+        private readonly Dictionary<ConversationFunction, bool> functionParameterFoldouts = new Dictionary<ConversationFunction, bool>();
+        private readonly Dictionary<ConversationNode, ConversationOption> pendingOptionsByNode = new Dictionary<ConversationNode, ConversationOption>();
+        private readonly Dictionary<ConditionalBranch, ConditionRule> pendingConditionsByBranch = new Dictionary<ConditionalBranch, ConditionRule>();
+        private static readonly ComparisonOperator[] comparisonOperatorValues =
+        {
+            ComparisonOperator.Equal,
+            ComparisonOperator.NotEqual,
+            ComparisonOperator.GreaterThan,
+            ComparisonOperator.GreaterOrEqual,
+            ComparisonOperator.LessThan,
+            ComparisonOperator.LessOrEqual
+        };
+        private static readonly string[] comparisonOperatorLabels =
+        {
+            "Equal (=)",
+            "NotEqual (!=)",
+            "GreaterThan (>)",
+            "GreaterOrEqual (>=)",
+            "LessThan (<)",
+            "LessOrEqual (<=)"
+        };
         #endregion
 
         #region Panel Sizes
@@ -209,7 +241,7 @@ namespace ConversationEditor
             functionNodeStyle = new GUIStyle(nodeStyle);
             functionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.black, borderWidth);
             functionNodeSelectedStyle = new GUIStyle(functionNodeStyle);
-            functionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
+            functionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
             functionNodeDraggingStyle = new GUIStyle(functionNodeStyle);
             functionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.white, borderWidth);
             optionNodeStyle = new GUIStyle(nodeStyle);
@@ -532,137 +564,59 @@ namespace ConversationEditor
             // Set label width to be proportional to inspector panel width
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f; // Fixed label width for consistency
-            // ID (read-only)
+            EditorGUI.BeginChangeCheck();
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.IntField("ID", node.Id, GUILayout.ExpandWidth(true));
+            EditorGUILayout.IntField(new GUIContent("ID", "Unique node identifier."), node.Id, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
-            // Node Type (read-only for Start/End)
             EditorGUI.BeginDisabledGroup(node.NodeType == ConversationNodeType.Start || node.NodeType == ConversationNodeType.End);
-            node.NodeType = (ConversationNodeType)EditorGUILayout.EnumPopup("Node Type", node.NodeType, GUILayout.ExpandWidth(true));
+            node.NodeType = (ConversationNodeType)EditorGUILayout.EnumPopup(new GUIContent("Node Type", "Node behavior type."), node.NodeType, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
-            // Allow Start node to edit NextNodeId too
             if (node.NodeType == ConversationNodeType.Start)
             {
-                EditorGUILayout.Space();
+                DrawSectionSeparator();
                 EditorGUILayout.LabelField("Connection", EditorStyles.boldLabel);
-                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node);
+                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Target node for flow continuation.");
             }
             else if (node.NodeType != ConversationNodeType.End)
             {
-                // Speaker Actor
                 if (conversationData.ResourceManager.Actors.Count > 0)
                 {
                     var actorIds = conversationData.ResourceManager.Actors.Select(a => a.Id).ToList();
                     actorIds.Insert(0, "(None)");
-                    int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : 
-                        actorIds.IndexOf(node.SpeakerActorId);
+                    int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : actorIds.IndexOf(node.SpeakerActorId);
                     if (currentIndex < 0) currentIndex = 0;
-
-                    int newIndex = EditorGUILayout.Popup("Speaker Actor", currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
+                    int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor", "Actor speaking in this node."), currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
                     node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
                 }
                 else
                 {
-                    node.SpeakerActorId = EditorGUILayout.TextField("Speaker Actor ID", node.SpeakerActorId, GUILayout.ExpandWidth(true));
+                    node.SpeakerActorId = EditorGUILayout.TextField(new GUIContent("Speaker Actor ID", "Actor identifier for this node."), node.SpeakerActorId, GUILayout.ExpandWidth(true));
                 }
-                // Text
-                EditorGUILayout.LabelField("Text:");
+                EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
                 node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
-                // Next Node ID with dropdown
-                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node);
-                // Options
+                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
                 if (node.NodeType == ConversationNodeType.Dialogue)
                 {
-                    EditorGUILayout.Space();
+                    DrawSectionSeparator();
                     EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
-
-                    if (node.Options == null)
-                        node.Options = new List<ConversationOption>();
-
-                    for (int i = 0; i < node.Options.Count; i++)
-                    {
-                        EditorGUILayout.BeginVertical("box");
-                        EditorGUILayout.LabelField($"Option {i + 1}", EditorStyles.boldLabel);
-                        // Ensure the option has a valid Conditions list
-                        if (node.Options[i].Conditions == null)
-                            node.Options[i].Conditions = new List<ConditionRule>();
-                        node.Options[i].Text = EditorGUILayout.TextField("Text", node.Options[i].Text ?? "", GUILayout.ExpandWidth(true));
-                        node.Options[i].NextNodeId = DrawNodeIdDropdown("Next Node", node.Options[i].NextNodeId, node);
-                        if (GUILayout.Button("Remove Option", GUILayout.ExpandWidth(true)))
-                        {
-                            Undo.RecordObject(this, "Remove Option");
-                            node.Options.RemoveAt(i);
-                            MarkDirty();
-                            break;
-                        }
-                        EditorGUILayout.EndVertical();
-                    }
-                    if (GUILayout.Button("Add Option", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
-                    {
-                        Undo.RecordObject(this, "Add Option");
-                        var newOption = new ConversationOption
-                        {
-                            Text = "New Option",
-                            NextNodeId = 0,
-                            Conditions = new List<ConditionRule>()
-                        };
-                        node.Options.Add(newOption);
-                        MarkDirty();
-                    }
+                    DrawOptionSection(node);
                 }
-                // Functions
-                EditorGUILayout.Space();
+                DrawSectionSeparator();
                 EditorGUILayout.LabelField("Functions", EditorStyles.boldLabel);
-                if (node.Functions == null)
-                    node.Functions = new List<ConversationFunction>();
+                if (node.Functions == null) node.Functions = new List<ConversationFunction>();
                 DrawFunctionList(node.Functions);
-                // Conditional Branches
                 if (node.NodeType == ConversationNodeType.Conditional)
                 {
-                    EditorGUILayout.Space();
+                    DrawSectionSeparator();
                     EditorGUILayout.LabelField("Conditional Branches", EditorStyles.boldLabel);
-                    if (node.ConditionalBranches == null)
-                        node.ConditionalBranches = new List<ConditionalBranch>();
-                    for (int i = 0; i < node.ConditionalBranches.Count; i++)
-                    {
-                        EditorGUILayout.BeginVertical("box");
-                        EditorGUILayout.LabelField($"Branch {i + 1}");
-                        var branch = node.ConditionalBranches[i];
-                        branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, node);
-                        branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, node);
-                        // Conditions
-                        DrawConditionList(branch.Conditions);
-                        if (GUILayout.Button("Remove Branch"))
-                        {
-                            Undo.RecordObject(this, "Remove Branch");
-                            node.ConditionalBranches.RemoveAt(i);
-                            MarkDirty();
-                            break;
-                        }
-                        EditorGUILayout.EndVertical();
-                    }
-                    if (GUILayout.Button("Add Branch", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
-                    {
-                        Undo.RecordObject(this, "Add Branch");
-                        var newBranch = new ConditionalBranch
-                        {
-                            Conditions = new List<ConditionRule>(),
-                            NextNodeIdTrue = 0,
-                            NextNodeIdFalse = 0
-                        };
-                        node.ConditionalBranches.Add(newBranch);
-                        MarkDirty();
-                    }
-                    // Default Branch
-                    node.DefaultBranchNodeId = DrawNodeIdDropdown("Default Branch Node", node.DefaultBranchNodeId, node);
+                    DrawConditionalBranchSection(node);
                 }
             }
-            // Editor Position and Size
-            EditorGUILayout.Space();
+            DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
-            node.EditorPosition = EditorGUILayout.Vector2Field("Position", node.EditorPosition, GUILayout.ExpandWidth(true));
-            node.EditorSize = EditorGUILayout.Vector2Field("Size", node.EditorSize, GUILayout.ExpandWidth(true));
-            // Restore original label width
+            node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
+            node.EditorSize = EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this node."), node.EditorSize, GUILayout.ExpandWidth(true));
+            if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
         }
 
@@ -672,11 +626,13 @@ namespace ConversationEditor
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
-            option.Text = EditorGUILayout.TextField("Text", option.Text, GUILayout.ExpandWidth(true));
-            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode);
+            EditorGUI.BeginChangeCheck();
+            option.Text = EditorGUILayout.TextField(new GUIContent("Text", "Option text shown to the player."), option.Text, GUILayout.ExpandWidth(true));
+            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode, "Target node for this option.");
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(option.Conditions);
+            if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
         }
 
@@ -686,43 +642,276 @@ namespace ConversationEditor
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
-            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, graphView?.SelectedNode);
-            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, graphView?.SelectedNode);
+            EditorGUI.BeginChangeCheck();
+            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, graphView?.SelectedNode, "Target node when branch evaluates true.");
+            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, graphView?.SelectedNode, "Target node when branch evaluates false.");
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(branch.Conditions);
+            if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
         }
 
-        private int DrawNodeIdDropdown(string label, int currentNodeId, ConversationNode excludeNode)
+        private int DrawNodeIdDropdown(string label, int currentNodeId, ConversationNode excludeNode, string tooltip = "")
         {
-            // Build list of available nodes
             var nodeOptions = new List<string>();
             var nodeIds = new List<int>();
-            // Add "NINGUNO" option
             nodeOptions.Add("NINGUNO");
             nodeIds.Add(0);
-            // Add all valid target nodes
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
-                // Skip Start nodes and the node itself (but allow selecting End nodes)
                 if (node.NodeType == ConversationNodeType.Start || node == excludeNode) continue;
-                // Use helper to format node text
                 nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
                 nodeIds.Add(node.Id);
             }
-
-            // Find current selection
             int currentIndex = nodeIds.IndexOf(currentNodeId);
             if (currentIndex < 0) currentIndex = 0;
-            // Draw dropdown
-            int newIndex = EditorGUILayout.Popup(label, currentIndex, nodeOptions.ToArray());
+            int newIndex = EditorGUILayout.Popup(new GUIContent(label, tooltip), currentIndex, nodeOptions.ToArray());
             int newNodeId = nodeIds[newIndex];
-            if (newNodeId != currentNodeId)
+            return newNodeId;
+        }
+
+        private int DrawNodeIdDropdownCompact(string label, int currentNodeId, ConversationNode excludeNode, string tooltip)
+        {
+            var nodeOptions = new List<string>();
+            var nodeIds = new List<int>();
+            nodeOptions.Add("NINGUNO");
+            nodeIds.Add(0);
+            foreach (var node in conversationData.ConversationManager.Nodes)
             {
+                if (node.NodeType == ConversationNodeType.Start || node == excludeNode) continue;
+                nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
+                nodeIds.Add(node.Id);
+            }
+            int currentIndex = nodeIds.IndexOf(currentNodeId);
+            if (currentIndex < 0) currentIndex = 0;
+            int newIndex = EditorGUILayout.Popup(new GUIContent(label, tooltip), currentIndex, nodeOptions.ToArray(), GUILayout.ExpandWidth(true));
+            return nodeIds[newIndex];
+        }
+
+        private void DrawOptionSection(ConversationNode node)
+        {
+            if (node.Options == null) node.Options = new List<ConversationOption>();
+            if (!pendingOptionsByNode.TryGetValue(node, out var pendingOption))
+            {
+                pendingOption = new ConversationOption { Text = "", NextNodeId = 0, Conditions = new List<ConditionRule>() };
+                pendingOptionsByNode[node] = pendingOption;
+            }
+            EditorGUILayout.BeginHorizontal();
+            pendingOption.Text = EditorGUILayout.TextField(new GUIContent("", "New option text."), pendingOption.Text ?? "", GUILayout.ExpandWidth(true));
+            pendingOption.NextNodeId = DrawNodeIdDropdownCompact("", pendingOption.NextNodeId, node, "Target node for the new option.");
+            Color oldColor = GUI.backgroundColor;
+            GUI.backgroundColor = Color.green;
+            if (GUILayout.Button(new GUIContent("+", "Add option."), GUILayout.Width(28)))
+            {
+                if (string.IsNullOrWhiteSpace(pendingOption.Text)) EditorUtility.DisplayDialog("Invalid Option", "Option text cannot be empty.", "OK");
+                else
+                {
+                    Undo.RecordObject(this, "Add Option");
+                    node.Options.Add(new ConversationOption
+                    {
+                        Text = pendingOption.Text.Trim(),
+                        NextNodeId = pendingOption.NextNodeId,
+                        Conditions = new List<ConditionRule>()
+                    });
+                    pendingOption.Text = "";
+                    pendingOption.NextNodeId = 0;
+                    MarkDirty();
+                }
+            }
+            GUI.backgroundColor = oldColor;
+            EditorGUILayout.EndHorizontal();
+            for (int i = 0; i < node.Options.Count; i++)
+            {
+                if (node.Options[i].Conditions == null) node.Options[i].Conditions = new List<ConditionRule>();
+                EditorGUILayout.BeginHorizontal("box");
+                node.Options[i].Text = EditorGUILayout.TextField(new GUIContent("", "Option text."), node.Options[i].Text ?? "", GUILayout.ExpandWidth(true));
+                node.Options[i].NextNodeId = DrawNodeIdDropdownCompact("", node.Options[i].NextNodeId, node, "Target node for this option.");
+                oldColor = GUI.backgroundColor;
+                GUI.backgroundColor = Color.red;
+                if (GUILayout.Button(new GUIContent("X", "Remove this option."), GUILayout.Width(28)))
+                {
+                    Undo.RecordObject(this, "Remove Option");
+                    node.Options.RemoveAt(i);
+                    MarkDirty();
+                    GUI.backgroundColor = oldColor;
+                    EditorGUILayout.EndHorizontal();
+                    break;
+                }
+                GUI.backgroundColor = oldColor;
+                EditorGUILayout.EndHorizontal();
+            }
+        }
+
+        private void DrawConditionalBranchSection(ConversationNode node)
+        {
+            if (node.ConditionalBranches == null) node.ConditionalBranches = new List<ConditionalBranch>();
+            for (int i = 0; i < node.ConditionalBranches.Count; i++)
+            {
+                var branch = node.ConditionalBranches[i];
+                if (branch.Conditions == null) branch.Conditions = new List<ConditionRule>();
+                EditorGUILayout.BeginVertical("box");
+                EditorGUILayout.LabelField($"Branch {i + 1}", EditorStyles.boldLabel);
+                EditorGUILayout.BeginHorizontal();
+                branch.NextNodeIdTrue = DrawNodeIdDropdownCompact("True", branch.NextNodeIdTrue, node, "Target node when this branch is true.");
+                branch.NextNodeIdFalse = DrawNodeIdDropdownCompact("False", branch.NextNodeIdFalse, node, "Target node when this branch is false.");
+                EditorGUILayout.EndHorizontal();
+                DrawConditionAddSection(branch);
+                DrawExistingConditionList(branch.Conditions);
+                if (GUILayout.Button(new GUIContent("Remove Branch", "Remove this conditional branch."), GUILayout.ExpandWidth(true)))
+                {
+                    Undo.RecordObject(this, "Remove Branch");
+                    node.ConditionalBranches.RemoveAt(i);
+                    pendingConditionsByBranch.Remove(branch);
+                    MarkDirty();
+                    EditorGUILayout.EndVertical();
+                    break;
+                }
+                EditorGUILayout.EndVertical();
+            }
+            if (GUILayout.Button(new GUIContent("Add Branch", "Add a new conditional branch."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
+            {
+                Undo.RecordObject(this, "Add Branch");
+                node.ConditionalBranches.Add(new ConditionalBranch
+                {
+                    Conditions = new List<ConditionRule>(),
+                    NextNodeIdTrue = 0,
+                    NextNodeIdFalse = 0
+                });
                 MarkDirty();
             }
-            return newNodeId;
+            node.DefaultBranchNodeId = DrawNodeIdDropdown("Default Branch Node", node.DefaultBranchNodeId, node, "Fallback target node when no branch matches.");
+        }
+
+        private void DrawConditionAddSection(ConditionalBranch branch)
+        {
+            if (!pendingConditionsByBranch.TryGetValue(branch, out var pendingCondition))
+            {
+                pendingCondition = new ConditionRule
+                {
+                    VariableName = "",
+                    Operator = ComparisonOperator.Equal,
+                    ValueDataType = ValueType.String,
+                    Value = "",
+                    IsValueVariable = false
+                };
+                pendingConditionsByBranch[branch] = pendingCondition;
+            }
+            EditorGUILayout.BeginVertical("box");
+            pendingCondition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for the condition value."), pendingCondition.ValueDataType, GUILayout.ExpandWidth(true));
+            pendingCondition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name for this condition."), pendingCondition.VariableName ?? "", GUILayout.ExpandWidth(true));
+            pendingCondition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), pendingCondition.Operator);
+            DrawConditionValueRow(pendingCondition, false);
+            if (GUILayout.Button(new GUIContent("Add", "Add this condition to the branch."), GUILayout.ExpandWidth(true)))
+            {
+                if (string.IsNullOrWhiteSpace(pendingCondition.VariableName)) EditorUtility.DisplayDialog("Invalid Condition", "Variable name cannot be empty.", "OK");
+                else if (!IsConditionValueValid(pendingCondition)) EditorUtility.DisplayDialog("Invalid Condition", "Value does not match the selected value type.", "OK");
+                else
+                {
+                    Undo.RecordObject(this, "Add Condition");
+                    branch.Conditions.Add(new ConditionRule
+                    {
+                        VariableName = pendingCondition.VariableName.Trim(),
+                        Operator = pendingCondition.Operator,
+                        ValueDataType = pendingCondition.ValueDataType,
+                        Value = pendingCondition.ValueDataType == ValueType.Boolean ? NormalizeBooleanValue(pendingCondition.Value) : (pendingCondition.Value ?? ""),
+                        IsValueVariable = pendingCondition.ValueDataType == ValueType.Boolean ? false : pendingCondition.IsValueVariable
+                    });
+                    pendingCondition.Operator = ComparisonOperator.Equal;
+                    pendingCondition.Value = pendingCondition.ValueDataType == ValueType.Boolean ? "true" : "";
+                    pendingCondition.IsValueVariable = false;
+                    MarkDirty();
+                }
+            }
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawExistingConditionList(List<ConditionRule> conditions)
+        {
+            if (conditions == null) return;
+            for (int i = 0; i < conditions.Count; i++)
+            {
+                var condition = conditions[i];
+                EditorGUILayout.BeginVertical("box");
+                EditorGUI.BeginDisabledGroup(true);
+                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type used by this condition."), condition.ValueDataType, GUILayout.ExpandWidth(true));
+                condition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name used by this condition."), condition.VariableName ?? "", GUILayout.ExpandWidth(true));
+                EditorGUI.EndDisabledGroup();
+                condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), condition.Operator);
+                DrawConditionValueRow(condition, true);
+                if (GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
+                {
+                    Undo.RecordObject(this, "Remove Condition");
+                    conditions.RemoveAt(i);
+                    MarkDirty();
+                    EditorGUILayout.EndVertical();
+                    break;
+                }
+                EditorGUILayout.EndVertical();
+            }
+        }
+
+        private void DrawConditionValueRow(ConditionRule condition, bool lockTypeSpecificFields)
+        {
+            if (condition.ValueDataType == ValueType.Boolean)
+            {
+                bool currentBool = ParseBooleanCondition(condition.Value);
+                bool newBool = EditorGUILayout.ToggleLeft(new GUIContent("Is true", "Boolean value for this condition."), currentBool);
+                condition.Value = newBool ? "true" : "false";
+                condition.IsValueVariable = false;
+                return;
+            }
+            EditorGUILayout.BeginHorizontal();
+            condition.Value = EditorGUILayout.TextField(new GUIContent("Value", "Value to compare against."), condition.Value ?? "", GUILayout.ExpandWidth(true));
+            bool previousGuiState = GUI.enabled;
+            if (lockTypeSpecificFields) GUI.enabled = true;
+            condition.IsValueVariable = EditorGUILayout.ToggleLeft(new GUIContent("variable", "Treat value as a variable name."), condition.IsValueVariable, GUILayout.Width(80));
+            GUI.enabled = previousGuiState;
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private ComparisonOperator DrawComparisonOperatorDropdown(GUIContent label, ComparisonOperator value)
+        {
+            int index = System.Array.IndexOf(comparisonOperatorValues, value);
+            if (index < 0) index = 0;
+            int newIndex = EditorGUILayout.Popup(label, index, comparisonOperatorLabels, GUILayout.ExpandWidth(true));
+            return comparisonOperatorValues[newIndex];
+        }
+
+        private bool IsConditionValueValid(ConditionRule condition)
+        {
+            if (condition == null) return false;
+            if (condition.IsValueVariable) return !string.IsNullOrWhiteSpace(condition.Value);
+            switch (condition.ValueDataType)
+            {
+                case ValueType.Integer:
+                    return int.TryParse(condition.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _);
+                case ValueType.Decimal:
+                    return decimal.TryParse(condition.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out _);
+                case ValueType.Boolean:
+                    return true;
+                default:
+                    return true;
+            }
+        }
+
+        private bool ParseBooleanCondition(string value)
+        {
+            return NormalizeBooleanValue(value) == "true";
+        }
+
+        private string NormalizeBooleanValue(string rawValue)
+        {
+            string value = (rawValue ?? "").Trim();
+            if (string.IsNullOrEmpty(value)) return "true";
+            string lowerValue = value.ToLowerInvariant();
+            if (lowerValue == "true" || lowerValue == "1") return "true";
+            if (lowerValue == "false" || lowerValue == "0") return "false";
+            if ("true".StartsWith(lowerValue) || lowerValue.StartsWith("true")) return "true";
+            if ("false".StartsWith(lowerValue) || lowerValue.StartsWith("false")) return "false";
+            if (lowerValue[0] == 't') return "true";
+            if (lowerValue[0] == 'f') return "false";
+            return "true";
         }
 
         private void DrawConditionList(List<ConditionRule> conditions)
@@ -733,22 +922,21 @@ namespace ConversationEditor
                 EditorGUILayout.BeginVertical("box");
                 var condition = conditions[i];
                 EditorGUILayout.LabelField($"Condition {i + 1}", EditorStyles.boldLabel);
-                condition.VariableName = EditorGUILayout.TextField("Variable", condition.VariableName ?? "", GUILayout.ExpandWidth(true));
-                condition.Operator = (ComparisonOperator)EditorGUILayout.EnumPopup("Operator", condition.Operator, GUILayout.ExpandWidth(true));
-                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup("Value Type", condition.ValueDataType, GUILayout.ExpandWidth(true));
-                condition.Value = EditorGUILayout.TextField("Value", condition.Value ?? "", GUILayout.ExpandWidth(true));
-                condition.IsValueVariable = EditorGUILayout.Toggle("Is Value Variable", condition.IsValueVariable);
-                if (GUILayout.Button("Remove Condition", GUILayout.ExpandWidth(true)))
+                condition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name for this condition."), condition.VariableName ?? "", GUILayout.ExpandWidth(true));
+                condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), condition.Operator);
+                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for this condition."), condition.ValueDataType, GUILayout.ExpandWidth(true));
+                DrawConditionValueRow(condition, false);
+                if (GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
                 {
                     Undo.RecordObject(this, "Remove Condition");
                     conditions.RemoveAt(i);
                     MarkDirty();
+                    EditorGUILayout.EndVertical();
                     break;
                 }
                 EditorGUILayout.EndVertical();
             }
-
-            if (GUILayout.Button("Add Condition", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
+            if (GUILayout.Button(new GUIContent("Add", "Add a new condition."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
             {
                 Undo.RecordObject(this, "Add Condition");
                 var newCondition = new ConditionRule
@@ -767,105 +955,222 @@ namespace ConversationEditor
         private void DrawFunctionList(List<ConversationFunction> functions)
         {
             if (functions == null) return;
+            DrawFunctionAddSection(functions);
+            DrawSectionSeparator();
             for (int i = 0; i < functions.Count; i++)
             {
-                EditorGUILayout.BeginVertical("box");
                 var func = functions[i];
-                // Ensure function has valid parameters dictionary
-                if (func.Parameters == null)
-                    func.Parameters = new Dictionary<string, string>();
-                EditorGUILayout.LabelField($"Function {i + 1}", EditorStyles.boldLabel);
-                // Predefined function dropdown
-                string[] predefinedFunctions = ConversationFunctionLibrary.GetFunctionNames();
-                int currentIndex = System.Array.IndexOf(predefinedFunctions, func.MethodName);
-                if (currentIndex < 0) currentIndex = predefinedFunctions.Length - 1; // "Custom"
-                int newIndex = EditorGUILayout.Popup("Function", currentIndex, predefinedFunctions, GUILayout.ExpandWidth(true));
-                string selectedFunction = predefinedFunctions[newIndex];
-                if (selectedFunction == "Custom")
+                if (func.Parameters == null) func.Parameters = new Dictionary<string, string>();
+                EditorGUILayout.BeginVertical("box");
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.TextField(new GUIContent("Function", "Captured function name."), func.MethodName ?? "", GUILayout.ExpandWidth(true));
+                EditorGUI.EndDisabledGroup();
+                if (!functionParameterFoldouts.TryGetValue(func, out var isExpanded)) isExpanded = false;
+                isExpanded = EditorGUILayout.Foldout(isExpanded, new GUIContent("Parameters", "Show or hide parameter values."), true);
+                functionParameterFoldouts[func] = isExpanded;
+                if (isExpanded)
                 {
-                    func.MethodName = EditorGUILayout.TextField("Method Name", func.MethodName ?? "", GUILayout.ExpandWidth(true));
-                }
-                else
-                {
-                    func.MethodName = selectedFunction;
-                }
-                var paramDef = ConversationFunctionLibrary.GetFunctionParameters(func.MethodName);
-                if (paramDef != null && paramDef.Count > 0)
-                {
-                    EditorGUILayout.LabelField("Parameters:", EditorStyles.boldLabel);
-                    foreach (var param in paramDef)
+                    var parameterOrder = GetFunctionParameterOrder(func);
+                    foreach (var parameterName in parameterOrder)
                     {
-                        if (!func.Parameters.ContainsKey(param.Key))
-                            func.Parameters[param.Key] = "";
-                        func.Parameters[param.Key] = EditorGUILayout.TextField(param.Key, func.Parameters[param.Key], GUILayout.ExpandWidth(true));
-                    }
-                }
-                else
-                {
-                    // Custom parameters
-                    EditorGUILayout.LabelField("Parameters (key=value):", EditorStyles.boldLabel);
-                    var keys = func.Parameters.Keys.ToList();
-                    foreach (var key in keys)
-                    {
+                        if (!func.Parameters.ContainsKey(parameterName)) func.Parameters[parameterName] = "";
                         EditorGUILayout.BeginHorizontal();
-                        string newValue = EditorGUILayout.TextField(key, func.Parameters[key] ?? "", GUILayout.ExpandWidth(true));
-                        if (newValue != func.Parameters[key])
-                        {
-                            func.Parameters[key] = newValue;
-                            MarkDirty();
-                        }
-                        if (GUILayout.Button("X", GUILayout.Width(25)))
-                        {
-                            func.Parameters.Remove(key);
-                            MarkDirty();
-                        }
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.TextField(new GUIContent("", "Parameter name."), parameterName, GUILayout.Width(130));
+                        EditorGUI.EndDisabledGroup();
+                        func.Parameters[parameterName] = EditorGUILayout.TextField(new GUIContent("", "Parameter value."), func.Parameters[parameterName] ?? "", GUILayout.ExpandWidth(true));
                         EditorGUILayout.EndHorizontal();
                     }
-                    if (GUILayout.Button("Add Parameter", GUILayout.ExpandWidth(true)))
-                    {
-                        func.Parameters["newParam"] = "";
-                        MarkDirty();
-                    }
                 }
-                func.Timestamp = EditorGUILayout.IntField("Timestamp", func.Timestamp, GUILayout.ExpandWidth(true));
-                if (GUILayout.Button("Remove Function", GUILayout.ExpandWidth(true)))
+                func.Timestamp = EditorGUILayout.IntField(new GUIContent("Timestamp", "Execution order for this function."), func.Timestamp, GUILayout.ExpandWidth(true));
+                Color oldColor = GUI.backgroundColor;
+                GUI.backgroundColor = Color.red;
+                if (GUILayout.Button(new GUIContent("Remove", "Remove this function."), GUILayout.ExpandWidth(true)))
                 {
                     Undo.RecordObject(this, "Remove Function");
+                    functionParameterFoldouts.Remove(func);
                     functions.RemoveAt(i);
                     MarkDirty();
+                    GUI.backgroundColor = oldColor;
+                    EditorGUILayout.EndVertical();
                     break;
                 }
+                GUI.backgroundColor = oldColor;
                 EditorGUILayout.EndVertical();
             }
-            if (GUILayout.Button("Add Function", GUILayout.ExpandWidth(true), GUILayout.Height(25)))
+        }
+
+        private void DrawFunctionAddSection(List<ConversationFunction> functions)
+        {
+            var categoryNames = ConversationFunctionLibrary.GetFunctionCategoryNames();
+            if (categoryNames.Length == 0) categoryNames = new[] { "Custom" };
+            if (!categoryNames.Contains(selectedFunctionCategory)) selectedFunctionCategory = categoryNames[0];
+            int categoryIndex = System.Array.IndexOf(categoryNames, selectedFunctionCategory);
+            if (categoryIndex < 0) categoryIndex = 0;
+            int newCategoryIndex = EditorGUILayout.Popup(new GUIContent("Category", "Function category filter."), categoryIndex, categoryNames, GUILayout.ExpandWidth(true));
+            if (newCategoryIndex != categoryIndex)
             {
+                selectedFunctionCategory = categoryNames[newCategoryIndex];
+                selectedFunctionName = "";
+                pendingFunctionParameters = new Dictionary<string, string>();
+            }
+            bool isCustomCategory = selectedFunctionCategory == "Custom";
+            if (isCustomCategory)
+            {
+                customFunctionName = EditorGUILayout.TextField(new GUIContent("Function", "Custom function name."), customFunctionName ?? "", GUILayout.ExpandWidth(true));
+                EditorGUILayout.BeginHorizontal();
+                pendingCustomParameterName = EditorGUILayout.TextField(new GUIContent("", "Custom parameter name."), pendingCustomParameterName ?? "", GUILayout.ExpandWidth(true));
+                pendingCustomParameterValue = EditorGUILayout.TextField(new GUIContent("", "Custom parameter value."), pendingCustomParameterValue ?? "", GUILayout.ExpandWidth(true));
+                Color oldColor = GUI.backgroundColor;
+                GUI.backgroundColor = Color.green;
+                if (GUILayout.Button(new GUIContent("+", "Add custom parameter."), GUILayout.Width(28)))
+                {
+                    if (string.IsNullOrWhiteSpace(pendingCustomParameterName)) EditorUtility.DisplayDialog("Invalid Parameter", "Parameter name cannot be empty.", "OK");
+                    else
+                    {
+                        string parameterName = pendingCustomParameterName.Trim();
+                        pendingFunctionParameters[parameterName] = pendingCustomParameterValue ?? "";
+                        pendingCustomParameterName = "";
+                        pendingCustomParameterValue = "";
+                    }
+                }
+                GUI.backgroundColor = oldColor;
+                EditorGUILayout.EndHorizontal();
+                foreach (var key in pendingFunctionParameters.Keys.ToList())
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUI.BeginDisabledGroup(true);
+                    EditorGUILayout.TextField(new GUIContent("", "Captured parameter name."), key, GUILayout.Width(130));
+                    EditorGUI.EndDisabledGroup();
+                    pendingFunctionParameters[key] = EditorGUILayout.TextField(new GUIContent("", "Captured parameter value."), pendingFunctionParameters[key] ?? "", GUILayout.ExpandWidth(true));
+                    oldColor = GUI.backgroundColor;
+                    GUI.backgroundColor = Color.red;
+                    if (GUILayout.Button(new GUIContent("X", "Remove custom parameter."), GUILayout.Width(28)))
+                    {
+                        pendingFunctionParameters.Remove(key);
+                        GUI.backgroundColor = oldColor;
+                        EditorGUILayout.EndHorizontal();
+                        break;
+                    }
+                    GUI.backgroundColor = oldColor;
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            else
+            {
+                var functionsByCategory = ConversationFunctionLibrary.GetFunctionsForCategory(selectedFunctionCategory);
+                if (functionsByCategory.Length == 0)
+                {
+                    selectedFunctionName = "";
+                    pendingFunctionParameters.Clear();
+                    EditorGUILayout.HelpBox("No functions available in this category.", MessageType.Info);
+                }
+                else
+                {
+                    if (!functionsByCategory.Contains(selectedFunctionName))
+                    {
+                        selectedFunctionName = functionsByCategory[0];
+                        SetupPendingParametersForFunction(selectedFunctionName);
+                    }
+                    int selectedIndex = System.Array.IndexOf(functionsByCategory, selectedFunctionName);
+                    if (selectedIndex < 0) selectedIndex = 0;
+                    int newFunctionIndex = EditorGUILayout.Popup(new GUIContent("Function", "Function name filtered by category."), selectedIndex, functionsByCategory, GUILayout.ExpandWidth(true));
+                    if (newFunctionIndex != selectedIndex)
+                    {
+                        selectedFunctionName = functionsByCategory[newFunctionIndex];
+                        SetupPendingParametersForFunction(selectedFunctionName);
+                    }
+                    var parameterDefinitions = ConversationFunctionLibrary.GetFunctionParameters(selectedFunctionName);
+                    if (parameterDefinitions != null)
+                    {
+                        foreach (var parameterDefinition in parameterDefinitions)
+                        {
+                            if (!pendingFunctionParameters.ContainsKey(parameterDefinition.Key)) pendingFunctionParameters[parameterDefinition.Key] = "";
+                            pendingFunctionParameters[parameterDefinition.Key] = EditorGUILayout.TextField(new GUIContent(parameterDefinition.Key, parameterDefinition.Value), pendingFunctionParameters[parameterDefinition.Key] ?? "", GUILayout.ExpandWidth(true));
+                        }
+                    }
+                }
+            }
+            pendingFunctionTimestamp = EditorGUILayout.IntField(new GUIContent("Timestamp", "Execution order for the new function."), pendingFunctionTimestamp, GUILayout.ExpandWidth(true));
+            if (GUILayout.Button(new GUIContent("Add", "Add function to this node."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
+            {
+                string methodName = isCustomCategory ? (customFunctionName ?? "").Trim() : selectedFunctionName;
+                if (string.IsNullOrWhiteSpace(methodName))
+                {
+                    EditorUtility.DisplayDialog("Invalid Function", "Function name cannot be empty.", "OK");
+                    return;
+                }
+                if (pendingFunctionParameters.Keys.Any(string.IsNullOrWhiteSpace))
+                {
+                    EditorUtility.DisplayDialog("Invalid Parameters", "Parameter names cannot be empty.", "OK");
+                    return;
+                }
                 Undo.RecordObject(this, "Add Function");
                 var newFunction = new ConversationFunction
                 {
-                    MethodName = "Custom",
-                    Parameters = new Dictionary<string, string>(),
-                    Timestamp = 0
+                    MethodName = methodName,
+                    Parameters = new Dictionary<string, string>(pendingFunctionParameters),
+                    Timestamp = pendingFunctionTimestamp
                 };
                 functions.Add(newFunction);
+                functionParameterFoldouts[newFunction] = false;
+                if (isCustomCategory)
+                {
+                    customFunctionName = "";
+                    pendingFunctionParameters.Clear();
+                    pendingCustomParameterName = "";
+                    pendingCustomParameterValue = "";
+                }
+                else
+                {
+                    SetupPendingParametersForFunction(selectedFunctionName);
+                }
+                pendingFunctionTimestamp = 0;
                 MarkDirty();
             }
         }
 
+        private void SetupPendingParametersForFunction(string functionName)
+        {
+            pendingFunctionParameters = new Dictionary<string, string>();
+            var parameterDefinitions = ConversationFunctionLibrary.GetFunctionParameters(functionName);
+            if (parameterDefinitions == null) return;
+            foreach (var parameter in parameterDefinitions) pendingFunctionParameters[parameter.Key] = "";
+        }
+
+        private IEnumerable<string> GetFunctionParameterOrder(ConversationFunction function)
+        {
+            var predefinedParameters = ConversationFunctionLibrary.GetFunctionParameters(function.MethodName);
+            if (predefinedParameters != null)
+            {
+                foreach (var key in predefinedParameters.Keys)
+                {
+                    if (!function.Parameters.ContainsKey(key)) function.Parameters[key] = "";
+                }
+                foreach (var key in function.Parameters.Keys.Where(k => !predefinedParameters.ContainsKey(k)).ToList()) function.Parameters.Remove(key);
+                return predefinedParameters.Keys;
+            }
+            return function.Parameters.Keys.OrderBy(key => key).ToList();
+        }
+
+        private void DrawSectionSeparator()
+        {
+            EditorGUILayout.Space(4);
+            Rect separatorRect = EditorGUILayout.GetControlRect(false, 1f);
+            EditorGUI.DrawRect(separatorRect, new Color(0.35f, 0.35f, 0.35f, 1f));
+            EditorGUILayout.Space(6);
+        }
+
         private void OpenConversationDialog()
         {
-            string path = EditorUtility.OpenFilePanelWithFilters("Open Conversation", "Assets",
-                new string[] { "Conversation Files", "conversation,json", "All Files", "*" });
-            if (!string.IsNullOrEmpty(path))
-            {
-                LoadConversation(path);
-            }
+            string path = EditorUtility.OpenFilePanelWithFilters("Open Conversation", "Assets", new string[] { "Conversation Files", "conversation,json", "All Files", "*" });
+            if (!string.IsNullOrEmpty(path)) LoadConversation(path);
         }
 
         private void EnsureEditorSettings()
         {
             if (conversationData == null) return;
-            if (conversationData.EditorSettings == null)
-                conversationData.EditorSettings = new ConversationEditorSettings();
+            if (conversationData.EditorSettings == null) conversationData.EditorSettings = new ConversationEditorSettings();
         }
 
         private void CreateNewConversation()
@@ -915,6 +1220,7 @@ namespace ConversationEditor
                 return;
             }
             EnsureEditorSettings();
+            NormalizeConversationConditionBooleanValues(conversationData);
             ConversationNodeUtility.EnsureStartNodeExists(conversationData);
             graphView?.SetConversationData(conversationData);
             currentFilePath = filePath;
@@ -925,6 +1231,39 @@ namespace ConversationEditor
             showInspector = false;
             panOffset = Vector2.zero;
             Repaint();
+        }
+
+        private void NormalizeConversationConditionBooleanValues(ConversationData data)
+        {
+            if (data?.ConversationManager?.Nodes == null) return;
+            foreach (var node in data.ConversationManager.Nodes)
+            {
+                if (node.Options != null)
+                {
+                    foreach (var option in node.Options)
+                    {
+                        NormalizeConditionList(option.Conditions);
+                    }
+                }
+                if (node.ConditionalBranches != null)
+                {
+                    foreach (var branch in node.ConditionalBranches)
+                    {
+                        NormalizeConditionList(branch.Conditions);
+                    }
+                }
+            }
+        }
+
+        private void NormalizeConditionList(List<ConditionRule> conditions)
+        {
+            if (conditions == null) return;
+            foreach (var condition in conditions)
+            {
+                if (condition == null || condition.ValueDataType != ValueType.Boolean) continue;
+                condition.Value = NormalizeBooleanValue(condition.Value);
+                condition.IsValueVariable = false;
+            }
         }
 
         private void SaveConversation()
