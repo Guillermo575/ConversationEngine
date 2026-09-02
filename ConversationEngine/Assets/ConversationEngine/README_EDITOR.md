@@ -29,6 +29,8 @@ All panels are resizable by dragging the splitter bars between them.
 
 ### Visual Node-Based Editing
 - **Three-Panel Interface**: Resources (left) | Graph (center) | Inspector (right)
+- **Reusable Graph View Component**: Graph rendering and interaction logic is encapsulated in `ConversationGraphView` for reuse in other editor tools
+- **Read-Only Graph Mode**: Optional mode for safe inspection where users can only pan and zoom without modifying nodes or connections
 - **Resizable Panels**: Drag splitter bars to adjust panel widths
 - **Multiple Node Types**: Support for Start, Dialogue, Function, Conditional, and End nodes
 - **Smart Connections**: Create connections via right-click menu, not Ctrl+click

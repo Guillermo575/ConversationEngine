@@ -16,6 +16,7 @@ namespace ConversationEditor
         private ConversationData conversationData;
         private string currentFilePath;
         private bool isDirty = false;
+        private ConversationGraphView graphView;
         #endregion
 
         #region View State
@@ -123,10 +124,23 @@ namespace ConversationEditor
         private void OnEnable()
         {
             Undo.undoRedoPerformed += OnUndoRedo;
+            if (graphView == null)
+            {
+                graphView = new ConversationGraphView(this, false);
+                graphView.OnDirty += MarkDirty;
+                graphView.OnSelectionChanged += SyncInspectorVisibilityFromGraph;
+                graphView.OnRepaintRequested += Repaint;
+            }
         }
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
+            if (graphView != null)
+            {
+                graphView.OnDirty -= MarkDirty;
+                graphView.OnSelectionChanged -= SyncInspectorVisibilityFromGraph;
+                graphView.OnRepaintRequested -= Repaint;
+            }
         }
         private void OnDestroy()
         {
@@ -333,32 +347,20 @@ namespace ConversationEditor
                     CreateNewConversation();
                     e.Use();
                 }
-                else if (e.keyCode == KeyCode.Delete && selectedNode != null)
+                else if (e.keyCode == KeyCode.Delete && graphView?.SelectedNode != null)
                 {
-                    DeleteNode(selectedNode);
+                    graphView.DeleteSelectedNode();
                     e.Use();
                 }
-                else if (e.keyCode == KeyCode.F && selectedNode != null)
+                else if (e.keyCode == KeyCode.F && graphView?.SelectedNode != null)
                 {
-                    FrameNode(selectedNode);
+                    graphView.FrameSelectedNode();
                     e.Use();
                 }
                 else if (e.keyCode == KeyCode.Escape)
                 {
-                    if (isConnecting)
-                    {
-                        isConnecting = false;
-                        connectingFromNode = null;
-                        connectingFromOption = null;
-                        connectingFromBranch = null;
-                    }
-                    else if (selectedNode != null)
-                    {
-                        selectedNode = null;
-                        selectedOption = null;
-                        selectedBranch = null;
-                        showInspector = false;
-                    }
+                    graphView?.HandleEscapeAction();
+                    showInspector = graphView != null && graphView.HasSelection;
                     e.Use();
                     Repaint();
                 }
@@ -376,7 +378,7 @@ namespace ConversationEditor
             if (GUILayout.Button(isDirty ? "Save*" : "Save", EditorStyles.toolbarButton, GUILayout.Width(50))) SaveConversation();
             if (GUILayout.Button("Save As", EditorStyles.toolbarButton, GUILayout.Width(60))) SaveConversationAs();
             GUILayout.Space(10);
-            if (GUILayout.Button("Auto-Layout", EditorStyles.toolbarButton, GUILayout.Width(80))) ShowAutoLayoutMenu();
+            if (GUILayout.Button("Auto-Layout", EditorStyles.toolbarButton, GUILayout.Width(80))) graphView?.ShowAutoLayoutMenu();
             GUI.enabled = true;
             GUILayout.FlexibleSpace();
             if (conversationData != null)
@@ -491,743 +493,30 @@ namespace ConversationEditor
         #region Graph Drawing
         private void DrawConversationGraph()
         {
-            if (conversationData?.ConversationManager?.Nodes == null) return;
-            Rect graphRect = CalculateGraphRect();
-            currentGraphRect = graphRect;
-            HandleGraphInput(graphRect);
-            GUI.Box(graphRect, GUIContent.none);
-            GUI.BeginGroup(graphRect);
-            Rect localRect = new Rect(0, 0, graphRect.width, graphRect.height);
-            DrawGrid(localRect);
-            DrawConnections();
-            DrawNodes();
-            if (isConnecting) DrawConnectionLine();
-            DrawZoomControls(localRect);
-            GUI.EndGroup();
-        }
-        private Rect CalculateGraphRect()
-        {
-            return GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-        }
-        private Vector2 WorldToGraph(Vector2 worldPos)
-        {
-            return (worldPos + panOffset) * zoom;
-        }
-        private Rect WorldToGraphRect(Rect worldRect)
-        {
-            return new Rect(WorldToGraph(worldRect.position), worldRect.size * zoom);
-        }
-        private Vector2 WindowToWorld(Vector2 windowPos)
-        {
-            Vector2 graphLocalPos = windowPos - currentGraphRect.position;
-            return (graphLocalPos / zoom) - panOffset;
-        }
-
-        private void HandleGraphInput(Rect graphRect)
-        {
-            Event e = Event.current;
-            if (!graphRect.Contains(e.mousePosition) && e.type != EventType.MouseUp) return;
-            Rect zoomControlsRect = GetZoomControlsRect(graphRect);
-            bool isPointerOverZoomControls = zoomControlsRect.Contains(e.mousePosition);
-            if (isPointerOverZoomControls && !isDraggingView) return;
-            if (e.type == EventType.ScrollWheel)
-            {
-                float oldZoom = zoom;
-                float zoomDelta = -e.delta.y * 0.05f;
-                float newZoom = Mathf.Clamp(zoom + zoomDelta, minZoom, maxZoom);
-
-                if (!Mathf.Approximately(newZoom, oldZoom))
-                {
-                    Vector2 graphLocalMouse = e.mousePosition - graphRect.position;
-                    Vector2 worldMouse = (graphLocalMouse / oldZoom) - panOffset;
-                    zoom = newZoom;
-                    panOffset = (graphLocalMouse / zoom) - worldMouse;
-                    SaveEditorZoomSetting();
-                }
-                e.Use();
-                Repaint();
-                return;
-            }
-            if (e.type == EventType.MouseDown && e.button == 0)
-            {
-                if (isRightClickMenuActive)
-                {
-                    isRightClickMenuActive = false;
-                    e.Use();
-                    return;
-                }
-                bool clickedOnNode = false;
-                Vector2 mouseWorldPos = WindowToWorld(e.mousePosition);
-                if (conversationData?.ConversationManager?.Nodes != null)
-                {
-                    foreach (var node in conversationData.ConversationManager.Nodes)
-                    {
-                        Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
-                        if (nodeRect.Contains(mouseWorldPos))
-                        {
-                            clickedOnNode = true;
-                            break;
-                        }
-                    }
-                }
-                if (clickedOnNode) return;
-                if (isConnecting)
-                {
-                    isConnecting = false;
-                    connectingFromNode = null;
-                    connectingFromOption = null;
-                    connectingFromBranch = null;
-                    e.Use();
-                    Repaint();
-                    return;
-                }
-                isDraggingView = true;
-                dragStartPos = e.mousePosition;
-                e.Use();
-                Repaint();
-                return;
-            }
-
-            if (e.type == EventType.MouseDown && (e.button == 2 || (e.button == 0 && e.alt)))
-            {
-                isDraggingView = true;
-                dragStartPos = e.mousePosition;
-                e.Use();
-                return;
-            }
-            if (e.type == EventType.MouseDrag && isDraggingView)
-            {
-                panOffset += e.delta / zoom;
-                e.Use();
-                Repaint();
-                return;
-            }
-            if (e.type == EventType.MouseUp)
-            {
-                isDraggingView = false;
-                return;
-            }
-            if (e.type == EventType.MouseDown && e.button == 1)
-            {
-                bool clickedOnNode = false;
-                Vector2 mouseWorldPos = WindowToWorld(e.mousePosition);
-                if (conversationData?.ConversationManager?.Nodes != null)
-                {
-                    foreach (var node in conversationData.ConversationManager.Nodes)
-                    {
-                        Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
-                        if (nodeRect.Contains(mouseWorldPos))
-                        {
-                            clickedOnNode = true;
-                            break;
-                        }
-                    }
-                }
-                if (!clickedOnNode)
-                {
-                    contextMenuPosition = mouseWorldPos;
-                    ShowContextMenu();
-                    e.Use();
-                }
-            }
-        }
-
-        private void DrawGrid(Rect rect)
-        {
-            Handles.BeginGUI();
-            float spacing = gridSpacing * zoom;
-            if (spacing <= 0.001f)
-            {
-                Handles.EndGUI();
-                return;
-            }
-            int widthDivs = Mathf.CeilToInt(rect.width / spacing);
-            int heightDivs = Mathf.CeilToInt(rect.height / spacing);
-            float offsetX = Mathf.Repeat(panOffset.x * zoom, spacing);
-            float offsetY = Mathf.Repeat(panOffset.y * zoom, spacing);
-            Handles.color = gridColor;
-            for (int i = 0; i <= widthDivs; i++)
-            {
-                float x = spacing * i + offsetX;
-                Handles.DrawLine(new Vector3(x, 0f), new Vector3(x, rect.height));
-            }
-            for (int i = 0; i <= heightDivs; i++)
-            {
-                float y = spacing * i + offsetY;
-                Handles.DrawLine(new Vector3(0f, y), new Vector3(rect.width, y));
-            }
-            Handles.EndGUI();
-        }
-        private void DrawNodes()
-        {
-            if (conversationData?.ConversationManager?.Nodes == null) return;
-            foreach (var node in conversationData.ConversationManager.Nodes)
-            {
-                DrawNode(node);
-            }
-        }
-
-        private void DrawNode(ConversationNode node)
-        {
-            Rect nodeWorldRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
-            Rect nodeRect = WorldToGraphRect(nodeWorldRect);
-            GUIStyle style = GetNodeStyle(node);
-            GUI.Box(nodeRect, "", style);
-            GUILayout.BeginArea(nodeRect);
-            DrawNodeContent(node);
-            GUILayout.EndArea();
-            HandleNodeInteraction(node, nodeRect);
-            if (node.Options != null && node.Options.Count > 0) DrawNodeOptions(node, nodeRect);
-            if (node.ConditionalBranches != null && node.ConditionalBranches.Count > 0) DrawConditionalBranches(node, nodeRect);
-            if (selectedNode == node && node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
-            {
-                DrawResizeHandle(node, nodeRect);
-            }
-        }
-        private GUIStyle GetNodeStyle(ConversationNode node)
-        {
-            bool isSelected = selectedNode == node;
-            bool isDragging = isNodeBeingDragged && isSelected;
-            switch (node.NodeType)
-            {
-                case ConversationNodeType.Start:
-                    if (isDragging) return startNodeDraggingStyle;
-                    if (isSelected) return startNodeSelectedStyle;
-                    return startNodeStyle;
-                case ConversationNodeType.End:
-                    if (isDragging) return endNodeDraggingStyle;
-                    if (isSelected) return endNodeSelectedStyle;
-                    return endNodeStyle;
-                case ConversationNodeType.Function:
-                    if (isDragging) return functionNodeDraggingStyle;
-                    if (isSelected) return functionNodeSelectedStyle;
-                    return functionNodeStyle;
-                case ConversationNodeType.Conditional:
-                    if (isDragging) return conditionalNodeDraggingStyle;
-                    if (isSelected) return conditionalNodeSelectedStyle;
-                    return conditionalNodeStyle;
-                default:
-                    if (isDragging) return nodeDraggingStyle;
-                    if (isSelected) return nodeSelectedStyle;
-                    return nodeStyle;
-            }
-        }
-
-        private void DrawNodeContent(ConversationNode node)
-        {
-            nodeHeaderStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
-            nodeBodyTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            nodeActorTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            switch (node.NodeType)
-            {
-                case ConversationNodeType.Start:
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("START", nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    break;
-                case ConversationNodeType.End:
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("END", nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    break;
-                case ConversationNodeType.Function:
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("FUNCTION", nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    break;
-                default:
-                    GUILayout.Label($"ID: {node.Id}", nodeHeaderStyle);
-                    if (!string.IsNullOrEmpty(node.SpeakerActorId))
-                    {
-                        var actor = conversationData.ResourceManager.Actors.FirstOrDefault(a => a.Id == node.SpeakerActorId);
-                        if (actor != null && !string.IsNullOrEmpty(actor.IconPath))
-                        {
-                            GUILayout.Label($"?? {node.SpeakerActorId}", nodeActorTextStyle);
-                        }
-                        else
-                        {
-                            GUILayout.Label($"Actor: {node.SpeakerActorId}", nodeActorTextStyle);
-                        }
-                    }
-                    if (!string.IsNullOrEmpty(node.Text))
-                    {
-                        string preview = node.Text.Length > 100 ? node.Text.Substring(0, 100) + "..." : node.Text;
-                        GUILayout.Label(preview, nodeBodyTextStyle);
-                    }
-                    break;
-            }
-        }
-
-        private void HandleNodeInteraction(ConversationNode node, Rect nodeRect)
-        {
-            Event e = Event.current;
-            Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
-            if (e.type == EventType.MouseDown && nodeRect.Contains(mouseGraphPos))
-            {
-                if (e.button == 0)
-                {
-                    if (isRightClickMenuActive)
-                    {
-                        isRightClickMenuActive = false;
-                        return;
-                    }
-                    if (isConnecting)
-                    {
-                        if (node.NodeType != ConversationNodeType.Start && node != connectingFromNode)
-                        {
-                            CompleteConnection(node);
-                        }
-                        else
-                        {
-                            isConnecting = false;
-                            connectingFromNode = null;
-                            connectingFromOption = null;
-                            connectingFromBranch = null;
-                        }
-                        e.Use();
-                        Repaint();
-                        return;
-                    }
-                    selectedNode = node;
-                    selectedOption = null;
-                    selectedBranch = null;
-                    showInspector = true;
-                    isMouseOverNode = true;
-                    isNodeBeingDragged = false;
-                    GUI.FocusControl(null);
-                    e.Use();
-                    Repaint();
-                }
-                else if (e.button == 1)
-                {
-                    if (node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
-                    {
-                        selectedNode = node;
-                        showInspector = true;
-                        ShowNodeContextMenu(node);
-                        e.Use();
-                    }
-                }
-            }
-            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode)
-            {
-                if (!isNodeBeingDragged) isNodeBeingDragged = true;
-                Undo.RecordObject(this, "Move Node");
-                node.EditorPosition += e.delta / zoom;
-                node.EditorPosition.x = Mathf.Max(0, Mathf.Min(10000, node.EditorPosition.x));
-                node.EditorPosition.y = Mathf.Max(0, Mathf.Min(10000, node.EditorPosition.y));
-                MarkDirty();
-                e.Use();
-                Repaint();
-            }
-            if (e.type == EventType.MouseUp && e.button == 0)
-            {
-                isMouseOverNode = false;
-                if (isNodeBeingDragged)
-                {
-                    isNodeBeingDragged = false;
-                    Repaint();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Converts a window-space mouse position to graph-local GUI coordinates.
-        /// </summary>
-        private Vector2 WindowToGraphLocal(Vector2 windowPos)
-        {
-            return windowPos - currentGraphRect.position;
-        }
-        #endregion
-
-        #region Node Options and Branches
-        private void DrawNodeOptions(ConversationNode node, Rect nodeRect)
-        {
-            float optionHeight = 60f;
-            float optionWidth = 150f;
-            float spacing = 10f;
-
-            for (int i = 0; i < node.Options.Count; i++)
-            {
-                var option = node.Options[i];
-                Rect optionWorldRect = new Rect(
-                    node.EditorPosition.x + node.EditorSize.x + spacing,
-                    node.EditorPosition.y + i * (optionHeight + spacing),
-                    optionWidth,
-                    optionHeight
-                );
-                Rect optionRect = WorldToGraphRect(optionWorldRect);
-
-                GUI.Box(optionRect, "", optionNodeStyle);
-
-                GUILayout.BeginArea(optionRect);
-                GUILayout.Label($"Option {i + 1}", EditorStyles.boldLabel);
-                GUILayout.Label(string.IsNullOrEmpty(option.Text) ? "(empty)" :
-                    (option.Text.Length > 20 ? option.Text.Substring(0, 20) + "..." : option.Text));
-                GUILayout.EndArea();
-
-                HandleOptionInteraction(node, option, optionRect, i);
-                DrawConnectionFromOption(node, option, optionRect);
-            }
-        }
-
-        private void HandleOptionInteraction(ConversationNode node, ConversationOption option, Rect optionRect, int index)
-        {
-            Event e = Event.current;
-            Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
-
-            if (e.type == EventType.MouseDown && optionRect.Contains(mouseGraphPos))
-            {
-                if (e.button == 0 && (e.control || e.command))
-                {
-                    isConnecting = true;
-                    connectingFromNode = node;
-                    connectingFromOption = option;
-                    connectingFromBranch = null;
-                    e.Use();
-                }
-                else if (e.button == 0)
-                {
-                    selectedNode = node;
-                    selectedOption = option;
-                    selectedBranch = null;
-                    e.Use();
-                    Repaint();
-                }
-                else if (e.button == 1)
-                {
-                    ShowOptionContextMenu(node, option, index);
-                    e.Use();
-                }
-            }
-
-            if (e.type == EventType.MouseUp && e.button == 0 && isConnecting && connectingFromOption == null && optionRect.Contains(mouseGraphPos))
-            {
-                isConnecting = false;
-                e.Use();
-            }
-        }
-
-        private void DrawConditionalBranches(ConversationNode node, Rect nodeRect)
-        {
-            if (node.NodeType != ConversationNodeType.Conditional) return;
-
-            float branchHeight = 40f;
-            float branchWidth = 100f;
-            float spacing = 10f;
-
-            for (int i = 0; i < node.ConditionalBranches.Count; i++)
-            {
-                var branch = node.ConditionalBranches[i];
-
-                Rect trueWorldRect = new Rect(
-                    node.EditorPosition.x + node.EditorSize.x + spacing,
-                    node.EditorPosition.y + i * (branchHeight * 2 + spacing),
-                    branchWidth,
-                    branchHeight
-                );
-                Rect trueRect = WorldToGraphRect(trueWorldRect);
-
-                GUI.Box(trueRect, "", optionNodeStyle);
-                GUILayout.BeginArea(trueRect);
-                GUILayout.Label($"Branch {i + 1}: TRUE", EditorStyles.boldLabel);
-                GUILayout.EndArea();
-
-                Rect falseWorldRect = new Rect(
-                    node.EditorPosition.x + node.EditorSize.x + spacing,
-                    node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2,
-                    branchWidth,
-                    branchHeight
-                );
-                Rect falseRect = WorldToGraphRect(falseWorldRect);
-
-                GUI.Box(falseRect, "", optionNodeStyle);
-                GUILayout.BeginArea(falseRect);
-                GUILayout.Label($"Branch {i + 1}: FALSE", EditorStyles.boldLabel);
-                GUILayout.EndArea();
-
-                HandleBranchInteraction(node, branch, trueRect, falseRect, i);
-                DrawConnectionFromBranch(node, branch, trueRect, falseRect);
-            }
-        }
-
-        private void HandleBranchInteraction(ConversationNode node, ConditionalBranch branch,
-            Rect trueRect, Rect falseRect, int index)
-        {
-            Event e = Event.current;
-            Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
-
-            if (e.type == EventType.MouseDown && trueRect.Contains(mouseGraphPos))
-            {
-                if (e.button == 0 && (e.control || e.command))
-                {
-                    isConnecting = true;
-                    connectingFromNode = node;
-                    connectingFromOption = null;
-                    connectingFromBranch = branch;
-                    connectingBranchIndex = 0;
-                    e.Use();
-                }
-                else if (e.button == 0)
-                {
-                    selectedNode = node;
-                    selectedOption = null;
-                    selectedBranch = branch;
-                    e.Use();
-                    Repaint();
-                }
-            }
-
-            if (e.type == EventType.MouseDown && falseRect.Contains(mouseGraphPos))
-            {
-                if (e.button == 0 && (e.control || e.command))
-                {
-                    isConnecting = true;
-                    connectingFromNode = node;
-                    connectingFromOption = null;
-                    connectingFromBranch = branch;
-                    connectingBranchIndex = 1;
-                    e.Use();
-                }
-                else if (e.button == 0)
-                {
-                    selectedNode = node;
-                    selectedOption = null;
-                    selectedBranch = branch;
-                    e.Use();
-                    Repaint();
-                }
-            }
-        }
-
-        private void DrawResizeHandle(ConversationNode node, Rect nodeRect)
-        {
-            Rect handleRect = new Rect(nodeRect.xMax - 10, nodeRect.yMax - 10, 10, 10);
-            EditorGUIUtility.AddCursorRect(new Rect(currentGraphRect.x + handleRect.x, currentGraphRect.y + handleRect.y, handleRect.width, handleRect.height), MouseCursor.ResizeUpLeft);
-            Event e = Event.current;
-            Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
-            if (e.type == EventType.MouseDown && handleRect.Contains(mouseGraphPos)) e.Use();
-        }
-        #endregion
-
-        #region Connection Drawing
-        private void DrawConnections()
-        {
-            if (conversationData?.ConversationManager?.Nodes == null) return;
-
-            Handles.BeginGUI();
-
-            foreach (var node in conversationData.ConversationManager.Nodes)
-            {
-                if (node.NextNodeId > 0)
-                {
-                    var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == node.NextNodeId);
-                    if (targetNode != null)
-                    {
-                        DrawConnection(node.EditorPosition + node.EditorSize / 2,
-                                     targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2),
-                                     Color.white);
-                    }
-                }
-
-                if (node.Options != null)
-                {
-                    float optionHeight = 60f;
-                    float optionWidth = 150f;
-                    float spacing = 10f;
-
-                    for (int i = 0; i < node.Options.Count; i++)
-                    {
-                        var option = node.Options[i];
-                        if (option.NextNodeId > 0)
-                        {
-                            var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == option.NextNodeId);
-                            if (targetNode != null)
-                            {
-                                Vector2 optionPos = new Vector2(
-                                    node.EditorPosition.x + node.EditorSize.x + spacing + optionWidth / 2,
-                                    node.EditorPosition.y + i * (optionHeight + spacing) + optionHeight / 2
-                                );
-
-                                DrawConnection(optionPos,
-                                             targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2),
-                                             Color.cyan);
-                            }
-                        }
-                    }
-                }
-
-                if (node.ConditionalBranches != null)
-                {
-                    float branchHeight = 40f;
-                    float branchWidth = 100f;
-                    float spacing = 10f;
-
-                    for (int i = 0; i < node.ConditionalBranches.Count; i++)
-                    {
-                        var branch = node.ConditionalBranches[i];
-
-                        if (branch.NextNodeIdTrue > 0)
-                        {
-                            var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
-                            if (targetNode != null)
-                            {
-                                Vector2 branchPos = new Vector2(
-                                    node.EditorPosition.x + node.EditorSize.x + spacing + branchWidth / 2,
-                                    node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight / 2
-                                );
-
-                                DrawConnection(branchPos,
-                                             targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2),
-                                             Color.green);
-                            }
-                        }
-
-                        if (branch.NextNodeIdFalse > 0)
-                        {
-                            var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
-                            if (targetNode != null)
-                            {
-                                Vector2 branchPos = new Vector2(
-                                    node.EditorPosition.x + node.EditorSize.x + spacing + branchWidth / 2,
-                                    node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight * 1.5f + 5
-                                );
-
-                                DrawConnection(branchPos,
-                                             targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2),
-                                             Color.red);
-                            }
-                        }
-                    }
-                }
-            }
-
-            Handles.EndGUI();
-        }
-
-        private void DrawConnection(Vector2 startWorld, Vector2 endWorld, Color color)
-        {
-            Vector2 start = WorldToGraph(startWorld);
-            Vector2 end = WorldToGraph(endWorld);
-
-            Handles.color = color;
-            Vector2 tangentOffset = Vector2.right * (50f * zoom);
-            Vector2 startTangent = start + tangentOffset;
-            Vector2 endTangent = end - tangentOffset;
-            Handles.DrawBezier(start, end, startTangent, endTangent, color, null, 5f);
-
-            Vector2 direction = (end - endTangent).normalized;
-            Vector2 arrowPoint1 = end - direction * 10 + new Vector2(-direction.y, direction.x) * 5;
-            Vector2 arrowPoint2 = end - direction * 10 - new Vector2(-direction.y, direction.x) * 5;
-            Handles.DrawAAPolyLine(5f, end, arrowPoint1);
-            Handles.DrawAAPolyLine(5f, end, arrowPoint2);
-        }
-
-        private void DrawConnectionLine()
-        {
-            if (!isConnecting) return;
-
-            Vector2 startPos = Vector2.zero;
-
-            if (connectingFromOption != null)
-            {
-                var node = connectingFromNode;
-                int optionIndex = node.Options.IndexOf(connectingFromOption);
-                if (optionIndex >= 0)
-                {
-                    float optionHeight = 60f;
-                    float optionWidth = 150f;
-                    float spacing = 10f;
-                    startPos = new Vector2(
-                        node.EditorPosition.x + node.EditorSize.x + spacing + optionWidth,
-                        node.EditorPosition.y + optionIndex * (optionHeight + spacing) + optionHeight / 2
-                    );
-                }
-            }
-            else if (connectingFromBranch != null)
-            {
-                var node = connectingFromNode;
-                int branchIndex = node.ConditionalBranches.IndexOf(connectingFromBranch);
-                if (branchIndex >= 0)
-                {
-                    float branchHeight = 40f;
-                    float branchWidth = 100f;
-                    float spacing = 10f;
-                    float yOffset = connectingBranchIndex == 0 ? branchHeight / 2 : branchHeight * 1.5f + 5;
-                    startPos = new Vector2(
-                        node.EditorPosition.x + node.EditorSize.x + spacing + branchWidth,
-                        node.EditorPosition.y + branchIndex * (branchHeight * 2 + spacing) + yOffset
-                    );
-                }
-            }
-            else
-            {
-                startPos = connectingFromNode.EditorPosition + connectingFromNode.EditorSize / 2;
-            }
-
-            Vector2 endPos = WindowToWorld(Event.current.mousePosition);
-
-            Handles.BeginGUI();
-            Handles.color = Color.yellow;
-            Handles.DrawAAPolyLine(5f, WorldToGraph(startPos), WorldToGraph(endPos));
-            Handles.EndGUI();
-
-            Repaint();
-        }
-
-        private void CompleteConnection(ConversationNode targetNode)
-        {
-            if (!isConnecting || connectingFromNode == null) return;
-
-            Undo.RecordObject(this, "Create Connection");
-
-            if (connectingFromOption != null)
-            {
-                connectingFromOption.NextNodeId = targetNode.Id;
-            }
-            else if (connectingFromBranch != null)
-            {
-                if (connectingBranchIndex == 0)
-                {
-                    connectingFromBranch.NextNodeIdTrue = targetNode.Id;
-                }
-                else
-                {
-                    connectingFromBranch.NextNodeIdFalse = targetNode.Id;
-                }
-            }
-            else
-            {
-                connectingFromNode.NextNodeId = targetNode.Id;
-            }
-
-            MarkDirty();
-            isConnecting = false;
-            connectingFromNode = null;
-            connectingFromOption = null;
-            connectingFromBranch = null;
-            Repaint();
+            if (graphView == null) return;
+            graphView.SetReadOnlyMode(false);
+            graphView.Draw();
         }
         #endregion
 
         #region Inspector Panel
         private void DrawInspectorPanel()
         {
-            // This is now called from within a GUILayout.BeginArea in DrawThreePanelLayout
-            // So we don't need to create our own area here
             inspectorScrollPos = EditorGUILayout.BeginScrollView(inspectorScrollPos);
-
-            if (selectedNode != null)
+            var graphSelectedNode = graphView?.SelectedNode;
+            var graphSelectedOption = graphView?.SelectedOption;
+            var graphSelectedBranch = graphView?.SelectedBranch;
+            if (graphSelectedNode != null)
             {
-                DrawNodeInspector(selectedNode);
+                DrawNodeInspector(graphSelectedNode);
             }
-            else if (selectedOption != null)
+            else if (graphSelectedOption != null)
             {
-                DrawOptionInspector(selectedOption);
+                DrawOptionInspector(graphSelectedOption);
             }
-            else if (selectedBranch != null)
+            else if (graphSelectedBranch != null)
             {
-                DrawBranchInspector(selectedBranch);
+                DrawBranchInspector(graphSelectedBranch);
             }
             else
             {
@@ -1384,7 +673,7 @@ namespace ConversationEditor
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
             option.Text = EditorGUILayout.TextField("Text", option.Text, GUILayout.ExpandWidth(true));
-            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, selectedNode);
+            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode);
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(option.Conditions);
@@ -1397,8 +686,8 @@ namespace ConversationEditor
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
-            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, selectedNode);
-            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, selectedNode);
+            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, graphView?.SelectedNode);
+            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, graphView?.SelectedNode);
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(branch.Conditions);
@@ -1623,14 +912,6 @@ namespace ConversationEditor
                 MarkDirty();
             }
             zoom = clampedZoom;
-        }
-
-        private void DrawConnectionFromOption(ConversationNode node, ConversationOption option, Rect optionRect)
-        {
-        }
-
-        private void DrawConnectionFromBranch(ConversationNode node, ConditionalBranch branch, Rect trueRect, Rect falseRect)
-        {
         }
 
         private void OpenConversationDialog()
@@ -2035,7 +1316,7 @@ namespace ConversationEditor
             };
             conversationData.ConversationManager.Nodes.Add(startNode);
             conversationData.ConversationManager.Nodes.Add(endNode);
-            ApplyZoomFromConversationSettings();
+            graphView?.SetConversationData(conversationData);
             currentFilePath = null;
             isDirty = false;
             selectedNode = null;
@@ -2059,8 +1340,8 @@ namespace ConversationEditor
                 return;
             }
             EnsureEditorSettings();
-            ApplyZoomFromConversationSettings();
             ConversationNodeUtility.EnsureStartNodeExists(conversationData);
+            graphView?.SetConversationData(conversationData);
             currentFilePath = filePath;
             isDirty = false;
             selectedNode = null;
@@ -2092,7 +1373,6 @@ namespace ConversationEditor
         private void SaveToFile(string filePath)
         {
             if (conversationData == null) return;
-            SaveEditorZoomSetting();
             try
             {
                 string json = ConversationJsonSettings.Serialize(conversationData);
@@ -2104,6 +1384,11 @@ namespace ConversationEditor
             {
                 EditorUtility.DisplayDialog("Error", $"Failed to save conversation: {ex.Message}", "OK");
             }
+        }
+
+        private void SyncInspectorVisibilityFromGraph()
+        {
+            showInspector = graphView != null && graphView.HasSelection;
         }
 
         private void MarkDirty()
