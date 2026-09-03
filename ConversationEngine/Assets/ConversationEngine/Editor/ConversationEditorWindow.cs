@@ -572,8 +572,9 @@ namespace ConversationEditor
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.IntField(new GUIContent("ID", "Unique node identifier."), node.Id, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
-            EditorGUI.BeginDisabledGroup(node.NodeType == ConversationNodeType.Start || node.NodeType == ConversationNodeType.End);
-            node.NodeType = (ConversationNodeType)EditorGUILayout.EnumPopup(new GUIContent("Node Type", "Node behavior type."), node.NodeType, GUILayout.ExpandWidth(true));
+            // Node Type is read-only for all nodes in the inspector
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.EnumPopup(new GUIContent("Node Type", "Node behavior type (read-only)."), node.NodeType, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
             if (node.NodeType == ConversationNodeType.Start)
             {
@@ -583,32 +584,37 @@ namespace ConversationEditor
             }
             else if (node.NodeType != ConversationNodeType.End)
             {
-                if (conversationData.ResourceManager.Actors.Count > 0)
+                // For conditional nodes we hide the dialogue-specific fields (Speaker, Text, Next Node, Functions)
+                if (node.NodeType != ConversationNodeType.Conditional)
                 {
-                    var actorIds = conversationData.ResourceManager.Actors.Select(a => a.Id).ToList();
-                    actorIds.Insert(0, "(None)");
-                    int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : actorIds.IndexOf(node.SpeakerActorId);
-                    if (currentIndex < 0) currentIndex = 0;
-                    int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor", "Actor speaking in this node."), currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
-                    node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
-                }
-                else
-                {
-                    node.SpeakerActorId = EditorGUILayout.TextField(new GUIContent("Speaker Actor ID", "Actor identifier for this node."), node.SpeakerActorId, GUILayout.ExpandWidth(true));
-                }
-                EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
-                node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
-                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
-                if (node.NodeType == ConversationNodeType.Dialogue)
-                {
+                    if (conversationData.ResourceManager.Actors.Count > 0)
+                    {
+                        var actorIds = conversationData.ResourceManager.Actors.Select(a => a.Id).ToList();
+                        actorIds.Insert(0, "(None)");
+                        int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : actorIds.IndexOf(node.SpeakerActorId);
+                        if (currentIndex < 0) currentIndex = 0;
+                        int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor", "Actor speaking in this node."), currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
+                        node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
+                    }
+                    else
+                    {
+                        node.SpeakerActorId = EditorGUILayout.TextField(new GUIContent("Speaker Actor ID", "Actor identifier for this node."), node.SpeakerActorId, GUILayout.ExpandWidth(true));
+                    }
+                    EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
+                    node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
+                    if (node.NodeType == ConversationNodeType.Dialogue)
+                    {
+                        DrawSectionSeparator();
+                        EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
+                        DrawOptionSection(node);
+                    }
                     DrawSectionSeparator();
-                    EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
-                    DrawOptionSection(node);
+                    EditorGUILayout.LabelField("Functions", EditorStyles.boldLabel);
+                    if (node.Functions == null) node.Functions = new List<ConversationFunction>();
+                    DrawFunctionList(node.Functions);
                 }
-                DrawSectionSeparator();
-                EditorGUILayout.LabelField("Functions", EditorStyles.boldLabel);
-                if (node.Functions == null) node.Functions = new List<ConversationFunction>();
-                DrawFunctionList(node.Functions);
+
                 if (node.NodeType == ConversationNodeType.Conditional)
                 {
                     DrawSectionSeparator();

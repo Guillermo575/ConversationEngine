@@ -137,12 +137,12 @@ The inspector panel appears on the right when a node is selected and shows:
 
 #### All Node Properties
 - **ID**: Auto-generated, read-only unique identifier
-- **Node Type**: Node type selector (read-only for Start/End)
+- **Node Type**: Node type selector (read-only for all node types)
 
 #### Start Node Properties
 - **Next Node**: Dropdown selector for connected node
 
-#### Dialogue/Function Node Properties
+-#### Dialogue/Function Node Properties
 - **Speaker Actor**: Dropdown of available actors
 - **Text**: Multi-line text area for dialogue content
 - **Next Node**: Dropdown selector (not manual ID entry)
@@ -157,6 +157,8 @@ The inspector panel appears on the right when a node is selected and shows:
   - Parameter configuration
   - Timestamp for text synchronization
 - **Editor Properties**: Position and size
+
+Note: For `Conditional` nodes the dialogue-specific fields above (Speaker Actor, Text, Next Node and Functions) are hidden in the inspector because conditional nodes only expose conditional branches and editor properties.
 
 ### Option Nodes In Graph
 - Option nodes are rendered as individual draggable blocks.
