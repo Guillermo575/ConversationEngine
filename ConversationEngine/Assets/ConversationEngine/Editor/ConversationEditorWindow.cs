@@ -541,13 +541,14 @@ namespace ConversationEditor
             var graphSelectedNode = graphView?.SelectedNode;
             var graphSelectedOption = graphView?.SelectedOption;
             var graphSelectedBranch = graphView?.SelectedBranch;
-            if (graphSelectedNode != null)
-            {
-                DrawNodeInspector(graphSelectedNode);
-            }
-            else if (graphSelectedOption != null)
+            // Prefer showing option inspector when an option is selected (options also reference a parent node)
+            if (graphSelectedOption != null)
             {
                 DrawOptionInspector(graphSelectedOption);
+            }
+            else if (graphSelectedNode != null)
+            {
+                DrawNodeInspector(graphSelectedNode);
             }
             else if (graphSelectedBranch != null)
             {
