@@ -643,7 +643,10 @@ namespace ConversationEditor
                     {
                         var option = node.Options[i];
                         Rect optionRect = GetOptionWorldRect(node, option, i);
-                        Vector2 optionStart = new Vector2(node.EditorPosition.x + node.EditorSize.x, optionRect.center.y);
+                        // Start point should be on the right edge of the parent node and vertically
+                        // aligned with the option center but clamped to the node's vertical bounds
+                        float clampedY = Mathf.Clamp(optionRect.center.y, node.EditorPosition.y, node.EditorPosition.y + node.EditorSize.y);
+                        Vector2 optionStart = new Vector2(node.EditorPosition.x + node.EditorSize.x, clampedY);
                         Vector2 optionEnd = new Vector2(optionRect.xMin, optionRect.center.y);
                         DrawParentOptionLink(optionStart, optionEnd, Color.white);
                         if (option.NextNodeId > 0)
