@@ -1,39 +1,55 @@
->	Reglas para documentar el codigo:
-	*	Para que este codigo tenga mayor difusion redactalo en ingles
-	*	El codigo que añada funciones nuevas al programa agregalas en los archivos read_me que estan dentro del proyecto
-	*	A menos que yo te lo indique evitaras:
-		-	Crear archivos .md adicionales
-		-	Documentar cambios en archivos tipo changelog o bitacora de cambios (esos que indica los cambios de la nueva version)
-		-	Documentar las correcciones de bugs
-		-	Los cambios que se hagan de algo que ya existe y ahora funciona diferente evitaras documentarlo como novedades de una nueva version a otra
-			-	En su lugar editaras la documentacion para que se ajuste al nuevo contexto
-	*	Usa emoticonos y simbolos si lo necesitas (configura la codificacion de los .md si es necesario)
->	Reglas para redactar y ordenar el codigo:
-	*	Todas las variables, metodos, comentarios, etc tiene que estar en Ingles
-		-	Solo usar caracteres alfanumericos al nombrarlos (nada de caracteres especiales)
-		-	No usar caracteres que no se usen en ingles ejemplo: ñ, Ç y vocales con acento
-		-	No usar este caracter (´) de ninguna forma
-		-	No uses emoticonos ni simbolos en los comentarios
-	*	Cuando uses #region colocaras una descripcion maximo de 4 palabras que resuma lo que hay dentro
-	*	No uses lineas vacias para separar, me es mas legible leer una linea debajo de la otra y las etiquetas de #region/#endregion para separar el codigo extenso:
-		-	En Notepad++ uso la expresion regular "^\s*\r?\n" para identificar y quitar las lineas vacias y dejar lo demas como esta (para que me entiendas a que me refiero con lineas vacias)
-		-	A pesar de lo anterior mencionado con #region/#endregion aplicaras las siguientes reglas:
-			-	cuando uses #region coloca una linea vacia (en caso de no haber un cochete "{" arriba de #region)
-			-	cuando uses #endregion coloca una linea vacia (en caso de no haber un cochete "}" abajo de #endregion)
-	*	Si la clase tiene metodos con disintas funciones ordenalos por categoria (la funcion que cumplen) y envuelvelos con #region/#endregion
-	*	Si tienes bastantes variables y piensas separarlos con comentarios usa #region/#endregion en su lugar
-	*	Dentro de un metodo:
-		-	Si vas a colocar comentarios de mas de una linea envuelve el codigo del que se esta hablando (y esos mismos comentarios) en un #region/#endregion
-		-	si una parte del codigo esta envuelto en un #region/#endregion no puedes colocar otro #region/#endregion
-		-	Si usas return o continue para salir abruptamente de un metodo o loop por medio de una condicional el return tiene que estar dentro de la misma linea que la condicional ejemplo:
-			-	if (x < 0) return;
-		-	Si en la condicional no vas a usar corchetes "{ }" el codigo que se ejecuta al cumplirse la condicional estara en la misma linea ejemplo:
-			-	if (x < 0) y = true;
-	*   Cuando trabajes sobre ventanas, GUI, o cualquier codigo que involucre agregar botones, campos de texto, dropdowns, etc. verifica si tiene funciones nativas para agregar leyendas tooltip para que al posicionar el puntero sobre el componente se muestre un mensaje explicativo
-		-   En caso de tenerla siempre coloca un tooltip en cada componente que hagas o edites
-			-   No agregues tooltips en codigo que no estes tocando a menos que yo te lo indique
-		-   En caso contrario no implementes funciones o metodos externas para desplegar el tooltip a menos que yo te lo indique 
-	*	Con lo anterior descrito solo aplicaras estas reglas con el codigo que este creando o editando, no con el codigo que ya existe y que no estas tocando
-		-	La excepciones a lo anterior y puedas aplicar las reglas anteriores seian:
-			-	A menos que yo lo indique
-			-	Estas modificando sobre un metodo que ya existia previamente
+
+---
+# Reglas para el agente de Copilot
+
+## Reglas para documentar el codigo:
+	* Para mayor difusión, redactar en inglés.
+	* Añadir funciones nuevas en los archivos README dentro del proyecto.
+    * Evitar (a menos que se indique):
+        - Crear archivos .md adicionales.
+        - Documentar cambios en changelog o bitácora.
+        - Documentar correcciones de bugs.
+		- Si se realizo cambios en comportamiento existente, quitar en la documentacion el comportamiento anterior y sustituirlo por el actual.
+    * Usar emoticonos y símbolos si es necesario (configurar codificación en .md).
+
+---
+
+## Reglas para preparar el area de trabajo
+	* Antes de proyectos desde cero, analizar si el código puede reutilizarse.
+		- Es preferible tener archivos separados que se encarguen de tareas especificas que podrían ocupar muchas lineas de codigo.
+		- Si haces código que se encarga de manejar segmentos modulares (como interfaces, paneles o ventanas) manejaras una clase principal que funcione como la "base" que servira para instanciar, manejar y mantener en comunicacion a las demas clases modulares.
+		- El objetivo es ahorrar tiempo, prevenir tener archivos pesados, codigo duplicado, logica redundante y volver a analizar el codigo para hacer la segmentacion en una etapa avanzada del proyecto.
+
+---
+
+## Reglas para redactar y ordenar el codigo:
+    ### Variables, métodos, comentarios
+		- En ingles.
+        - Solo caracteres alfanuméricos en nombres.
+        - Sin caracteres especiales, incluyendo ñ, Ç, acentos.
+        - No usar el carácter (´).
+        - Sin emoticonos ni símbolos en comentarios.
+    * Usar #region con una descripción de máximo 4 palabras.
+    * No usar líneas vacías para separar pero con la siguientes excepciones:
+        - Cuando uses #region, coloca una línea vacía antes si no hay un "{" arriba.
+        - Cuando uses #endregion, coloca línea vacía después si no hay un "}" abajo.
+	* Si la clase tiene metodos con disintas funciones ordenalos por categoria (la funcion que cumplen) y envuelvelos con #region/#endregion.
+	* Si tienes bastantes variables y piensas separarlos con comentarios usa #region/#endregion en su lugar.
+    ### Dentro de métodos:
+        - Encerrar bloques de comentarios largos en #region/#endregion.
+        - No anidar #region/#endregion dentro de otros.
+        - Uso de return o continue en la misma línea que la condición:
+            - Ejemplo: if (x < 0) return;
+        - Sin llaves en condicionales si solo hay una línea:
+            - Ejemplo: if (x < 0) y = true;
+    ### Para componentes GUI:
+        - Verificar si tienen funciones nativas para tooltips.
+        - Agregar tooltip en cada componente editado o creado.
+        - No agregar tooltips en otros componentes a menos que se indique.
+        - No implementar funciones externas para tooltips en código sin tocar (salvo indicación).
+    ### Estas reglas aplican solo al código que estás creando o modificando en ese momento, no al código existente no tocado.
+        - Excepciones:
+            - Cuando se indique lo contrario.
+            - Cuando modifiques un método existente.
+
+---
