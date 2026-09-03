@@ -150,12 +150,24 @@ The inspector panel appears on the right when a node is selected and shows:
   - Add/remove options
   - Per-option text and Next Node dropdown
   - Condition rules for option visibility
+  - Option node local position and size editable from the option inspector
 - **Functions**: Timed function execution
   - Predefined function library
   - Custom function support
   - Parameter configuration
   - Timestamp for text synchronization
 - **Editor Properties**: Position and size
+
+### Option Nodes In Graph
+- Option nodes are rendered as individual draggable blocks.
+- Each option node stores a local position and size relative to its parent dialogue node.
+- Parent-to-option link lines are drawn to identify option ownership.
+- Left click selects an option node and opens its inspector.
+- Drag with left click to move only the selected option node.
+- Right click an option node to open actions:
+  - Duplicate option
+  - Create new option (default text: `-`)
+  - Delete option
 
 #### Conditional Node Properties
 - **Conditional Branches**: Multiple branch support

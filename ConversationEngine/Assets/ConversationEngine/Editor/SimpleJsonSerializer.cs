@@ -117,6 +117,14 @@ namespace ConversationEditor
                     sb.AppendLine("          {");
                     sb.AppendLine($"            \"Text\": \"{EscapeString(opt.Text)}\",");
                     sb.AppendLine($"            \"NextNodeId\": {opt.NextNodeId},");
+                    sb.AppendLine("            \"EditorPosition\": {");
+                    sb.AppendLine($"              \"X\": {opt.EditorPosition.x},");
+                    sb.AppendLine($"              \"Y\": {opt.EditorPosition.y}");
+                    sb.AppendLine("            },");
+                    sb.AppendLine("            \"EditorSize\": {");
+                    sb.AppendLine($"              \"X\": {opt.EditorSize.x},");
+                    sb.AppendLine($"              \"Y\": {opt.EditorSize.y}");
+                    sb.AppendLine("            },");
                     sb.AppendLine("            \"Conditions\": []");
                     sb.Append("          }");
                     if (i < node.Options.Count - 1) sb.Append(",");

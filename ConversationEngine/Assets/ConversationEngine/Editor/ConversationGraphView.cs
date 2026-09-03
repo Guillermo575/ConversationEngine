@@ -39,6 +39,10 @@ namespace ConversationEditor
         private bool isMouseOverNode = false;
         private bool isRightClickMenuActive = false;
         private bool isNodeBeingDragged = false;
+        private bool isMouseOverOption = false;
+        private bool isOptionBeingDragged = false;
+        private ConversationNode optionDragParentNode;
+        private ConversationOption optionBeingDragged;
         #endregion
 
         #region Layout State
@@ -61,6 +65,8 @@ namespace ConversationEditor
         private GUIStyle functionNodeSelectedStyle;
         private GUIStyle functionNodeDraggingStyle;
         private GUIStyle optionNodeStyle;
+        private GUIStyle optionNodeSelectedStyle;
+        private GUIStyle optionNodeDraggingStyle;
         private GUIStyle conditionalNodeStyle;
         private GUIStyle conditionalNodeSelectedStyle;
         private GUIStyle conditionalNodeDraggingStyle;
@@ -77,6 +83,9 @@ namespace ConversationEditor
         private const int minNodeFontSize = 8;
         private const int nodeHeaderBaseFontSize = 11;
         private const int nodeBodyBaseFontSize = 12;
+        private const float optionDefaultWidth = 150f;
+        private const float optionDefaultHeight = 60f;
+        private const float optionDefaultSpacing = 10f;
         #endregion
 
         #region Events
@@ -104,6 +113,7 @@ namespace ConversationEditor
             conversationData = data;
             EnsureEditorSettings();
             ApplyZoomFromConversationSettings();
+            EnsureOptionEditorDataInConversation();
             ClearSelection();
             panOffset = Vector2.zero;
         }
@@ -344,21 +354,8 @@ namespace ConversationEditor
                     e.Use();
                     return;
                 }
-                bool clickedOnNode = false;
                 Vector2 mouseWorldPos = WindowToWorld(e.mousePosition);
-                if (conversationData?.ConversationManager?.Nodes != null)
-                {
-                    foreach (var node in conversationData.ConversationManager.Nodes)
-                    {
-                        Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
-                        if (nodeRect.Contains(mouseWorldPos))
-                        {
-                            clickedOnNode = true;
-                            break;
-                        }
-                    }
-                }
-                if (clickedOnNode) return;
+                if (IsPointerOverInteractiveElement(mouseWorldPos)) return;
                 if (isConnecting)
                 {
                     isConnecting = false;
@@ -397,26 +394,11 @@ namespace ConversationEditor
             if (isReadOnly) return;
             if (e.type == EventType.MouseDown && e.button == 1)
             {
-                bool clickedOnNode = false;
                 Vector2 mouseWorldPos = WindowToWorld(e.mousePosition);
-                if (conversationData?.ConversationManager?.Nodes != null)
-                {
-                    foreach (var node in conversationData.ConversationManager.Nodes)
-                    {
-                        Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
-                        if (nodeRect.Contains(mouseWorldPos))
-                        {
-                            clickedOnNode = true;
-                            break;
-                        }
-                    }
-                }
-                if (!clickedOnNode)
-                {
-                    contextMenuPosition = mouseWorldPos;
-                    ShowContextMenu();
-                    e.Use();
-                }
+                if (IsPointerOverInteractiveElement(mouseWorldPos)) return;
+                contextMenuPosition = mouseWorldPos;
+                ShowContextMenu();
+                e.Use();
             }
         }
 
@@ -491,18 +473,18 @@ namespace ConversationEditor
         #region Options Branches
         private void DrawNodeOptions(ConversationNode node, Rect nodeRect)
         {
-            float optionHeight = 60f;
-            float optionWidth = 150f;
-            float spacing = 10f;
             for (int i = 0; i < node.Options.Count; i++)
             {
                 var option = node.Options[i];
-                Rect optionWorldRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (optionHeight + spacing), optionWidth, optionHeight);
+                Rect optionWorldRect = GetOptionWorldRect(node, option, i);
                 Rect optionRect = WorldToGraphRect(optionWorldRect);
-                GUI.Box(optionRect, "", optionNodeStyle);
-                GUILayout.BeginArea(optionRect);
-                GUILayout.Label($"Option {i + 1}", EditorStyles.boldLabel);
-                GUILayout.Label(string.IsNullOrEmpty(option.Text) ? "(empty)" : (option.Text.Length > 20 ? option.Text.Substring(0, 20) + "..." : option.Text));
+                GUIStyle optionStyle = GetOptionStyle(option);
+                GUI.Box(optionRect, GUIContent.none, optionStyle);
+                Rect optionContentRect = new Rect(optionRect.x + 8f, optionRect.y + 6f, optionRect.width - 16f, optionRect.height - 12f);
+                GUILayout.BeginArea(optionContentRect);
+                GUILayout.Label(new GUIContent($"Option {i + 1}", "Option node index inside the parent dialogue node."), EditorStyles.boldLabel);
+                string optionPreview = string.IsNullOrEmpty(option.Text) ? "(empty)" : (option.Text.Length > 20 ? option.Text.Substring(0, 20) + "..." : option.Text);
+                GUILayout.Label(new GUIContent(optionPreview, "Option text preview."));
                 GUILayout.EndArea();
                 HandleOptionInteraction(node, option, optionRect, i);
             }
@@ -521,18 +503,48 @@ namespace ConversationEditor
                     connectingFromOption = option;
                     connectingFromBranch = null;
                     e.Use();
+                    return;
                 }
-                else if (e.button == 0)
+                if (e.button == 0)
                 {
                     SetSelection(node, option, null);
+                    isMouseOverNode = false;
+                    isMouseOverOption = true;
+                    isOptionBeingDragged = false;
+                    optionDragParentNode = node;
+                    optionBeingDragged = option;
                     e.Use();
                     RequestRepaint();
+                    return;
                 }
-                else if (!isReadOnly && e.button == 1)
+                if (!isReadOnly && e.button == 1)
                 {
+                    SetSelection(node, option, null);
                     ShowOptionContextMenu(node, option, index);
                     e.Use();
+                    return;
                 }
+            }
+            if (isReadOnly) return;
+            if (e.type == EventType.MouseDrag && selectedNode == node && selectedOption == option && !isConnecting && e.button == 0 && isMouseOverOption && optionDragParentNode == node && optionBeingDragged == option)
+            {
+                if (!isOptionBeingDragged) isOptionBeingDragged = true;
+                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Move Option Node");
+                option.EditorPosition += e.delta / zoom;
+                option.EditorPosition.x = Mathf.Clamp(option.EditorPosition.x, -10000f, 10000f);
+                option.EditorPosition.y = Mathf.Clamp(option.EditorPosition.y, -10000f, 10000f);
+                MarkDirty();
+                e.Use();
+                RequestRepaint();
+                return;
+            }
+            if (e.type == EventType.MouseUp && e.button == 0)
+            {
+                if (isOptionBeingDragged) RequestRepaint();
+                isOptionBeingDragged = false;
+                isMouseOverOption = false;
+                optionDragParentNode = null;
+                optionBeingDragged = null;
             }
         }
 
@@ -627,18 +639,19 @@ namespace ConversationEditor
                 }
                 if (node.Options != null)
                 {
-                    float optionHeight = 60f;
-                    float optionWidth = 150f;
-                    float spacing = 10f;
                     for (int i = 0; i < node.Options.Count; i++)
                     {
                         var option = node.Options[i];
+                        Rect optionRect = GetOptionWorldRect(node, option, i);
+                        Vector2 optionStart = new Vector2(node.EditorPosition.x + node.EditorSize.x, optionRect.center.y);
+                        Vector2 optionEnd = new Vector2(optionRect.xMin, optionRect.center.y);
+                        DrawParentOptionLink(optionStart, optionEnd, Color.white);
                         if (option.NextNodeId > 0)
                         {
                             var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == option.NextNodeId);
                             if (targetNode != null)
                             {
-                                Vector2 optionPos = new Vector2(node.EditorPosition.x + node.EditorSize.x + spacing + optionWidth / 2, node.EditorPosition.y + i * (optionHeight + spacing) + optionHeight / 2);
+                                Vector2 optionPos = new Vector2(optionRect.xMax, optionRect.center.y);
                                 DrawConnection(optionPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.cyan);
                             }
                         }
@@ -702,10 +715,8 @@ namespace ConversationEditor
                 int optionIndex = node.Options.IndexOf(connectingFromOption);
                 if (optionIndex >= 0)
                 {
-                    float optionHeight = 60f;
-                    float optionWidth = 150f;
-                    float spacing = 10f;
-                    startPos = new Vector2(node.EditorPosition.x + node.EditorSize.x + spacing + optionWidth, node.EditorPosition.y + optionIndex * (optionHeight + spacing) + optionHeight / 2);
+                    Rect optionRect = GetOptionWorldRect(node, connectingFromOption, optionIndex);
+                    startPos = new Vector2(optionRect.xMax, optionRect.center.y);
                 }
             }
             else if (connectingFromBranch != null)
@@ -751,6 +762,12 @@ namespace ConversationEditor
             connectingFromBranch = null;
             RequestRepaint();
         }
+
+        private void DrawParentOptionLink(Vector2 startWorld, Vector2 endWorld, Color color)
+        {
+            Handles.color = color;
+            Handles.DrawAAPolyLine(3f, WorldToGraph(startWorld), WorldToGraph(endWorld));
+        }
         #endregion
 
         #region Menus
@@ -792,7 +809,7 @@ namespace ConversationEditor
                 {
                     if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Add Option");
                     if (node.Options == null) node.Options = new List<ConversationOption>();
-                    node.Options.Add(new ConversationOption());
+                    node.Options.Add(CreateOption(node, "", node.Options.Count));
                     MarkDirty();
                     isRightClickMenuActive = false;
                 });
@@ -823,17 +840,34 @@ namespace ConversationEditor
                 {
                     Text = option.Text,
                     NextNodeId = 0,
-                    Conditions = new List<ConditionRule>(option.Conditions ?? new List<ConditionRule>())
+                    Conditions = new List<ConditionRule>(option.Conditions ?? new List<ConditionRule>()),
+                    EditorPosition = option.EditorPosition + new Vector2(25f, 20f),
+                    EditorSize = option.EditorSize
                 };
                 node.Options.Insert(index + 1, newOption);
+                SetSelection(node, newOption, null);
                 MarkDirty();
+                isRightClickMenuActive = false;
+            });
+            menu.AddItem(new GUIContent("Create New Option"), false, () =>
+            {
+                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Option");
+                if (node.Options == null) node.Options = new List<ConversationOption>();
+                var newOption = CreateOption(node, "-", node.Options.Count);
+                node.Options.Insert(index + 1, newOption);
+                SetSelection(node, newOption, null);
+                MarkDirty();
+                isRightClickMenuActive = false;
             });
             menu.AddItem(new GUIContent("Delete Option"), false, () =>
             {
                 if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Delete Option");
                 node.Options.RemoveAt(index);
+                if (selectedOption == option) SetSelection(node, null, null);
                 MarkDirty();
+                isRightClickMenuActive = false;
             });
+            isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
         #endregion
@@ -894,12 +928,10 @@ namespace ConversationEditor
                 NodeType = ConversationNodeType.Dialogue,
                 EditorPosition = contextMenuPosition,
                 EditorSize = new Vector2(200, 100),
-                Options = new List<ConversationOption>
-                {
-                    new ConversationOption { Text = "Option 1" },
-                    new ConversationOption { Text = "Option 2" }
-                }
+                Options = new List<ConversationOption>()
             };
+            newNode.Options.Add(CreateOption(newNode, "Option 1", 0));
+            newNode.Options.Add(CreateOption(newNode, "Option 2", 1));
             conversationData.ConversationManager.Nodes.Add(newNode);
             if (shouldAutoLink) TryAutoLinkStartNode(newNode);
             SetSelection(newNode, null, null);
@@ -925,7 +957,9 @@ namespace ConversationEditor
                 {
                     Text = o.Text,
                     NextNodeId = 0,
-                    Conditions = new List<ConditionRule>(o.Conditions ?? new List<ConditionRule>())
+                    Conditions = new List<ConditionRule>(o.Conditions ?? new List<ConditionRule>()),
+                    EditorPosition = o.EditorPosition,
+                    EditorSize = o.EditorSize
                 }).ToList(),
                 Functions = node.Functions?.Select(f => new ConversationFunction
                 {
@@ -999,12 +1033,9 @@ namespace ConversationEditor
             Rect bounds = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
             if (node.Options != null && node.Options.Count > 0)
             {
-                float optionHeight = 60f;
-                float optionWidth = 150f;
-                float spacing = 10f;
                 for (int i = 0; i < node.Options.Count; i++)
                 {
-                    Rect optionRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (optionHeight + spacing), optionWidth, optionHeight);
+                    Rect optionRect = GetOptionWorldRect(node, node.Options[i], i);
                     bounds = EncapsulateRect(bounds, optionRect);
                 }
             }
@@ -1244,6 +1275,11 @@ namespace ConversationEditor
             functionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.white, borderWidth);
             optionNodeStyle = new GUIStyle(nodeStyle);
             optionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.4f, 0.7f, 0.9f, 0.9f), Color.black, borderWidth);
+            optionNodeStyle.padding = new RectOffset(borderWidth + 6, borderWidth + 6, borderWidth + 6, borderWidth + 6);
+            optionNodeSelectedStyle = new GUIStyle(optionNodeStyle);
+            optionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.4f, 0.7f, 0.9f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
+            optionNodeDraggingStyle = new GUIStyle(optionNodeStyle);
+            optionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.4f, 0.7f, 0.9f, 0.9f), Color.white, borderWidth);
             conditionalNodeStyle = new GUIStyle(nodeStyle);
             conditionalNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), Color.black, borderWidth);
             conditionalNodeSelectedStyle = new GUIStyle(conditionalNodeStyle);
@@ -1293,6 +1329,15 @@ namespace ConversationEditor
                     if (isSelected) return nodeSelectedStyle;
                     return nodeStyle;
             }
+        }
+
+        private GUIStyle GetOptionStyle(ConversationOption option)
+        {
+            bool isSelected = selectedOption == option;
+            bool isDragging = isOptionBeingDragged && isSelected;
+            if (isDragging) return optionNodeDraggingStyle;
+            if (isSelected) return optionNodeSelectedStyle;
+            return optionNodeStyle;
         }
 
         private int GetScaledNodeFontSize(int baseFontSize)
@@ -1348,6 +1393,82 @@ namespace ConversationEditor
         {
             OnRepaintRequested?.Invoke();
             ownerWindow?.Repaint();
+        }
+
+        private void EnsureOptionEditorDataInConversation()
+        {
+            if (conversationData?.ConversationManager?.Nodes == null) return;
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                if (node.Options == null) continue;
+                for (int i = 0; i < node.Options.Count; i++)
+                {
+                    EnsureOptionEditorData(node, node.Options[i], i);
+                }
+            }
+        }
+
+        private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
+        {
+            EnsureOptionEditorData(node, option, optionIndex);
+            Vector2 optionWorldPos = node.EditorPosition + option.EditorPosition;
+            return new Rect(optionWorldPos, option.EditorSize);
+        }
+
+        private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
+        {
+            if (node == null || option == null) return;
+            if (option.EditorSize.x <= 1f || option.EditorSize.y <= 1f) option.EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight);
+            if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
+        }
+
+        private Vector2 GenerateOptionPosition(ConversationNode node, int optionIndex)
+        {
+            float baseX = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
+            float baseY = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
+            return new Vector2(baseX, baseY);
+        }
+
+        private ConversationOption CreateOption(ConversationNode node, string text, int optionIndex)
+        {
+            var option = new ConversationOption
+            {
+                Text = text,
+                NextNodeId = 0,
+                Conditions = new List<ConditionRule>(),
+                EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight),
+                EditorPosition = GenerateOptionPosition(node, optionIndex)
+            };
+            return option;
+        }
+
+        private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
+        {
+            if (conversationData?.ConversationManager?.Nodes == null) return false;
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+                if (nodeRect.Contains(mouseWorldPos)) return true;
+                if (node.Options != null)
+                {
+                    for (int i = 0; i < node.Options.Count; i++)
+                    {
+                        Rect optionRect = GetOptionWorldRect(node, node.Options[i], i);
+                        if (optionRect.Contains(mouseWorldPos)) return true;
+                    }
+                }
+                if (node.NodeType != ConversationNodeType.Conditional || node.ConditionalBranches == null) continue;
+                float branchHeight = 40f;
+                float branchWidth = 100f;
+                float spacing = 10f;
+                for (int i = 0; i < node.ConditionalBranches.Count; i++)
+                {
+                    Rect trueRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing), branchWidth, branchHeight);
+                    Rect falseRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2f, branchWidth, branchHeight);
+                    if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
+                }
+            }
+            return false;
         }
         #endregion
     }

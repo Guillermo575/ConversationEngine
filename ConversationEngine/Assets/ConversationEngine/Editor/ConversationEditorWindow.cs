@@ -133,6 +133,9 @@ namespace ConversationEditor
         private const int minNodeFontSize = 8;
         private const int nodeHeaderBaseFontSize = 11;
         private const int nodeBodyBaseFontSize = 12;
+        private const float optionDefaultWidth = 150f;
+        private const float optionDefaultHeight = 60f;
+        private const float optionDefaultSpacing = 10f;
         #endregion
 
         #region Unity Menu Items
@@ -627,8 +630,12 @@ namespace ConversationEditor
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
             EditorGUI.BeginChangeCheck();
+            int selectedOptionIndex = graphView?.SelectedNode?.Options?.IndexOf(option) ?? 0;
+            EnsureOptionEditorData(graphView?.SelectedNode, option, Mathf.Max(0, selectedOptionIndex));
             option.Text = EditorGUILayout.TextField(new GUIContent("Text", "Option text shown to the player."), option.Text, GUILayout.ExpandWidth(true));
             option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode, "Target node for this option.");
+            option.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Local graph position relative to the parent node."), option.EditorPosition, GUILayout.ExpandWidth(true));
+            option.EditorSize = EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this option node."), option.EditorSize, GUILayout.ExpandWidth(true));
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(option.Conditions);
@@ -708,12 +715,7 @@ namespace ConversationEditor
                 else
                 {
                     Undo.RecordObject(this, "Add Option");
-                    node.Options.Add(new ConversationOption
-                    {
-                        Text = pendingOption.Text.Trim(),
-                        NextNodeId = pendingOption.NextNodeId,
-                        Conditions = new List<ConditionRule>()
-                    });
+                    node.Options.Add(CreateOptionForNode(node, pendingOption.Text.Trim(), pendingOption.NextNodeId, node.Options.Count));
                     pendingOption.Text = "";
                     pendingOption.NextNodeId = 0;
                     MarkDirty();
@@ -724,6 +726,7 @@ namespace ConversationEditor
             for (int i = 0; i < node.Options.Count; i++)
             {
                 if (node.Options[i].Conditions == null) node.Options[i].Conditions = new List<ConditionRule>();
+                EnsureOptionEditorData(node, node.Options[i], i);
                 EditorGUILayout.BeginHorizontal("box");
                 node.Options[i].Text = EditorGUILayout.TextField(new GUIContent("", "Option text."), node.Options[i].Text ?? "", GUILayout.ExpandWidth(true));
                 node.Options[i].NextNodeId = DrawNodeIdDropdownCompact("", node.Options[i].NextNodeId, node, "Target node for this option.");
@@ -741,6 +744,33 @@ namespace ConversationEditor
                 GUI.backgroundColor = oldColor;
                 EditorGUILayout.EndHorizontal();
             }
+        }
+
+        private ConversationOption CreateOptionForNode(ConversationNode node, string text, int nextNodeId, int optionIndex)
+        {
+            return new ConversationOption
+            {
+                Text = text,
+                NextNodeId = nextNodeId,
+                Conditions = new List<ConditionRule>(),
+                EditorPosition = GenerateOptionPosition(node, optionIndex),
+                EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight)
+            };
+        }
+
+        private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
+        {
+            if (node == null || option == null) return;
+            if (option.EditorSize.x <= 1f || option.EditorSize.y <= 1f) option.EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight);
+            if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
+        }
+
+        private Vector2 GenerateOptionPosition(ConversationNode node, int optionIndex)
+        {
+            if (node == null) return new Vector2(optionDefaultWidth + optionDefaultSpacing, optionDefaultSpacing);
+            float x = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
+            float y = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
+            return new Vector2(x, y);
         }
 
         private void DrawConditionalBranchSection(ConversationNode node)

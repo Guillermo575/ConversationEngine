@@ -119,6 +119,8 @@ namespace ConversationScheme
         public string Text;
         public int NextNodeId;
         public List<ConditionRule> Conditions = new List<ConditionRule>();
+        public Vector2 EditorPosition;
+        public Vector2 EditorSize = new Vector2(150, 60);
     }
 
     [Serializable]

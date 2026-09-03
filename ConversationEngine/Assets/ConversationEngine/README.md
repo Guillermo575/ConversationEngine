@@ -79,6 +79,8 @@
 - `Text`: option text displayed to the player.
 - `NextNodeId` (int): target node when this option is selected.
 - `Conditions`: list of condition rules that must be satisfied for this option to appear.
+- `EditorPosition` (Vector2): local option node position in the editor, where `(0,0)` is the parent node position.
+- `EditorSize` (Vector2): option node size in the editor (default: `150x60`).
 
 ## Conditional Branching
 `ConditionalBranch` includes:
