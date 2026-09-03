@@ -96,15 +96,11 @@ namespace ConversationEditor
                     }
                 }
 
-                if (currentNode.ConditionalBranches != null)
+                if (currentNode.conditionalBranch != null)
                 {
-                    foreach (var branch in currentNode.ConditionalBranches)
-                    {
-                        if (branch.NextNodeIdTrue > 0)
-                            connectedIds.Add(branch.NextNodeIdTrue);
-                        if (branch.NextNodeIdFalse > 0)
-                            connectedIds.Add(branch.NextNodeIdFalse);
-                    }
+                    var branch = currentNode.conditionalBranch;
+                    if (branch.NextNodeIdTrue > 0) connectedIds.Add(branch.NextNodeIdTrue);
+                    if (branch.NextNodeIdFalse > 0) connectedIds.Add(branch.NextNodeIdFalse);
                 }
 
                 // Enqueue unvisited connected nodes

@@ -98,7 +98,8 @@ namespace ConversationScheme
         public int NextNodeId;
         public List<ConversationOption> Options = new List<ConversationOption>();
         public List<ConversationFunction> Functions = new List<ConversationFunction>();
-        public List<ConditionalBranch> ConditionalBranches = new List<ConditionalBranch>();
+        // Renamed to singular conditionalBranch - only Conditional nodes use this
+        public ConditionalBranch conditionalBranch = null;
         public int DefaultBranchNodeId;
         public Vector2 EditorPosition;
         public Vector2 EditorSize = new Vector2(200, 100);

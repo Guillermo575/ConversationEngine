@@ -776,41 +776,21 @@ namespace ConversationEditor
 
         private void DrawConditionalBranchSection(ConversationNode node)
         {
-            if (node.ConditionalBranches == null) node.ConditionalBranches = new List<ConditionalBranch>();
-            for (int i = 0; i < node.ConditionalBranches.Count; i++)
-            {
-                var branch = node.ConditionalBranches[i];
-                if (branch.Conditions == null) branch.Conditions = new List<ConditionRule>();
-                EditorGUILayout.BeginVertical("box");
-                EditorGUILayout.LabelField($"Branch {i + 1}", EditorStyles.boldLabel);
-                EditorGUILayout.BeginHorizontal();
-                branch.NextNodeIdTrue = DrawNodeIdDropdownCompact("True", branch.NextNodeIdTrue, node, "Target node when this branch is true.");
-                branch.NextNodeIdFalse = DrawNodeIdDropdownCompact("False", branch.NextNodeIdFalse, node, "Target node when this branch is false.");
-                EditorGUILayout.EndHorizontal();
-                DrawConditionAddSection(branch);
-                DrawExistingConditionList(branch.Conditions);
-                if (GUILayout.Button(new GUIContent("Remove Branch", "Remove this conditional branch."), GUILayout.ExpandWidth(true)))
-                {
-                    Undo.RecordObject(this, "Remove Branch");
-                    node.ConditionalBranches.RemoveAt(i);
-                    pendingConditionsByBranch.Remove(branch);
-                    MarkDirty();
-                    EditorGUILayout.EndVertical();
-                    break;
-                }
-                EditorGUILayout.EndVertical();
-            }
-            if (GUILayout.Button(new GUIContent("Add Branch", "Add a new conditional branch."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
-            {
-                Undo.RecordObject(this, "Add Branch");
-                node.ConditionalBranches.Add(new ConditionalBranch
-                {
-                    Conditions = new List<ConditionRule>(),
-                    NextNodeIdTrue = 0,
-                    NextNodeIdFalse = 0
-                });
-                MarkDirty();
-            }
+            // Ensure singular conditionalBranch exists for conditional nodes
+            if (node.conditionalBranch == null) node.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
+            var branch = node.conditionalBranch;
+            if (branch.Conditions == null) branch.Conditions = new List<ConditionRule>();
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Conditional Branch", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            branch.NextNodeIdTrue = DrawNodeIdDropdownCompact("Next Node (True)", branch.NextNodeIdTrue, node, "Target node when branch evaluates true.");
+            branch.NextNodeIdFalse = DrawNodeIdDropdownCompact("Next Node (False)", branch.NextNodeIdFalse, node, "Target node when branch evaluates false.");
+            EditorGUILayout.EndHorizontal();
+            DrawConditionAddSection(branch);
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
+            DrawExistingConditionList(branch.Conditions);
+            EditorGUILayout.EndVertical();
             node.DefaultBranchNodeId = DrawNodeIdDropdown("Default Branch Node", node.DefaultBranchNodeId, node, "Fallback target node when no branch matches.");
         }
 
@@ -1276,12 +1256,9 @@ namespace ConversationEditor
                         NormalizeConditionList(option.Conditions);
                     }
                 }
-                if (node.ConditionalBranches != null)
+                if (node.conditionalBranch != null)
                 {
-                    foreach (var branch in node.ConditionalBranches)
-                    {
-                        NormalizeConditionList(branch.Conditions);
-                    }
+                    NormalizeConditionList(node.conditionalBranch.Conditions);
                 }
             }
         }

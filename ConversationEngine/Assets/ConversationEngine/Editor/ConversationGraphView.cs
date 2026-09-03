@@ -275,13 +275,40 @@ namespace ConversationEditor
             Rect nodeWorldRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
             Rect nodeRect = WorldToGraphRect(nodeWorldRect);
             GUIStyle style = GetNodeStyle(node);
-            GUI.Box(nodeRect, "", style);
-            GUILayout.BeginArea(nodeRect);
-            DrawNodeContent(node);
-            GUILayout.EndArea();
+            if (node.NodeType == ConversationNodeType.Conditional)
+            {
+                // Draw diamond shape for conditional node
+                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                float hx = node.EditorSize.x * 0.5f;
+                float hy = node.EditorSize.y * 0.5f;
+                Vector3[] points = new Vector3[4];
+                points[0] = WorldToGraph(new Vector2(center.x - hx, center.y)); // left
+                points[1] = WorldToGraph(new Vector2(center.x, center.y - hy)); // top
+                points[2] = WorldToGraph(new Vector2(center.x + hx, center.y)); // right
+                points[3] = WorldToGraph(new Vector2(center.x, center.y + hy)); // bottom
+                Handles.BeginGUI();
+                Handles.color = new Color(0.9f, 0.8f, 0.2f, 0.9f);
+                Handles.DrawAAConvexPolygon(points);
+                Handles.color = Color.black;
+                Handles.DrawAAPolyLine(3f, points[0], points[1], points[2], points[3], points[0]);
+                Handles.EndGUI();
+                // draw label
+                GUILayout.BeginArea(nodeRect);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label("Conditional", nodeHeaderStyle);
+                GUILayout.FlexibleSpace();
+                GUILayout.EndArea();
+            }
+            else
+            {
+                GUI.Box(nodeRect, "", style);
+                GUILayout.BeginArea(nodeRect);
+                DrawNodeContent(node);
+                GUILayout.EndArea();
+            }
             HandleNodeInteraction(node, nodeRect);
             if (node.Options != null && node.Options.Count > 0) DrawNodeOptions(node, nodeRect);
-            if (node.ConditionalBranches != null && node.ConditionalBranches.Count > 0) DrawConditionalBranches(node, nodeRect);
+            if (node.NodeType == ConversationNodeType.Conditional) DrawConditionalIndicators(node, nodeRect);
             if (!isReadOnly && selectedNode == node && node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
                 DrawResizeHandle(node, nodeRect);
         }
@@ -548,29 +575,24 @@ namespace ConversationEditor
             }
         }
 
-        private void DrawConditionalBranches(ConversationNode node, Rect nodeRect)
+        private void DrawConditionalIndicators(ConversationNode node, Rect nodeRect)
         {
-            if (node.NodeType != ConversationNodeType.Conditional) return;
-            float branchHeight = 40f;
-            float branchWidth = 100f;
-            float spacing = 10f;
-            for (int i = 0; i < node.ConditionalBranches.Count; i++)
-            {
-                var branch = node.ConditionalBranches[i];
-                Rect trueWorldRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing), branchWidth, branchHeight);
-                Rect trueRect = WorldToGraphRect(trueWorldRect);
-                GUI.Box(trueRect, "", optionNodeStyle);
-                GUILayout.BeginArea(trueRect);
-                GUILayout.Label($"Branch {i + 1}: TRUE", EditorStyles.boldLabel);
-                GUILayout.EndArea();
-                Rect falseWorldRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2, branchWidth, branchHeight);
-                Rect falseRect = WorldToGraphRect(falseWorldRect);
-                GUI.Box(falseRect, "", optionNodeStyle);
-                GUILayout.BeginArea(falseRect);
-                GUILayout.Label($"Branch {i + 1}: FALSE", EditorStyles.boldLabel);
-                GUILayout.EndArea();
-                HandleBranchInteraction(node, branch, trueRect, falseRect);
-            }
+            // Draw small interactive indicators to the left (true) and right (false) of the conditional diamond
+            Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+            float indicatorSize = 16f;
+            Rect trueWorldRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+            Rect falseWorldRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+            Rect trueRect = WorldToGraphRect(trueWorldRect);
+            Rect falseRect = WorldToGraphRect(falseWorldRect);
+            GUI.Box(trueRect, "", optionNodeStyle);
+            GUI.Box(falseRect, "", optionNodeStyle);
+            GUILayout.BeginArea(trueRect);
+            GUILayout.Label("T", EditorStyles.boldLabel);
+            GUILayout.EndArea();
+            GUILayout.BeginArea(falseRect);
+            GUILayout.Label("F", EditorStyles.boldLabel);
+            GUILayout.EndArea();
+            HandleBranchInteraction(node, node.conditionalBranch, trueRect, falseRect);
         }
 
         private void HandleBranchInteraction(ConversationNode node, ConditionalBranch branch, Rect trueRect, Rect falseRect)
@@ -660,32 +682,21 @@ namespace ConversationEditor
                         }
                     }
                 }
-                if (node.ConditionalBranches != null)
+                if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
                 {
-                    float branchHeight = 40f;
-                    float branchWidth = 100f;
-                    float spacing = 10f;
-                    for (int i = 0; i < node.ConditionalBranches.Count; i++)
+                    var branch = node.conditionalBranch;
+                    Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                    Vector2 leftPos = new Vector2(center.x - node.EditorSize.x * 0.5f, center.y);
+                    Vector2 rightPos = new Vector2(center.x + node.EditorSize.x * 0.5f, center.y);
+                    if (branch.NextNodeIdTrue > 0)
                     {
-                        var branch = node.ConditionalBranches[i];
-                        if (branch.NextNodeIdTrue > 0)
-                        {
-                            var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
-                            if (targetNode != null)
-                            {
-                                Vector2 branchPos = new Vector2(node.EditorPosition.x + node.EditorSize.x + spacing + branchWidth / 2, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight / 2);
-                                DrawConnection(branchPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.green);
-                            }
-                        }
-                        if (branch.NextNodeIdFalse > 0)
-                        {
-                            var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
-                            if (targetNode != null)
-                            {
-                                Vector2 branchPos = new Vector2(node.EditorPosition.x + node.EditorSize.x + spacing + branchWidth / 2, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight * 1.5f + 5);
-                                DrawConnection(branchPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.red);
-                            }
-                        }
+                        var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
+                        if (targetNode != null) DrawConnection(leftPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.green);
+                    }
+                    if (branch.NextNodeIdFalse > 0)
+                    {
+                        var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
+                        if (targetNode != null) DrawConnection(rightPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.red);
                     }
                 }
             }
@@ -725,15 +736,9 @@ namespace ConversationEditor
             else if (connectingFromBranch != null)
             {
                 var node = connectingFromNode;
-                int branchIndex = node.ConditionalBranches.IndexOf(connectingFromBranch);
-                if (branchIndex >= 0)
-                {
-                    float branchHeight = 40f;
-                    float branchWidth = 100f;
-                    float spacing = 10f;
-                    float yOffset = connectingBranchIndex == 0 ? branchHeight / 2 : branchHeight * 1.5f + 5;
-                    startPos = new Vector2(node.EditorPosition.x + node.EditorSize.x + spacing + branchWidth, node.EditorPosition.y + branchIndex * (branchHeight * 2 + spacing) + yOffset);
-                }
+                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                float hx = node.EditorSize.x * 0.5f;
+                startPos = connectingBranchIndex == 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
             }
             else
             {
@@ -910,7 +915,8 @@ namespace ConversationEditor
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
                 NodeType = nodeType,
                 EditorPosition = contextMenuPosition,
-                EditorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100)
+                EditorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100),
+                conditionalBranch = nodeType == ConversationNodeType.Conditional ? new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 } : null
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
             if (shouldAutoLink) TryAutoLinkStartNode(newNode);
@@ -970,12 +976,12 @@ namespace ConversationEditor
                     Parameters = new Dictionary<string, string>(f.Parameters ?? new Dictionary<string, string>()),
                     Timestamp = f.Timestamp
                 }).ToList(),
-                ConditionalBranches = node.ConditionalBranches?.Select(b => new ConditionalBranch
+                conditionalBranch = node.conditionalBranch != null ? new ConditionalBranch
                 {
-                    Conditions = new List<ConditionRule>(b.Conditions ?? new List<ConditionRule>()),
+                    Conditions = new List<ConditionRule>(node.conditionalBranch.Conditions ?? new List<ConditionRule>()),
                     NextNodeIdTrue = 0,
                     NextNodeIdFalse = 0
-                }).ToList(),
+                } : null,
                 DefaultBranchNodeId = 0
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
@@ -1042,18 +1048,15 @@ namespace ConversationEditor
                     bounds = EncapsulateRect(bounds, optionRect);
                 }
             }
-            if (node.NodeType == ConversationNodeType.Conditional && node.ConditionalBranches != null && node.ConditionalBranches.Count > 0)
+            if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
             {
-                float branchHeight = 40f;
-                float branchWidth = 100f;
-                float spacing = 10f;
-                for (int i = 0; i < node.ConditionalBranches.Count; i++)
-                {
-                    Rect trueRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing), branchWidth, branchHeight);
-                    Rect falseRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2f, branchWidth, branchHeight);
-                    bounds = EncapsulateRect(bounds, trueRect);
-                    bounds = EncapsulateRect(bounds, falseRect);
-                }
+                // include small left/right indicators in visual bounds
+                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                float indicatorSize = 16f;
+                Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                bounds = EncapsulateRect(bounds, trueRect);
+                bounds = EncapsulateRect(bounds, falseRect);
             }
             return bounds;
         }
@@ -1152,20 +1155,18 @@ namespace ConversationEditor
                     }
                 }
             }
-            if (node.ConditionalBranches != null)
+            if (node.conditionalBranch != null)
             {
-                foreach (var branch in node.ConditionalBranches)
+                var branch = node.conditionalBranch;
+                if (branch.NextNodeIdTrue > 0)
                 {
-                    if (branch.NextNodeIdTrue > 0)
-                    {
-                        var nextNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
-                        if (nextNode != null && !nextNodes.Contains(nextNode)) nextNodes.Add(nextNode);
-                    }
-                    if (branch.NextNodeIdFalse > 0)
-                    {
-                        var nextNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
-                        if (nextNode != null && !nextNodes.Contains(nextNode)) nextNodes.Add(nextNode);
-                    }
+                    var nextNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
+                    if (nextNode != null && !nextNodes.Contains(nextNode)) nextNodes.Add(nextNode);
+                }
+                if (branch.NextNodeIdFalse > 0)
+                {
+                    var nextNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
+                    if (nextNode != null && !nextNodes.Contains(nextNode)) nextNodes.Add(nextNode);
                 }
             }
             if (node.DefaultBranchNodeId > 0)
@@ -1460,16 +1461,12 @@ namespace ConversationEditor
                         if (optionRect.Contains(mouseWorldPos)) return true;
                     }
                 }
-                if (node.NodeType != ConversationNodeType.Conditional || node.ConditionalBranches == null) continue;
-                float branchHeight = 40f;
-                float branchWidth = 100f;
-                float spacing = 10f;
-                for (int i = 0; i < node.ConditionalBranches.Count; i++)
-                {
-                    Rect trueRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing), branchWidth, branchHeight);
-                    Rect falseRect = new Rect(node.EditorPosition.x + node.EditorSize.x + spacing, node.EditorPosition.y + i * (branchHeight * 2 + spacing) + branchHeight + spacing / 2f, branchWidth, branchHeight);
-                    if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
-                }
+                if (node.NodeType != ConversationNodeType.Conditional || node.conditionalBranch == null) continue;
+                float indicatorSize = 16f;
+                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
             }
             return false;
         }

@@ -163,7 +163,20 @@ namespace ConversationEditor
             sb.AppendLine("        ],");
 
             // ConditionalBranches
-            sb.AppendLine("        \"ConditionalBranches\": [],");
+            // conditionalBranch (singular) - only for conditional nodes
+            if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
+            {
+                sb.AppendLine("        \"conditionalBranch\": {");
+                // Conditions (we currently serialize as empty list placeholder)
+                sb.AppendLine("          \"Conditions\": [],");
+                sb.AppendLine($"          \"NextNodeIdTrue\": {node.conditionalBranch.NextNodeIdTrue},");
+                sb.AppendLine($"          \"NextNodeIdFalse\": {node.conditionalBranch.NextNodeIdFalse}");
+                sb.AppendLine("        },");
+            }
+            else
+            {
+                sb.AppendLine("        \"conditionalBranch\": {},");
+            }
             sb.AppendLine($"        \"DefaultBranchNodeId\": {node.DefaultBranchNodeId},");
             sb.AppendLine("        \"EditorPosition\": {");
             sb.AppendLine($"          \"X\": {node.EditorPosition.x},");
@@ -216,6 +229,15 @@ namespace ConversationEditor
             // Replace "X": with "x": and "Y": with "y": for EditorPosition and EditorSize
             json = json.Replace("\"X\":", "\"x\":");
             json = json.Replace("\"Y\":", "\"y\":");
+            // Convert old ConditionalBranches array to new singular conditionalBranch object
+            try
+            {
+                string patternWithObject = "\"ConditionalBranches\"\\s*:\\s*\\[(?<inner>\\{.*?\\})\\s*\\]";
+                json = System.Text.RegularExpressions.Regex.Replace(json, patternWithObject, "\"conditionalBranch\": ${inner}", System.Text.RegularExpressions.RegexOptions.Singleline);
+                // empty array case
+                json = System.Text.RegularExpressions.Regex.Replace(json, "\"ConditionalBranches\"\\s*:\\s*\\[\\s*\\]", "\"conditionalBranch\": {}");
+            }
+            catch { }
             json = ConvertEnumsToNumbers(json);
             return json;
         }

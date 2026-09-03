@@ -83,15 +83,12 @@ namespace ConversationScheme
                 }
 
                 // Remove references from ConditionalBranches
-                if (node.ConditionalBranches != null)
+                if (node.conditionalBranch != null)
                 {
-                    foreach (var branch in node.ConditionalBranches)
-                    {
-                        if (branch.NextNodeIdTrue == deletedNodeId)
-                            branch.NextNodeIdTrue = 0;
-                        if (branch.NextNodeIdFalse == deletedNodeId)
-                            branch.NextNodeIdFalse = 0;
-                    }
+                    if (node.conditionalBranch.NextNodeIdTrue == deletedNodeId)
+                        node.conditionalBranch.NextNodeIdTrue = 0;
+                    if (node.conditionalBranch.NextNodeIdFalse == deletedNodeId)
+                        node.conditionalBranch.NextNodeIdFalse = 0;
                 }
             }
         }
@@ -170,9 +167,9 @@ namespace ConversationScheme
                 if (node.Options != null && node.Options.Any(o => o.NextNodeId == targetNodeId))
                     hasReference = true;
 
-                // Check ConditionalBranches
-                if (node.ConditionalBranches != null && 
-                    node.ConditionalBranches.Any(b => b.NextNodeIdTrue == targetNodeId || b.NextNodeIdFalse == targetNodeId))
+                // Check conditionalBranch
+                if (node.conditionalBranch != null &&
+                    (node.conditionalBranch.NextNodeIdTrue == targetNodeId || node.conditionalBranch.NextNodeIdFalse == targetNodeId))
                     hasReference = true;
 
                 if (hasReference)
