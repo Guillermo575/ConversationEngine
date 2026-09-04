@@ -595,7 +595,7 @@ namespace ConversationEditor
             }
             DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
-            node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
+            node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph center position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
             node.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this node. Minimum X/Y is 20."), node.EditorSize, GUILayout.ExpandWidth(true)));
             if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;

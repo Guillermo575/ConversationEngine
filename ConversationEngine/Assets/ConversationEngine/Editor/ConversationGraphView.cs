@@ -256,13 +256,13 @@ namespace ConversationEditor
 
         private void DrawNode(ConversationNode node)
         {
-            Rect nodeWorldRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+            Rect nodeWorldRect = GetNodeWorldRect(node);
             Rect nodeRect = WorldToGraphRect(nodeWorldRect);
             GUIStyle style = GetNodeStyle(node);
             if (node.NodeType == ConversationNodeType.Conditional)
             {
                 // Draw diamond shape for conditional node
-                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                Vector2 center = node.EditorPosition;
                 float hx = node.EditorSize.x * 0.5f;
                 float hy = node.EditorSize.y * 0.5f;
                 Vector3[] points = new Vector3[4];
@@ -564,7 +564,7 @@ namespace ConversationEditor
         private void DrawConditionalIndicators(ConversationNode node, Rect nodeRect)
         {
             // Draw small interactive indicators to the left (true) and right (false) of the conditional diamond
-            Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+            Vector2 center = node.EditorPosition;
             float indicatorSize = 16f;
             Rect trueWorldRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
             Rect falseWorldRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
@@ -640,12 +640,13 @@ namespace ConversationEditor
             Handles.BeginGUI();
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
+                Rect nodeRect = GetNodeWorldRect(node);
                 if (node.NextNodeId > 0)
                 {
                     var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == node.NextNodeId);
                     if (targetNode != null)
                     {
-                        Vector2 startMid = node.EditorPosition + node.EditorSize / 2;
+                        Vector2 startMid = node.EditorPosition;
                         Vector2 targetPoint = GetNodeConnectionPoint(targetNode, startMid);
                         DrawConnection(startMid, targetPoint, Color.white);
                     }
@@ -658,8 +659,8 @@ namespace ConversationEditor
                         Rect optionRect = GetOptionWorldRect(node, option, i);
                         // Start point should be on the right edge of the parent node and vertically
                         // aligned with the option center but clamped to the node's vertical bounds
-                        float clampedY = Mathf.Clamp(optionRect.center.y, node.EditorPosition.y, node.EditorPosition.y + node.EditorSize.y);
-                        Vector2 optionStart = new Vector2(node.EditorPosition.x + node.EditorSize.x, clampedY);
+                        float clampedY = Mathf.Clamp(optionRect.center.y, nodeRect.yMin, nodeRect.yMax);
+                        Vector2 optionStart = new Vector2(nodeRect.xMax, clampedY);
                         Vector2 optionEnd = new Vector2(optionRect.xMin, optionRect.center.y);
                         DrawParentOptionLink(optionStart, optionEnd, Color.white);
                         if (option.NextNodeId > 0)
@@ -677,7 +678,7 @@ namespace ConversationEditor
                 if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
                 {
                     var branch = node.conditionalBranch;
-                    Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                    Vector2 center = node.EditorPosition;
                     Vector2 leftPos = new Vector2(center.x - node.EditorSize.x * 0.5f, center.y);
                     Vector2 rightPos = new Vector2(center.x + node.EditorSize.x * 0.5f, center.y);
                     if (branch.NextNodeIdTrue > 0)
@@ -753,13 +754,13 @@ namespace ConversationEditor
             else if (connectingFromBranch != null)
             {
                 var node = connectingFromNode;
-                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                Vector2 center = node.EditorPosition;
                 float hx = node.EditorSize.x * 0.5f;
                 startPos = connectingBranchIndex == 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
             }
             else
             {
-                startPos = connectingFromNode.EditorPosition + connectingFromNode.EditorSize / 2;
+                startPos = connectingFromNode.EditorPosition;
             }
             Vector2 endPos = WindowToWorld(Event.current.mousePosition);
             Handles.BeginGUI();
@@ -797,8 +798,8 @@ namespace ConversationEditor
         private Vector2 GetNodeConnectionPoint(ConversationNode node, Vector2 fromWorld)
         {
             // Determine the best point on the node edge (midpoint of the chosen side)
-            Rect nodeRect = new Rect(node.EditorPosition, node.EditorSize);
-            Vector2 center = nodeRect.center;
+            Rect nodeRect = GetNodeWorldRect(node);
+            Vector2 center = node.EditorPosition;
             Vector2 dir = fromWorld - center;
 
             switch (node.NodeType)
@@ -1001,12 +1002,13 @@ namespace ConversationEditor
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
             if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node");
             bool shouldAutoLink = HasOnlyStartAndEndNodes();
+            Vector2 editorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100);
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
                 NodeType = nodeType,
-                EditorPosition = contextMenuPosition,
-                EditorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100),
+                EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
+                EditorSize = editorSize,
                 conditionalBranch = nodeType == ConversationNodeType.Conditional ? new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 } : null
             };
             conversationData.ConversationManager.Nodes.Add(newNode);
@@ -1022,12 +1024,13 @@ namespace ConversationEditor
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
             if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node with Options");
             bool shouldAutoLink = HasOnlyStartAndEndNodes();
+            Vector2 editorSize = new Vector2(200, 100);
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
                 NodeType = ConversationNodeType.Dialogue,
-                EditorPosition = contextMenuPosition,
-                EditorSize = new Vector2(200, 100),
+                EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
+                EditorSize = editorSize,
                 Options = new List<ConversationOption>()
             };
             newNode.Options.Add(CreateOption(newNode, "Option 1", 0));
@@ -1104,7 +1107,7 @@ namespace ConversationEditor
         {
             if (node == null) return;
             Vector2 graphCenter = new Vector2(currentGraphRect.width, currentGraphRect.height) * 0.5f;
-            panOffset = graphCenter / zoom - (node.EditorPosition + node.EditorSize * 0.5f);
+            panOffset = graphCenter / zoom - node.EditorPosition;
             RequestRepaint();
         }
         #endregion
@@ -1130,7 +1133,7 @@ namespace ConversationEditor
 
         private Rect GetNodeVisualBounds(ConversationNode node)
         {
-            Rect bounds = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+            Rect bounds = GetNodeWorldRect(node);
             if (node.Options != null && node.Options.Count > 0)
             {
                 for (int i = 0; i < node.Options.Count; i++)
@@ -1142,7 +1145,7 @@ namespace ConversationEditor
             if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
             {
                 // include small left/right indicators in visual bounds
-                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                Vector2 center = node.EditorPosition;
                 float indicatorSize = 16f;
                 Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
                 Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
@@ -1181,7 +1184,7 @@ namespace ConversationEditor
             visited.Add(node.Id);
             if (!levelPositions.ContainsKey(level)) levelPositions[level] = y;
             else y = levelPositions[level];
-            node.EditorPosition = new Vector2(x, y);
+            node.EditorPosition = ToNodeCenterPosition(new Vector2(x, y), node.EditorSize);
             var nextNodes = GetConnectedNodes(node);
             float nextX = x + autoLayoutSpacing;
             float currentY = y;
@@ -1207,7 +1210,7 @@ namespace ConversationEditor
             visited.Add(node.Id);
             if (!levelPositions.ContainsKey(level)) levelPositions[level] = x;
             else x = levelPositions[level];
-            node.EditorPosition = new Vector2(x, y);
+            node.EditorPosition = ToNodeCenterPosition(new Vector2(x, y), node.EditorSize);
             var nextNodes = GetConnectedNodes(node);
             float nextY = y + autoLayoutSpacing;
             float currentX = x;
@@ -1486,7 +1489,8 @@ namespace ConversationEditor
         private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
         {
             EnsureOptionEditorData(node, option, optionIndex);
-            Vector2 optionWorldPos = node.EditorPosition + option.EditorPosition;
+            Rect nodeRect = GetNodeWorldRect(node);
+            Vector2 optionWorldPos = nodeRect.position + option.EditorPosition;
             return new Rect(optionWorldPos, option.EditorSize);
         }
 
@@ -1522,7 +1526,7 @@ namespace ConversationEditor
             if (conversationData?.ConversationManager?.Nodes == null) return false;
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
-                Rect nodeRect = new Rect(node.EditorPosition.x, node.EditorPosition.y, node.EditorSize.x, node.EditorSize.y);
+                Rect nodeRect = GetNodeWorldRect(node);
                 if (nodeRect.Contains(mouseWorldPos)) return true;
                 if (node.Options != null)
                 {
@@ -1534,12 +1538,27 @@ namespace ConversationEditor
                 }
                 if (node.NodeType != ConversationNodeType.Conditional || node.conditionalBranch == null) continue;
                 float indicatorSize = 16f;
-                Vector2 center = node.EditorPosition + node.EditorSize * 0.5f;
+                Vector2 center = node.EditorPosition;
                 Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
                 Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
                 if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
             }
             return false;
+        }
+
+        private Rect GetNodeWorldRect(ConversationNode node)
+        {
+            return new Rect(TranslateNodeDrawPosition(node.EditorPosition, node.EditorSize), node.EditorSize);
+        }
+
+        private Vector2 TranslateNodeDrawPosition(Vector2 position, Vector2 size)
+        {
+            return position - size * 0.5f;
+        }
+
+        private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
+        {
+            return drawPosition + size * 0.5f;
         }
         #endregion
     }
