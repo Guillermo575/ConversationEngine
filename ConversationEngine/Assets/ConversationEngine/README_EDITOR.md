@@ -138,15 +138,16 @@ The inspector panel appears on the right when a node is selected and shows:
 #### All Node Properties
 - **ID**: Auto-generated, read-only unique identifier
 - **Node Type**: Node type selector (read-only for all node types)
+- **Editor Size Validation**: Node and option size values are clamped to a minimum of `20 x 20`
 
 #### Start Node Properties
 - **Next Node**: Dropdown selector for connected node
 
--#### Dialogue/Function Node Properties
+#### Dialogue Node Properties
 - **Speaker Actor**: Dropdown of available actors
 - **Text**: Multi-line text area for dialogue content
 - **Next Node**: Dropdown selector (not manual ID entry)
-- **Options** (Dialogue only): Player choice management
+- **Options**: Player choice management
   - Add/remove options
   - Per-option text and Next Node dropdown
   - Condition rules for option visibility
@@ -156,6 +157,11 @@ The inspector panel appears on the right when a node is selected and shows:
   - Custom function support
   - Parameter configuration
   - Timestamp for text synchronization
+
+#### Function Node Properties
+- **Speaker Actor/Text Hidden**: Function nodes only show flow and function execution settings
+- **Next Node**: Dropdown selector (not manual ID entry)
+- **Functions**: Timed function execution list and parameter editing
 - **Editor Properties**: Position and size
 
 Note: For `Conditional` nodes the dialogue-specific fields above (Speaker Actor, Text, Next Node and Functions) are hidden in the inspector because conditional nodes only expose conditional branches and editor properties.
@@ -164,6 +170,7 @@ Note: For `Conditional` nodes the dialogue-specific fields above (Speaker Actor,
 - Option nodes are rendered as individual draggable blocks.
 - Each option node stores a local position and size relative to its parent dialogue node.
 - Parent-to-option link lines are drawn to identify option ownership.
+- Preview text length adapts to current option node size to reduce overflow.
 - Left click selects an option node and opens its inspector.
 - Drag with left click to move only the selected option node.
 - Right click an option node to open actions:

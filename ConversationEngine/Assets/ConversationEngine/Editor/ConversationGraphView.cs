@@ -61,6 +61,10 @@ namespace ConversationEditor
         private const float optionDefaultWidth = 150f;
         private const float optionDefaultHeight = 60f;
         private const float optionDefaultSpacing = 10f;
+        private const float minEditorNodeSize = 20f;
+        private const float nodeHorizontalPadding = 16f;
+        private const float nodeVerticalPadding = 12f;
+        private const float estimatedLineSpacing = 3f;
         #endregion
 
         #region
@@ -92,6 +96,7 @@ namespace ConversationEditor
             conversationData = data;
             EnsureEditorSettings();
             ApplyZoomFromConversationSettings();
+            EnsureMinimumEditorSizesInConversation();
             EnsureOptionEditorDataInConversation();
             ClearSelection();
             panOffset = Vector2.zero;
@@ -319,7 +324,8 @@ namespace ConversationEditor
                     if (!string.IsNullOrEmpty(node.SpeakerActorId)) GUILayout.Label($"Actor: {node.SpeakerActorId}", conversationNodeStyle.nodeActorTextStyle);
                     if (!string.IsNullOrEmpty(node.Text))
                     {
-                        string preview = node.Text.Length > 100 ? node.Text.Substring(0, 100) + "..." : node.Text;
+                        int previewLength = GetNodePreviewTextLength(node, !string.IsNullOrEmpty(node.SpeakerActorId));
+                        string preview = BuildPreviewText(node.Text, previewLength);
                         GUILayout.Label(preview, conversationNodeStyle.nodeBodyTextStyle);
                     }
                     break;
@@ -489,8 +495,9 @@ namespace ConversationEditor
                 Rect optionContentRect = new Rect(optionRect.x + 8f, optionRect.y + 6f, optionRect.width - 16f, optionRect.height - 12f);
                 GUILayout.BeginArea(optionContentRect);
                 GUILayout.Label(new GUIContent($"Option {i + 1}", "Option node index inside the parent dialogue node."), EditorStyles.boldLabel);
-                string optionPreview = string.IsNullOrEmpty(option.Text) ? "(empty)" : (option.Text.Length > 20 ? option.Text.Substring(0, 20) + "..." : option.Text);
-                GUILayout.Label(new GUIContent(optionPreview, "Option text preview."));
+                int maxPreviewLength = GetOptionPreviewTextLength(option);
+                string optionPreview = BuildPreviewText(option.Text, maxPreviewLength, "(empty)");
+                GUILayout.Label(new GUIContent(optionPreview, "Option text preview sized to the current option node dimensions."));
                 GUILayout.EndArea();
                 HandleOptionInteraction(node, option, optionRect, i);
             }
@@ -1303,6 +1310,74 @@ namespace ConversationEditor
             }
         }
 
+        private void EnsureMinimumEditorSizesInConversation()
+        {
+            if (conversationData?.ConversationManager?.Nodes == null) return;
+            bool hasChanges = false;
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                Vector2 clampedNodeSize = ClampEditorSize(node.EditorSize);
+                if (clampedNodeSize != node.EditorSize)
+                {
+                    node.EditorSize = clampedNodeSize;
+                    hasChanges = true;
+                }
+                if (node.Options == null) continue;
+                foreach (var option in node.Options)
+                {
+                    Vector2 clampedOptionSize = ClampEditorSize(option.EditorSize);
+                    if (clampedOptionSize != option.EditorSize)
+                    {
+                        option.EditorSize = clampedOptionSize;
+                        hasChanges = true;
+                    }
+                }
+            }
+            if (hasChanges) MarkDirty();
+        }
+
+        private Vector2 ClampEditorSize(Vector2 size)
+        {
+            return new Vector2(Mathf.Max(minEditorNodeSize, size.x), Mathf.Max(minEditorNodeSize, size.y));
+        }
+
+        private int GetNodePreviewTextLength(ConversationNode node, bool hasActorLine)
+        {
+            int bodyFontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+            float usableWidth = Mathf.Max(minEditorNodeSize, node.EditorSize.x - nodeHorizontalPadding);
+            float headerHeight = GetScaledNodeFontSize(nodeHeaderBaseFontSize) + estimatedLineSpacing;
+            float actorHeight = hasActorLine ? bodyFontSize + estimatedLineSpacing : 0f;
+            float usableHeight = Mathf.Max(minEditorNodeSize, node.EditorSize.y - headerHeight - actorHeight - nodeVerticalPadding);
+            return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
+        }
+
+        private int GetOptionPreviewTextLength(ConversationOption option)
+        {
+            int bodyFontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+            float usableWidth = Mathf.Max(minEditorNodeSize, option.EditorSize.x - nodeHorizontalPadding);
+            float headerHeight = bodyFontSize + estimatedLineSpacing;
+            float usableHeight = Mathf.Max(minEditorNodeSize, option.EditorSize.y - headerHeight - nodeVerticalPadding);
+            return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
+        }
+
+        private int EstimatePreviewLength(float width, float height, int fontSize)
+        {
+            float estimatedCharacterWidth = Mathf.Max(1f, fontSize * 0.55f);
+            float lineHeight = Mathf.Max(1f, fontSize + estimatedLineSpacing);
+            int charsPerLine = Mathf.Max(1, Mathf.FloorToInt(width / estimatedCharacterWidth));
+            int maxLines = Mathf.Max(1, Mathf.FloorToInt(height / lineHeight));
+            return charsPerLine * maxLines;
+        }
+
+        private string BuildPreviewText(string sourceText, int maxLength, string emptyFallback = "")
+        {
+            if (string.IsNullOrEmpty(sourceText)) return emptyFallback;
+            int safeLength = Mathf.Max(1, maxLength);
+            if (sourceText.Length <= safeLength) return sourceText;
+            int trimmedLength = Mathf.Max(1, safeLength - 3);
+            return sourceText.Substring(0, trimmedLength) + "...";
+        }
+
         private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
         {
             EnsureOptionEditorData(node, option, optionIndex);
@@ -1313,7 +1388,7 @@ namespace ConversationEditor
         private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
         {
             if (node == null || option == null) return;
-            if (option.EditorSize.x <= 1f || option.EditorSize.y <= 1f) option.EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight);
+            option.EditorSize = ClampEditorSize(option.EditorSize);
             if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
         }
 

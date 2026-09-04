@@ -136,6 +136,7 @@ namespace ConversationEditor
         private const float optionDefaultWidth = 150f;
         private const float optionDefaultHeight = 60f;
         private const float optionDefaultSpacing = 10f;
+        private const float minEditorNodeSize = 20f;
         #endregion
 
         #region Unity Menu Items
@@ -565,69 +566,86 @@ namespace ConversationEditor
         {
             EditorGUILayout.LabelField("Node Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
-            // Set label width to be proportional to inspector panel width
             float oldLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 100f; // Fixed label width for consistency
+            EditorGUIUtility.labelWidth = 100f;
             EditorGUI.BeginChangeCheck();
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.IntField(new GUIContent("ID", "Unique node identifier."), node.Id, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
-            // Node Type is read-only for all nodes in the inspector
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.EnumPopup(new GUIContent("Node Type", "Node behavior type (read-only)."), node.NodeType, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
-            if (node.NodeType == ConversationNodeType.Start)
+            switch (node.NodeType)
             {
-                DrawSectionSeparator();
-                EditorGUILayout.LabelField("Connection", EditorStyles.boldLabel);
-                node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Target node for flow continuation.");
-            }
-            else if (node.NodeType != ConversationNodeType.End)
-            {
-                // For conditional nodes we hide the dialogue-specific fields (Speaker, Text, Next Node, Functions)
-                if (node.NodeType != ConversationNodeType.Conditional)
-                {
-                    if (conversationData.ResourceManager.Actors.Count > 0)
-                    {
-                        var actorIds = conversationData.ResourceManager.Actors.Select(a => a.Id).ToList();
-                        actorIds.Insert(0, "(None)");
-                        int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : actorIds.IndexOf(node.SpeakerActorId);
-                        if (currentIndex < 0) currentIndex = 0;
-                        int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor", "Actor speaking in this node."), currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
-                        node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
-                    }
-                    else
-                    {
-                        node.SpeakerActorId = EditorGUILayout.TextField(new GUIContent("Speaker Actor ID", "Actor identifier for this node."), node.SpeakerActorId, GUILayout.ExpandWidth(true));
-                    }
-                    EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
-                    node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
-                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
-                    if (node.NodeType == ConversationNodeType.Dialogue)
-                    {
-                        DrawSectionSeparator();
-                        EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
-                        DrawOptionSection(node);
-                    }
+                case ConversationNodeType.Start:
                     DrawSectionSeparator();
-                    EditorGUILayout.LabelField("Functions", EditorStyles.boldLabel);
-                    if (node.Functions == null) node.Functions = new List<ConversationFunction>();
-                    DrawFunctionList(node.Functions);
-                }
-
-                if (node.NodeType == ConversationNodeType.Conditional)
-                {
+                    EditorGUILayout.LabelField(new GUIContent("Connection", "Outgoing connection settings for start node."), EditorStyles.boldLabel);
+                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Target node for flow continuation.");
+                    break;
+                case ConversationNodeType.Conditional:
                     DrawSectionSeparator();
-                    EditorGUILayout.LabelField("Conditional Branches", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField(new GUIContent("Conditional Branches", "Condition-based outgoing branch settings."), EditorStyles.boldLabel);
                     DrawConditionalBranchSection(node);
-                }
+                    break;
+                case ConversationNodeType.End:
+                    break;
+                default:
+                    DrawDialogueOrFunctionInspector(node);
+                    break;
             }
             DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
             node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
-            node.EditorSize = EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this node."), node.EditorSize, GUILayout.ExpandWidth(true));
+            node.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this node. Minimum X/Y is 20."), node.EditorSize, GUILayout.ExpandWidth(true)));
             if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
+        }
+
+        private void DrawDialogueOrFunctionInspector(ConversationNode node)
+        {
+            switch (node.NodeType)
+            {
+                case ConversationNodeType.Dialogue:
+                    DrawSpeakerAndTextFields(node);
+                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
+                    DrawSectionSeparator();
+                    EditorGUILayout.LabelField(new GUIContent("Options", "Player options available from this dialogue node."), EditorStyles.boldLabel);
+                    DrawOptionSection(node);
+                    DrawSectionSeparator();
+                    EditorGUILayout.LabelField(new GUIContent("Functions", "Timed functions executed while this node is active."), EditorStyles.boldLabel);
+                    if (node.Functions == null) node.Functions = new List<ConversationFunction>();
+                    DrawFunctionList(node.Functions);
+                    return;
+                case ConversationNodeType.Function:
+                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
+                    DrawSectionSeparator();
+                    EditorGUILayout.LabelField(new GUIContent("Functions", "Timed functions executed while this node is active."), EditorStyles.boldLabel);
+                    if (node.Functions == null) node.Functions = new List<ConversationFunction>();
+                    DrawFunctionList(node.Functions);
+                    return;
+                default:
+                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
+                    return;
+            }
+        }
+
+        private void DrawSpeakerAndTextFields(ConversationNode node)
+        {
+            if (conversationData.ResourceManager.Actors.Count > 0)
+            {
+                var actorIds = conversationData.ResourceManager.Actors.Select(a => a.Id).ToList();
+                actorIds.Insert(0, "(None)");
+                int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : actorIds.IndexOf(node.SpeakerActorId);
+                if (currentIndex < 0) currentIndex = 0;
+                int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor", "Actor speaking in this node."), currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
+                node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
+            }
+            else
+            {
+                node.SpeakerActorId = EditorGUILayout.TextField(new GUIContent("Speaker Actor ID", "Actor identifier for this node."), node.SpeakerActorId, GUILayout.ExpandWidth(true));
+            }
+            EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
+            node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
         }
 
         private void DrawOptionInspector(ConversationOption option)
@@ -642,7 +660,7 @@ namespace ConversationEditor
             option.Text = EditorGUILayout.TextField(new GUIContent("Text", "Option text shown to the player."), option.Text, GUILayout.ExpandWidth(true));
             option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode, "Target node for this option.");
             option.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Local graph position relative to the parent node."), option.EditorPosition, GUILayout.ExpandWidth(true));
-            option.EditorSize = EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this option node."), option.EditorSize, GUILayout.ExpandWidth(true));
+            option.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this option node. Minimum X/Y is 20."), option.EditorSize, GUILayout.ExpandWidth(true)));
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(option.Conditions);
@@ -768,8 +786,13 @@ namespace ConversationEditor
         private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
         {
             if (node == null || option == null) return;
-            if (option.EditorSize.x <= 1f || option.EditorSize.y <= 1f) option.EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight);
+            option.EditorSize = ClampEditorSize(option.EditorSize);
             if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
+        }
+
+        private Vector2 ClampEditorSize(Vector2 size)
+        {
+            return new Vector2(Mathf.Max(minEditorNodeSize, size.x), Mathf.Max(minEditorNodeSize, size.y));
         }
 
         private Vector2 GenerateOptionPosition(ConversationNode node, int optionIndex)
