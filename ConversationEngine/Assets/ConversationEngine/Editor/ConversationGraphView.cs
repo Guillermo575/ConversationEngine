@@ -51,31 +51,6 @@ namespace ConversationEditor
         private Vector2 contextMenuPosition;
         #endregion
 
-        #region Styles
-        private GUIStyle nodeStyle;
-        private GUIStyle nodeSelectedStyle;
-        private GUIStyle nodeDraggingStyle;
-        private GUIStyle startNodeStyle;
-        private GUIStyle startNodeSelectedStyle;
-        private GUIStyle startNodeDraggingStyle;
-        private GUIStyle endNodeStyle;
-        private GUIStyle endNodeSelectedStyle;
-        private GUIStyle endNodeDraggingStyle;
-        private GUIStyle functionNodeStyle;
-        private GUIStyle functionNodeSelectedStyle;
-        private GUIStyle functionNodeDraggingStyle;
-        private GUIStyle optionNodeStyle;
-        private GUIStyle optionNodeSelectedStyle;
-        private GUIStyle optionNodeDraggingStyle;
-        private GUIStyle conditionalNodeStyle;
-        private GUIStyle conditionalNodeSelectedStyle;
-        private GUIStyle conditionalNodeDraggingStyle;
-        private GUIStyle nodeHeaderStyle;
-        private GUIStyle nodeBodyTextStyle;
-        private GUIStyle nodeActorTextStyle;
-        private bool stylesInitialized = false;
-        #endregion
-
         #region Constants
         private const float gridSpacing = 20f;
         private static readonly Color gridColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
@@ -86,6 +61,10 @@ namespace ConversationEditor
         private const float optionDefaultWidth = 150f;
         private const float optionDefaultHeight = 60f;
         private const float optionDefaultSpacing = 10f;
+        #endregion
+
+        #region
+        private ConversationNodeStyle conversationNodeStyle;
         #endregion
 
         #region Events
@@ -124,7 +103,7 @@ namespace ConversationEditor
         }
         public void Draw(Rect graphRect)
         {
-            InitializeStyles();
+            conversationNodeStyle = ConversationNodeStyle.GetSingleton();
             if (conversationData?.ConversationManager?.Nodes == null) return;
             currentGraphRect = graphRect;
             HandleGraphInput(graphRect);
@@ -295,7 +274,7 @@ namespace ConversationEditor
                 // draw label
                 GUILayout.BeginArea(nodeRect);
                 GUILayout.FlexibleSpace();
-                GUILayout.Label("Conditional", nodeHeaderStyle);
+                GUILayout.Label("Conditional", conversationNodeStyle.nodeHeaderStyle);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndArea();
             }
@@ -315,33 +294,33 @@ namespace ConversationEditor
 
         private void DrawNodeContent(ConversationNode node)
         {
-            nodeHeaderStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
-            nodeBodyTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            nodeActorTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+            conversationNodeStyle.nodeHeaderStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
+            conversationNodeStyle.nodeBodyTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+            conversationNodeStyle.nodeActorTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
             switch (node.NodeType)
             {
                 case ConversationNodeType.Start:
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label("START", nodeHeaderStyle);
+                    GUILayout.Label("START", conversationNodeStyle.nodeHeaderStyle);
                     GUILayout.FlexibleSpace();
                     break;
                 case ConversationNodeType.End:
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label("END", nodeHeaderStyle);
+                    GUILayout.Label("END", conversationNodeStyle.nodeHeaderStyle);
                     GUILayout.FlexibleSpace();
                     break;
                 case ConversationNodeType.Function:
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label("FUNCTION", nodeHeaderStyle);
+                    GUILayout.Label("FUNCTION", conversationNodeStyle.nodeHeaderStyle);
                     GUILayout.FlexibleSpace();
                     break;
                 default:
-                    GUILayout.Label($"ID: {node.Id}", nodeHeaderStyle);
-                    if (!string.IsNullOrEmpty(node.SpeakerActorId)) GUILayout.Label($"Actor: {node.SpeakerActorId}", nodeActorTextStyle);
+                    GUILayout.Label($"ID: {node.Id}", conversationNodeStyle.nodeHeaderStyle);
+                    if (!string.IsNullOrEmpty(node.SpeakerActorId)) GUILayout.Label($"Actor: {node.SpeakerActorId}", conversationNodeStyle.nodeActorTextStyle);
                     if (!string.IsNullOrEmpty(node.Text))
                     {
                         string preview = node.Text.Length > 100 ? node.Text.Substring(0, 100) + "..." : node.Text;
-                        GUILayout.Label(preview, nodeBodyTextStyle);
+                        GUILayout.Label(preview, conversationNodeStyle.nodeBodyTextStyle);
                     }
                     break;
             }
@@ -584,8 +563,8 @@ namespace ConversationEditor
             Rect falseWorldRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
             Rect trueRect = WorldToGraphRect(trueWorldRect);
             Rect falseRect = WorldToGraphRect(falseWorldRect);
-            GUI.Box(trueRect, "", optionNodeStyle);
-            GUI.Box(falseRect, "", optionNodeStyle);
+            GUI.Box(trueRect, "", conversationNodeStyle.optionNodeStyle);
+            GUI.Box(falseRect, "", conversationNodeStyle.optionNodeStyle);
             GUILayout.BeginArea(trueRect);
             GUILayout.Label("T", EditorStyles.boldLabel);
             GUILayout.EndArea();
@@ -1239,73 +1218,6 @@ namespace ConversationEditor
         #endregion
 
         #region Styles
-        private void InitializeStyles()
-        {
-            if (stylesInitialized) return;
-            int borderWidth = 4;
-            nodeStyle = new GUIStyle("box");
-            nodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.6f, 0.3f, 0.9f), Color.black, borderWidth);
-            nodeStyle.border = new RectOffset(borderWidth, borderWidth, borderWidth, borderWidth);
-            nodeStyle.padding = new RectOffset(borderWidth + 4, borderWidth + 4, borderWidth + 4, borderWidth + 4);
-            nodeStyle.alignment = TextAnchor.UpperLeft;
-            nodeStyle.wordWrap = true;
-            nodeSelectedStyle = new GUIStyle(nodeStyle);
-            nodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.6f, 0.3f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
-            nodeDraggingStyle = new GUIStyle(nodeStyle);
-            nodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.6f, 0.3f, 0.9f), Color.white, borderWidth);
-            startNodeStyle = new GUIStyle(nodeStyle);
-            startNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.4f, 0.8f, 0.9f), Color.black, borderWidth);
-            startNodeStyle.alignment = TextAnchor.MiddleCenter;
-            startNodeStyle.fontSize = 16;
-            startNodeStyle.fontStyle = FontStyle.Bold;
-            startNodeSelectedStyle = new GUIStyle(startNodeStyle);
-            startNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.4f, 0.8f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
-            startNodeDraggingStyle = new GUIStyle(startNodeStyle);
-            startNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.4f, 0.8f, 0.9f), Color.white, borderWidth);
-            endNodeStyle = new GUIStyle(nodeStyle);
-            endNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.2f, 0.2f, 0.9f), Color.black, borderWidth);
-            endNodeStyle.alignment = TextAnchor.MiddleCenter;
-            endNodeStyle.fontSize = 16;
-            endNodeStyle.fontStyle = FontStyle.Bold;
-            endNodeSelectedStyle = new GUIStyle(endNodeStyle);
-            endNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.2f, 0.2f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
-            endNodeDraggingStyle = new GUIStyle(endNodeStyle);
-            endNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.2f, 0.2f, 0.9f), Color.white, borderWidth);
-            functionNodeStyle = new GUIStyle(nodeStyle);
-            functionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.black, borderWidth);
-            functionNodeSelectedStyle = new GUIStyle(functionNodeStyle);
-            functionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
-            functionNodeDraggingStyle = new GUIStyle(functionNodeStyle);
-            functionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.white, borderWidth);
-            optionNodeStyle = new GUIStyle(nodeStyle);
-            optionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.4f, 0.7f, 0.9f, 0.9f), Color.black, borderWidth);
-            optionNodeStyle.padding = new RectOffset(borderWidth + 6, borderWidth + 6, borderWidth + 6, borderWidth + 6);
-            optionNodeSelectedStyle = new GUIStyle(optionNodeStyle);
-            optionNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.4f, 0.7f, 0.9f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
-            optionNodeDraggingStyle = new GUIStyle(optionNodeStyle);
-            optionNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.4f, 0.7f, 0.9f, 0.9f), Color.white, borderWidth);
-            conditionalNodeStyle = new GUIStyle(nodeStyle);
-            conditionalNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), Color.black, borderWidth);
-            conditionalNodeSelectedStyle = new GUIStyle(conditionalNodeStyle);
-            conditionalNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
-            conditionalNodeDraggingStyle = new GUIStyle(conditionalNodeStyle);
-            conditionalNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), Color.white, borderWidth);
-            nodeHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
-            nodeHeaderStyle.padding = new RectOffset(borderWidth + 4, borderWidth + 4, borderWidth + 4, borderWidth + 4);
-            nodeHeaderStyle.fontSize = nodeHeaderBaseFontSize;
-            nodeHeaderStyle.normal.textColor = Color.white;
-            nodeHeaderStyle.fontStyle = FontStyle.Bold;
-            nodeBodyTextStyle = new GUIStyle(EditorStyles.wordWrappedLabel);
-            nodeBodyTextStyle.fontStyle = FontStyle.Bold;
-            nodeBodyTextStyle.fontSize = nodeBodyBaseFontSize;
-            nodeBodyTextStyle.normal.textColor = Color.white;
-            nodeActorTextStyle = new GUIStyle(EditorStyles.label);
-            nodeActorTextStyle.wordWrap = true;
-            nodeActorTextStyle.fontSize = nodeBodyBaseFontSize;
-            nodeActorTextStyle.normal.textColor = Color.white;
-            stylesInitialized = true;
-        }
-
         private GUIStyle GetNodeStyle(ConversationNode node)
         {
             bool isSelected = selectedNode == node;
@@ -1313,25 +1225,25 @@ namespace ConversationEditor
             switch (node.NodeType)
             {
                 case ConversationNodeType.Start:
-                    if (isDragging) return startNodeDraggingStyle;
-                    if (isSelected) return startNodeSelectedStyle;
-                    return startNodeStyle;
+                    if (isDragging) return conversationNodeStyle.startNodeDraggingStyle;
+                    if (isSelected) return conversationNodeStyle.startNodeSelectedStyle;
+                    return conversationNodeStyle.startNodeStyle;
                 case ConversationNodeType.End:
-                    if (isDragging) return endNodeDraggingStyle;
-                    if (isSelected) return endNodeSelectedStyle;
-                    return endNodeStyle;
+                    if (isDragging) return conversationNodeStyle.endNodeDraggingStyle;
+                    if (isSelected) return conversationNodeStyle.endNodeSelectedStyle;
+                    return conversationNodeStyle.endNodeStyle;
                 case ConversationNodeType.Function:
-                    if (isDragging) return functionNodeDraggingStyle;
-                    if (isSelected) return functionNodeSelectedStyle;
-                    return functionNodeStyle;
+                    if (isDragging) return conversationNodeStyle.functionNodeDraggingStyle;
+                    if (isSelected) return conversationNodeStyle.functionNodeSelectedStyle;
+                    return conversationNodeStyle.functionNodeStyle;
                 case ConversationNodeType.Conditional:
-                    if (isDragging) return conditionalNodeDraggingStyle;
-                    if (isSelected) return conditionalNodeSelectedStyle;
-                    return conditionalNodeStyle;
+                    if (isDragging) return conversationNodeStyle.conditionalNodeDraggingStyle;
+                    if (isSelected) return conversationNodeStyle.conditionalNodeSelectedStyle;
+                    return conversationNodeStyle.conditionalNodeStyle;
                 default:
-                    if (isDragging) return nodeDraggingStyle;
-                    if (isSelected) return nodeSelectedStyle;
-                    return nodeStyle;
+                    if (isDragging) return conversationNodeStyle.nodeDraggingStyle;
+                    if (isSelected) return conversationNodeStyle.nodeSelectedStyle;
+                    return conversationNodeStyle.nodeStyle;
             }
         }
 
@@ -1339,35 +1251,14 @@ namespace ConversationEditor
         {
             bool isSelected = selectedOption == option;
             bool isDragging = isOptionBeingDragged && isSelected;
-            if (isDragging) return optionNodeDraggingStyle;
-            if (isSelected) return optionNodeSelectedStyle;
-            return optionNodeStyle;
+            if (isDragging) return conversationNodeStyle.optionNodeDraggingStyle;
+            if (isSelected) return conversationNodeStyle.optionNodeSelectedStyle;
+            return conversationNodeStyle.optionNodeStyle;
         }
 
         private int GetScaledNodeFontSize(int baseFontSize)
         {
             return Mathf.Max(minNodeFontSize, Mathf.RoundToInt(baseFontSize * zoom));
-        }
-
-        private Texture2D MakeTextureWithBorder(int width, int height, Color fillColor, Color borderColor, int borderWidth)
-        {
-            int totalWidth = width + borderWidth * 2;
-            int totalHeight = height + borderWidth * 2;
-            Color[] pixels = new Color[totalWidth * totalHeight];
-            for (int y = 0; y < totalHeight; y++)
-            {
-                for (int x = 0; x < totalWidth; x++)
-                {
-                    if (x < borderWidth || x >= totalWidth - borderWidth || y < borderWidth || y >= totalHeight - borderWidth) pixels[y * totalWidth + x] = borderColor;
-                    else pixels[y * totalWidth + x] = fillColor;
-                }
-            }
-            Texture2D texture = new Texture2D(totalWidth, totalHeight, TextureFormat.RGBA32, false);
-            texture.SetPixels(pixels);
-            texture.filterMode = FilterMode.Point;
-            texture.wrapMode = TextureWrapMode.Clamp;
-            texture.Apply();
-            return texture;
         }
         #endregion
 
