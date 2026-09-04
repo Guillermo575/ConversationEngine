@@ -855,7 +855,52 @@ namespace ConversationEditor
         {
             if (isReadOnly) return;
             GenericMenu menu = new GenericMenu();
-            if (node.NodeType != ConversationNodeType.End)
+
+            // Use switch for node type handling per project rules
+            switch (node.NodeType)
+            {
+                case ConversationNodeType.Conditional:
+                    // Provide two explicit connect actions for conditional true/false branches
+                    menu.AddItem(new GUIContent("Connect to Node (true)"), false, () =>
+                    {
+                        isConnecting = true;
+                        connectingFromNode = node;
+                        connectingFromOption = null;
+                        // ensure branch exists
+                        if (node.conditionalBranch == null) node.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
+                        connectingFromBranch = node.conditionalBranch;
+                        connectingBranchIndex = 0;
+                        isRightClickMenuActive = false;
+                        RequestRepaint();
+                    });
+                    menu.AddItem(new GUIContent("Connect to Node (false)"), false, () =>
+                    {
+                        isConnecting = true;
+                        connectingFromNode = node;
+                        connectingFromOption = null;
+                        if (node.conditionalBranch == null) node.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
+                        connectingFromBranch = node.conditionalBranch;
+                        connectingBranchIndex = 1;
+                        isRightClickMenuActive = false;
+                        RequestRepaint();
+                    });
+                    menu.AddSeparator("");
+                    break;
+                case ConversationNodeType.Dialogue:
+                    // Dialogue-specific: allow adding options
+                    menu.AddItem(new GUIContent("Add Option"), false, () =>
+                    {
+                        if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Add Option");
+                        if (node.Options == null) node.Options = new List<ConversationOption>();
+                        node.Options.Add(CreateOption(node, "", node.Options.Count));
+                        MarkDirty();
+                        isRightClickMenuActive = false;
+                    });
+                    break;
+                default:
+                    break;
+            }
+            if (node.NodeType != ConversationNodeType.End && node.NodeType != ConversationNodeType.Conditional)
             {
                 menu.AddItem(new GUIContent("Connect to Node"), false, () =>
                 {
@@ -867,17 +912,6 @@ namespace ConversationEditor
                     RequestRepaint();
                 });
                 menu.AddSeparator("");
-            }
-            if (node.NodeType == ConversationNodeType.Dialogue)
-            {
-                menu.AddItem(new GUIContent("Add Option"), false, () =>
-                {
-                    if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Add Option");
-                    if (node.Options == null) node.Options = new List<ConversationOption>();
-                    node.Options.Add(CreateOption(node, "", node.Options.Count));
-                    MarkDirty();
-                    isRightClickMenuActive = false;
-                });
             }
             menu.AddItem(new GUIContent("Duplicate Node"), false, () =>
             {
