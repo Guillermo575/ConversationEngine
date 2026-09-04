@@ -800,20 +800,27 @@ namespace ConversationEditor
             Rect nodeRect = new Rect(node.EditorPosition, node.EditorSize);
             Vector2 center = nodeRect.center;
             Vector2 dir = fromWorld - center;
-            // Use dominant axis from center->fromWorld to decide side (more intuitive)
-            if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
+
+            switch (node.NodeType)
             {
-                // For diamond nodes return the vertex in the chosen direction
-                float hx = node.EditorSize.x * 0.5f;
-                float hy = node.EditorSize.y * 0.5f;
-                if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-                {
-                    return dir.x < 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
-                }
-                else
-                {
-                    return dir.y < 0 ? new Vector2(center.x, center.y - hy) : new Vector2(center.x, center.y + hy);
-                }
+                case ConversationNodeType.Conditional:
+                    if (node.conditionalBranch != null)
+                    {
+                        float hx = node.EditorSize.x * 0.5f;
+                        float hy = node.EditorSize.y * 0.5f;
+                        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+                        {
+                            return dir.x < 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
+                        }
+                        else
+                        {
+                            return dir.y < 0 ? new Vector2(center.x, center.y - hy) : new Vector2(center.x, center.y + hy);
+                        }
+                    }
+                    // fall through to rectangle behavior if no conditional branch data
+                    break;
+                default:
+                    break;
             }
 
             // Rectangular nodes: pick side based on which axis is dominant
