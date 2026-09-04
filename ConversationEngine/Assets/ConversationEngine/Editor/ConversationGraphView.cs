@@ -643,7 +643,12 @@ namespace ConversationEditor
                 if (node.NextNodeId > 0)
                 {
                     var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == node.NextNodeId);
-                    if (targetNode != null) DrawConnection(node.EditorPosition + node.EditorSize / 2, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.white);
+                    if (targetNode != null)
+                    {
+                        Vector2 startMid = node.EditorPosition + node.EditorSize / 2;
+                        Vector2 targetPoint = GetNodeConnectionPoint(targetNode, startMid);
+                        DrawConnection(startMid, targetPoint, Color.white);
+                    }
                 }
                 if (node.Options != null)
                 {
@@ -663,7 +668,8 @@ namespace ConversationEditor
                             if (targetNode != null)
                             {
                                 Vector2 optionPos = new Vector2(optionRect.xMax, optionRect.center.y);
-                                DrawConnection(optionPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.cyan);
+                                var targetPoint = GetNodeConnectionPoint(targetNode, optionPos);
+                                DrawConnection(optionPos, targetPoint, Color.cyan);
                             }
                         }
                     }
@@ -677,12 +683,20 @@ namespace ConversationEditor
                     if (branch.NextNodeIdTrue > 0)
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
-                        if (targetNode != null) DrawConnection(leftPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.green);
+                        if (targetNode != null)
+                        {
+                            var targetPoint = GetNodeConnectionPoint(targetNode, leftPos);
+                            DrawConnection(leftPos, targetPoint, Color.green);
+                        }
                     }
                     if (branch.NextNodeIdFalse > 0)
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
-                        if (targetNode != null) DrawConnection(rightPos, targetNode.EditorPosition + new Vector2(0, targetNode.EditorSize.y / 2), Color.red);
+                        if (targetNode != null)
+                        {
+                            var targetPoint = GetNodeConnectionPoint(targetNode, rightPos);
+                            DrawConnection(rightPos, targetPoint, Color.red);
+                        }
                     }
                 }
             }
@@ -694,13 +708,30 @@ namespace ConversationEditor
             Vector2 start = WorldToGraph(startWorld);
             Vector2 end = WorldToGraph(endWorld);
             Handles.color = color;
-            Vector2 tangentOffset = Vector2.right * (50f * zoom);
-            Vector2 startTangent = start + tangentOffset;
-            Vector2 endTangent = end - tangentOffset;
+            // Calculate a tangent based on the direction between points for a nicer curve
+            Vector2 delta = end - start;
+            Vector2 startTangent, endTangent;
+            if (delta.sqrMagnitude < 0.0001f)
+            {
+                Vector2 fallback = Vector2.right * (50f * zoom);
+                startTangent = start + fallback;
+                endTangent = end - fallback;
+            }
+            else
+            {
+                float distance = delta.magnitude;
+                float tangentLength = Mathf.Clamp(distance * 0.5f, 50f * zoom, 200f * zoom);
+                Vector2 tangent = delta.normalized * tangentLength;
+                startTangent = start + tangent;
+                endTangent = end - tangent;
+            }
+
             Handles.DrawBezier(start, end, startTangent, endTangent, color, null, 5f);
+
             Vector2 direction = (end - endTangent).normalized;
-            Vector2 arrowPoint1 = end - direction * 10 + new Vector2(-direction.y, direction.x) * 5;
-            Vector2 arrowPoint2 = end - direction * 10 - new Vector2(-direction.y, direction.x) * 5;
+            if (direction.sqrMagnitude < 0.0001f) direction = Vector2.down;
+            Vector2 arrowPoint1 = end - direction * (10f * zoom) + new Vector2(-direction.y, direction.x) * (5f * zoom);
+            Vector2 arrowPoint2 = end - direction * (10f * zoom) - new Vector2(-direction.y, direction.x) * (5f * zoom);
             Handles.DrawAAPolyLine(5f, end, arrowPoint1);
             Handles.DrawAAPolyLine(5f, end, arrowPoint2);
         }
@@ -761,6 +792,39 @@ namespace ConversationEditor
         {
             Handles.color = color;
             Handles.DrawAAPolyLine(3f, WorldToGraph(startWorld), WorldToGraph(endWorld));
+        }
+
+        private Vector2 GetNodeConnectionPoint(ConversationNode node, Vector2 fromWorld)
+        {
+            // Determine the best point on the node edge (midpoint of the chosen side)
+            Rect nodeRect = new Rect(node.EditorPosition, node.EditorSize);
+            Vector2 center = nodeRect.center;
+            Vector2 dir = fromWorld - center;
+            // Use dominant axis from center->fromWorld to decide side (more intuitive)
+            if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
+            {
+                // For diamond nodes return the vertex in the chosen direction
+                float hx = node.EditorSize.x * 0.5f;
+                float hy = node.EditorSize.y * 0.5f;
+                if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+                {
+                    return dir.x < 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
+                }
+                else
+                {
+                    return dir.y < 0 ? new Vector2(center.x, center.y - hy) : new Vector2(center.x, center.y + hy);
+                }
+            }
+
+            // Rectangular nodes: pick side based on which axis is dominant
+            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            {
+                return dir.x < 0 ? new Vector2(nodeRect.xMin, nodeRect.center.y) : new Vector2(nodeRect.xMax, nodeRect.center.y);
+            }
+            else
+            {
+                return dir.y < 0 ? new Vector2(nodeRect.center.x, nodeRect.yMin) : new Vector2(nodeRect.center.x, nodeRect.yMax);
+            }
         }
         #endregion
 
