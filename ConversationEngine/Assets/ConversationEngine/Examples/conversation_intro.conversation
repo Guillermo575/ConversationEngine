@@ -38,17 +38,19 @@
         "SpeakerActorId": "",
         "Text": "",
         "NextNodeId": 2,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 0.0,
-          "y": 0.0
+          "X": 371.3635,
+          "Y": 420.9089
         },
         "EditorSize": {
-          "x": 150.0,
-          "y": 80.0
+          "X": 150,
+          "Y": 80
         }
       },
       {
@@ -57,32 +59,31 @@
         "SpeakerActorId": "",
         "Text": "",
         "NextNodeId": 3,
-        "Options": [],
+        "Options": [
+        ],
         "Functions": [
           {
             "MethodName": "SetBackground",
             "Parameters": {
-              "backgroundId": "bg_kingdom_gate"
             },
             "Timestamp": 0
           },
           {
             "MethodName": "PlayAudio",
             "Parameters": {
-              "audioId": "bgm_intro_theme"
             },
             "Timestamp": 0
           }
         ],
-        "ConditionalBranches": [],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 200.0,
-          "y": 0.0
+          "X": 392.7272,
+          "Y": 620.9089
         },
         "EditorSize": {
-          "x": 180.0,
-          "y": 100.0
+          "X": 180,
+          "Y": 100
         }
       },
       {
@@ -91,17 +92,19 @@
         "SpeakerActorId": "",
         "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
         "NextNodeId": 4,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 420.0,
-          "y": 0.0
+          "X": 402.7272,
+          "Y": 874.5449
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -110,17 +113,19 @@
         "SpeakerActorId": "actor_1",
         "Text": "Greetings, traveler. You look troubled. Is something wrong?",
         "NextNodeId": 5,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 660.0,
-          "y": 0.0
+          "X": 400.909,
+          "Y": 1088.182
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -129,17 +134,19 @@
         "SpeakerActorId": "actor_2",
         "Text": "I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.",
         "NextNodeId": 6,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 900.0,
-          "y": 0.0
+          "X": 399.0908,
+          "Y": 1298.183
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -148,17 +155,19 @@
         "SpeakerActorId": "actor_2",
         "Text": "Will you accept this mission and help us rescue her?",
         "NextNodeId": 7,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1140.0,
-          "y": 0.0
+          "X": 100,
+          "Y": 1393.636
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -171,34 +180,67 @@
           {
             "Text": "Yes",
             "NextNodeId": 8,
+            "EditorPosition": {
+              "X": 230.9499,
+              "Y": 6.806464
+            },
+            "EditorSize": {
+              "X": 150,
+              "Y": 60
+            },
             "Conditions": []
           },
           {
             "Text": "Alright, but you will pay me double",
             "NextNodeId": 9,
+            "EditorPosition": {
+              "X": 492.8951,
+              "Y": -23.59608
+            },
+            "EditorSize": {
+              "X": 150,
+              "Y": 60
+            },
             "Conditions": []
           },
           {
             "Text": "Can you repeat that again?",
             "NextNodeId": 5,
+            "EditorPosition": {
+              "X": 237.3344,
+              "Y": 133.6241
+            },
+            "EditorSize": {
+              "X": 150,
+              "Y": 60
+            },
             "Conditions": []
           },
           {
             "Text": "No thanks",
             "NextNodeId": 10,
+            "EditorPosition": {
+              "X": 171.7192,
+              "Y": 274.883
+            },
+            "EditorSize": {
+              "X": 150,
+              "Y": 60
+            },
             "Conditions": []
           }
         ],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1380.0,
-          "y": 0.0
+          "X": 588.1819,
+          "Y": 1653.183
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 150.0
+          "X": 200,
+          "Y": 150
         }
       },
       {
@@ -207,17 +249,19 @@
         "SpeakerActorId": "actor_2",
         "Text": "Thank you, brave knight. We leave at first light.",
         "NextNodeId": 11,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1620.0,
-          "y": -150.0
+          "X": 200,
+          "Y": 1818.57
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -226,17 +270,19 @@
         "SpeakerActorId": "actor_2",
         "Text": "I... understand. Very well. Deal.",
         "NextNodeId": 11,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1620.0,
-          "y": -30.0
+          "X": 697.1427,
+          "Y": 2054.287
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -245,17 +291,19 @@
         "SpeakerActorId": "",
         "Text": "Without a word, the knight turns around and walks away.",
         "NextNodeId": 12,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1620.0,
-          "y": 150.0
+          "X": 125,
+          "Y": 1950
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -264,17 +312,19 @@
         "SpeakerActorId": "",
         "Text": "At sunrise, they depart toward the hideout where the princess was taken.",
         "NextNodeId": 13,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1860.0,
-          "y": -90.0
+          "X": 424.2857,
+          "Y": 2225.713
         },
         "EditorSize": {
-          "x": 200.0,
-          "y": 100.0
+          "X": 200,
+          "Y": 100
         }
       },
       {
@@ -283,17 +333,19 @@
         "SpeakerActorId": "",
         "Text": "THE END",
         "NextNodeId": 14,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 1860.0,
-          "y": 150.0
+          "X": 177.1429,
+          "Y": 2098.573
         },
         "EditorSize": {
-          "x": 150.0,
-          "y": 80.0
+          "X": 150,
+          "Y": 80
         }
       },
       {
@@ -302,17 +354,19 @@
         "SpeakerActorId": "",
         "Text": "TO BE CONTINUED",
         "NextNodeId": 14,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 2100.0,
-          "y": -90.0
+          "X": 337.2727,
+          "Y": 2405.455
         },
         "EditorSize": {
-          "x": 150.0,
-          "y": 80.0
+          "X": 150,
+          "Y": 80
         }
       },
       {
@@ -321,19 +375,24 @@
         "SpeakerActorId": "",
         "Text": "",
         "NextNodeId": 0,
-        "Options": [],
-        "Functions": [],
-        "ConditionalBranches": [],
+        "Options": [
+        ],
+        "Functions": [
+        ],
+        "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "x": 2100.0,
-          "y": -90.0
+          "X": 184.5454,
+          "Y": 2671.818
         },
         "EditorSize": {
-          "x": 150.0,
-          "y": 80.0
+          "X": 150,
+          "Y": 80
         }
       }
     ]
+  },
+  "EditorSettings": {
+    "Zoom": 0.4000001
   }
 }
