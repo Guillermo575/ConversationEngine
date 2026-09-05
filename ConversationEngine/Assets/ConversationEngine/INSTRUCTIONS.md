@@ -53,6 +53,32 @@
         - Agregar tooltip en cada componente editado o creado.
         - No agregar tooltips en otros componentes a menos que se indique.
         - No implementar funciones externas para tooltips en código sin tocar (salvo indicación).
+	###Uso de Singletons
+	Al momento de crear clases modulares (auxiliares) verifica si es optimo hacer uso de singletons. Ejemplo de estructura singleton (colocala al inicio de la clase):
+
+	#region Singleton
+	private static ConversationNodeStyle SingletonObject;
+	private ConversationNodeStyle() { }
+	private ConversationNodeStyle CreateSingleton()
+	{
+		if (SingletonObject == null)
+		{
+			SingletonObject = this;
+			//Aqui ejecuta los metodos para inicializar variables si tiene
+		}
+		return SingletonObject;
+	}
+	public static ConversationNodeStyle GetSingleton()
+	{
+		#Si no existe se creara automaticamente
+		if (SingletonObject == null)
+		{
+			SingletonObject = new ConversationNodeStyle().CreateSingleton();
+		}
+		return SingletonObject;
+	}
+	#endregion
+
     ### Estas reglas aplican solo al código que estás creando o modificando en ese momento, no al código existente no tocado.
         - Excepciones:
             - Cuando se indique lo contrario.
