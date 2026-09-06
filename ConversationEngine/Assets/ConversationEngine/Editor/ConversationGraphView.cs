@@ -657,10 +657,14 @@ namespace ConversationEditor
                     {
                         var option = node.Options[i];
                         Rect optionRect = GetOptionWorldRect(node, option, i);
-                        // Start point should be on the right edge of the parent node and vertically
-                        // aligned with the option center but clamped to the node's vertical bounds
-                        float clampedY = Mathf.Clamp(optionRect.center.y, nodeRect.yMin, nodeRect.yMax);
-                        Vector2 optionStart = new Vector2(nodeRect.xMax, clampedY);
+                        // Start point should be on the right edge of the parent node.
+                        // Instead of clamping to the option center (which can snap to corners when
+                        // the option is above/below the node), distribute attachment points evenly
+                        // along the node's right edge so links originate from the middle of the side.
+                        float verticalMargin = Mathf.Min(10f, nodeRect.height * 0.1f);
+                        float t = (i + 1f) / (node.Options.Count + 1f);
+                        float y = Mathf.Lerp(nodeRect.yMin + verticalMargin, nodeRect.yMax - verticalMargin, t);
+                        Vector2 optionStart = new Vector2(nodeRect.xMax, y);
                         Vector2 optionEnd = new Vector2(optionRect.xMin, optionRect.center.y);
                         DrawParentOptionLink(optionStart, optionEnd, Color.white);
                         if (option.NextNodeId > 0)
