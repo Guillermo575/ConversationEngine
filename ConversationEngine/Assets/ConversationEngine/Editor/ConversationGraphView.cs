@@ -640,15 +640,12 @@ namespace ConversationEditor
             Handles.BeginGUI();
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
-                Rect nodeRect = GetNodeWorldRect(node);
                 if (node.NextNodeId > 0)
                 {
                     var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == node.NextNodeId);
                     if (targetNode != null)
                     {
-                        Vector2 startMid = node.EditorPosition;
-                        Vector2 targetPoint = GetNodeConnectionPoint(targetNode, startMid);
-                        DrawConnection(startMid, targetPoint, Color.white);
+                        ConversationEditorHelpers.DrawConnectionLine(node.EditorPosition, node.EditorSize, targetNode.EditorPosition, targetNode.EditorSize, 5f, Color.white, WorldToGraph, node.NodeType, targetNode.NodeType);
                     }
                 }
                 if (node.Options != null)
@@ -657,24 +654,13 @@ namespace ConversationEditor
                     {
                         var option = node.Options[i];
                         Rect optionRect = GetOptionWorldRect(node, option, i);
-                        // Start point should be on the right edge of the parent node.
-                        // Instead of clamping to the option center (which can snap to corners when
-                        // the option is above/below the node), distribute attachment points evenly
-                        // along the node's right edge so links originate from the middle of the side.
-                        float verticalMargin = Mathf.Min(10f, nodeRect.height * 0.1f);
-                        float t = (i + 1f) / (node.Options.Count + 1f);
-                        float y = Mathf.Lerp(nodeRect.yMin + verticalMargin, nodeRect.yMax - verticalMargin, t);
-                        Vector2 optionStart = new Vector2(nodeRect.xMax, y);
-                        Vector2 optionEnd = new Vector2(optionRect.xMin, optionRect.center.y);
-                        DrawParentOptionLink(optionStart, optionEnd, Color.white);
+                        ConversationEditorHelpers.DrawConnectionLine(node.EditorPosition, node.EditorSize, optionRect.center, optionRect.size, 3f, Color.white, WorldToGraph, node.NodeType, ConversationNodeType.Dialogue);
                         if (option.NextNodeId > 0)
                         {
                             var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == option.NextNodeId);
                             if (targetNode != null)
                             {
-                                Vector2 optionPos = new Vector2(optionRect.xMax, optionRect.center.y);
-                                var targetPoint = GetNodeConnectionPoint(targetNode, optionPos);
-                                DrawConnection(optionPos, targetPoint, Color.cyan);
+                                ConversationEditorHelpers.DrawConnectionLine(optionRect.center, optionRect.size, targetNode.EditorPosition, targetNode.EditorSize, 5f, Color.cyan, WorldToGraph, ConversationNodeType.Dialogue, targetNode.NodeType);
                             }
                         }
                     }
@@ -683,15 +669,15 @@ namespace ConversationEditor
                 {
                     var branch = node.conditionalBranch;
                     Vector2 center = node.EditorPosition;
-                    Vector2 leftPos = new Vector2(center.x - node.EditorSize.x * 0.5f, center.y);
-                    Vector2 rightPos = new Vector2(center.x + node.EditorSize.x * 0.5f, center.y);
+                    float hx = node.EditorSize.x * 0.5f;
+                    Vector2 trueAnchor = new Vector2(center.x - hx, center.y);
+                    Vector2 falseAnchor = new Vector2(center.x + hx, center.y);
                     if (branch.NextNodeIdTrue > 0)
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
                         if (targetNode != null)
                         {
-                            var targetPoint = GetNodeConnectionPoint(targetNode, leftPos);
-                            DrawConnection(leftPos, targetPoint, Color.green);
+                            ConversationEditorHelpers.DrawConnectionLine(new Rect(trueAnchor, Vector2.zero), new Rect(targetNode.EditorPosition, targetNode.EditorSize), 5f, Color.green, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
                         }
                     }
                     if (branch.NextNodeIdFalse > 0)
@@ -699,8 +685,7 @@ namespace ConversationEditor
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
                         if (targetNode != null)
                         {
-                            var targetPoint = GetNodeConnectionPoint(targetNode, rightPos);
-                            DrawConnection(rightPos, targetPoint, Color.red);
+                            ConversationEditorHelpers.DrawConnectionLine(new Rect(falseAnchor, Vector2.zero), new Rect(targetNode.EditorPosition, targetNode.EditorSize), 5f, Color.red, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
                         }
                     }
                 }
@@ -708,68 +693,36 @@ namespace ConversationEditor
             Handles.EndGUI();
         }
 
-        private void DrawConnection(Vector2 startWorld, Vector2 endWorld, Color color)
-        {
-            Vector2 start = WorldToGraph(startWorld);
-            Vector2 end = WorldToGraph(endWorld);
-            Handles.color = color;
-            // Calculate a tangent based on the direction between points for a nicer curve
-            Vector2 delta = end - start;
-            Vector2 startTangent, endTangent;
-            if (delta.sqrMagnitude < 0.0001f)
-            {
-                Vector2 fallback = Vector2.right * (50f * zoom);
-                startTangent = start + fallback;
-                endTangent = end - fallback;
-            }
-            else
-            {
-                float distance = delta.magnitude;
-                float tangentLength = Mathf.Clamp(distance * 0.5f, 50f * zoom, 200f * zoom);
-                Vector2 tangent = delta.normalized * tangentLength;
-                startTangent = start + tangent;
-                endTangent = end - tangent;
-            }
-
-            Handles.DrawBezier(start, end, startTangent, endTangent, color, null, 5f);
-
-            Vector2 direction = (end - endTangent).normalized;
-            if (direction.sqrMagnitude < 0.0001f) direction = Vector2.down;
-            Vector2 arrowPoint1 = end - direction * (10f * zoom) + new Vector2(-direction.y, direction.x) * (5f * zoom);
-            Vector2 arrowPoint2 = end - direction * (10f * zoom) - new Vector2(-direction.y, direction.x) * (5f * zoom);
-            Handles.DrawAAPolyLine(5f, end, arrowPoint1);
-            Handles.DrawAAPolyLine(5f, end, arrowPoint2);
-        }
-
         private void DrawConnectionLine()
         {
             if (!isConnecting || isReadOnly) return;
-            Vector2 startPos = Vector2.zero;
+            Rect startRect;
+            ConversationNodeType startType = ConversationNodeType.Dialogue;
             if (connectingFromOption != null)
             {
                 var node = connectingFromNode;
                 int optionIndex = node.Options.IndexOf(connectingFromOption);
-                if (optionIndex >= 0)
-                {
-                    Rect optionRect = GetOptionWorldRect(node, connectingFromOption, optionIndex);
-                    startPos = new Vector2(optionRect.xMax, optionRect.center.y);
-                }
+                if (optionIndex < 0) return;
+                Rect optionRect = GetOptionWorldRect(node, connectingFromOption, optionIndex);
+                startRect = optionRect;
             }
             else if (connectingFromBranch != null)
             {
                 var node = connectingFromNode;
                 Vector2 center = node.EditorPosition;
                 float hx = node.EditorSize.x * 0.5f;
-                startPos = connectingBranchIndex == 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
+                Vector2 branchAnchor = connectingBranchIndex == 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
+                startRect = new Rect(branchAnchor, Vector2.zero);
+                startType = ConversationNodeType.Conditional;
             }
             else
             {
-                startPos = connectingFromNode.EditorPosition;
+                startRect = GetNodeWorldRect(connectingFromNode);
+                startType = connectingFromNode != null ? connectingFromNode.NodeType : ConversationNodeType.Dialogue;
             }
-            Vector2 endPos = WindowToWorld(Event.current.mousePosition);
+            Rect endRect = new Rect(WindowToWorld(Event.current.mousePosition), Vector2.zero);
             Handles.BeginGUI();
-            Handles.color = Color.yellow;
-            Handles.DrawAAPolyLine(5f, WorldToGraph(startPos), WorldToGraph(endPos));
+            ConversationEditorHelpers.DrawConnectionLine(startRect, endRect, 5f, Color.yellow, WorldToGraph, startType, ConversationNodeType.Dialogue);
             Handles.EndGUI();
             RequestRepaint();
         }
@@ -793,50 +746,25 @@ namespace ConversationEditor
             RequestRepaint();
         }
 
-        private void DrawParentOptionLink(Vector2 startWorld, Vector2 endWorld, Color color)
+        private Rect GetNodeWorldRect(ConversationNode node)
         {
-            Handles.color = color;
-            Handles.DrawAAPolyLine(3f, WorldToGraph(startWorld), WorldToGraph(endWorld));
+            return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
         }
 
-        private Vector2 GetNodeConnectionPoint(ConversationNode node, Vector2 fromWorld)
+        private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
         {
-            // Determine the best point on the node edge (midpoint of the chosen side)
-            Rect nodeRect = GetNodeWorldRect(node);
-            Vector2 center = node.EditorPosition;
-            Vector2 dir = fromWorld - center;
+            EnsureOptionEditorData(node, option, optionIndex);
+            return ConversationEditorHelpers.GetOptionWorldRect(node.EditorPosition, node.EditorSize, option.EditorPosition, option.EditorSize);
+        }
 
-            switch (node.NodeType)
-            {
-                case ConversationNodeType.Conditional:
-                    if (node.conditionalBranch != null)
-                    {
-                        float hx = node.EditorSize.x * 0.5f;
-                        float hy = node.EditorSize.y * 0.5f;
-                        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-                        {
-                            return dir.x < 0 ? new Vector2(center.x - hx, center.y) : new Vector2(center.x + hx, center.y);
-                        }
-                        else
-                        {
-                            return dir.y < 0 ? new Vector2(center.x, center.y - hy) : new Vector2(center.x, center.y + hy);
-                        }
-                    }
-                    // fall through to rectangle behavior if no conditional branch data
-                    break;
-                default:
-                    break;
-            }
+        private Vector2 TranslateNodeDrawPosition(Vector2 position, Vector2 size)
+        {
+            return position - size * 0.5f;
+        }
 
-            // Rectangular nodes: pick side based on which axis is dominant
-            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-            {
-                return dir.x < 0 ? new Vector2(nodeRect.xMin, nodeRect.center.y) : new Vector2(nodeRect.xMax, nodeRect.center.y);
-            }
-            else
-            {
-                return dir.y < 0 ? new Vector2(nodeRect.center.x, nodeRect.yMin) : new Vector2(nodeRect.center.x, nodeRect.yMax);
-            }
+        private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
+        {
+            return drawPosition + size * 0.5f;
         }
         #endregion
 
@@ -1422,6 +1350,57 @@ namespace ConversationEditor
             }
         }
 
+        private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
+        {
+            if (node == null || option == null) return;
+            option.EditorSize = ClampEditorSize(option.EditorSize);
+            if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
+        }
+
+        private Vector2 GenerateOptionPosition(ConversationNode node, int optionIndex)
+        {
+            float baseX = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
+            float baseY = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
+            return new Vector2(baseX, baseY);
+        }
+
+        private ConversationOption CreateOption(ConversationNode node, string text, int optionIndex)
+        {
+            return new ConversationOption
+            {
+                Text = text,
+                NextNodeId = 0,
+                Conditions = new List<ConditionRule>(),
+                EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight),
+                EditorPosition = GenerateOptionPosition(node, optionIndex)
+            };
+        }
+
+        private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
+        {
+            if (conversationData?.ConversationManager?.Nodes == null) return false;
+            foreach (var node in conversationData.ConversationManager.Nodes)
+            {
+                Rect nodeRect = GetNodeWorldRect(node);
+                if (nodeRect.Contains(mouseWorldPos)) return true;
+                if (node.Options != null)
+                {
+                    for (int i = 0; i < node.Options.Count; i++)
+                    {
+                        Rect optionRect = GetOptionWorldRect(node, node.Options[i], i);
+                        if (optionRect.Contains(mouseWorldPos)) return true;
+                    }
+                }
+                if (node.NodeType != ConversationNodeType.Conditional || node.conditionalBranch == null) continue;
+                float indicatorSize = 16f;
+                Vector2 center = node.EditorPosition;
+                Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
+            }
+            return false;
+        }
+
         private void EnsureMinimumEditorSizesInConversation()
         {
             if (conversationData?.ConversationManager?.Nodes == null) return;
@@ -1488,81 +1467,6 @@ namespace ConversationEditor
             if (sourceText.Length <= safeLength) return sourceText;
             int trimmedLength = Mathf.Max(1, safeLength - 3);
             return sourceText.Substring(0, trimmedLength) + "...";
-        }
-
-        private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
-        {
-            EnsureOptionEditorData(node, option, optionIndex);
-            Rect nodeRect = GetNodeWorldRect(node);
-            Vector2 optionWorldPos = nodeRect.position + option.EditorPosition;
-            return new Rect(optionWorldPos, option.EditorSize);
-        }
-
-        private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
-        {
-            if (node == null || option == null) return;
-            option.EditorSize = ClampEditorSize(option.EditorSize);
-            if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
-        }
-
-        private Vector2 GenerateOptionPosition(ConversationNode node, int optionIndex)
-        {
-            float baseX = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
-            float baseY = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
-            return new Vector2(baseX, baseY);
-        }
-
-        private ConversationOption CreateOption(ConversationNode node, string text, int optionIndex)
-        {
-            var option = new ConversationOption
-            {
-                Text = text,
-                NextNodeId = 0,
-                Conditions = new List<ConditionRule>(),
-                EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight),
-                EditorPosition = GenerateOptionPosition(node, optionIndex)
-            };
-            return option;
-        }
-
-        private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
-        {
-            if (conversationData?.ConversationManager?.Nodes == null) return false;
-            foreach (var node in conversationData.ConversationManager.Nodes)
-            {
-                Rect nodeRect = GetNodeWorldRect(node);
-                if (nodeRect.Contains(mouseWorldPos)) return true;
-                if (node.Options != null)
-                {
-                    for (int i = 0; i < node.Options.Count; i++)
-                    {
-                        Rect optionRect = GetOptionWorldRect(node, node.Options[i], i);
-                        if (optionRect.Contains(mouseWorldPos)) return true;
-                    }
-                }
-                if (node.NodeType != ConversationNodeType.Conditional || node.conditionalBranch == null) continue;
-                float indicatorSize = 16f;
-                Vector2 center = node.EditorPosition;
-                Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
-                Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
-                if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
-            }
-            return false;
-        }
-
-        private Rect GetNodeWorldRect(ConversationNode node)
-        {
-            return new Rect(TranslateNodeDrawPosition(node.EditorPosition, node.EditorSize), node.EditorSize);
-        }
-
-        private Vector2 TranslateNodeDrawPosition(Vector2 position, Vector2 size)
-        {
-            return position - size * 0.5f;
-        }
-
-        private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
-        {
-            return drawPosition + size * 0.5f;
         }
         #endregion
     }

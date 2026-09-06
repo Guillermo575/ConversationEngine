@@ -18,8 +18,6 @@ namespace ConversationEditor
         {
             Vector2 startTangent = start + Vector2.right * 50;
             Vector2 endTangent = end + Vector2.left * 50;
-
-            // Sample points along the curve and check distance
             int samples = 20;
             for (int i = 0; i <= samples; i++)
             {
@@ -41,14 +39,89 @@ namespace ConversationEditor
             float uu = u * u;
             float uuu = uu * u;
             float ttt = tt * t;
-
             Vector2 p = uuu * p0;
             p += 3 * uu * t * p1;
             p += 3 * u * tt * p2;
             p += ttt * p3;
-
             return p;
         }
+
+        #region Connections
+        public static Rect GetNodeWorldRect(Vector2 nodeCenter, Vector2 nodeSize)
+        {
+            return new Rect(nodeCenter - nodeSize * 0.5f, nodeSize);
+        }
+
+        public static Rect GetOptionWorldRect(Vector2 parentCenter, Vector2 parentSize, Vector2 optionLocalPosition, Vector2 optionSize)
+        {
+            Rect parentRect = GetNodeWorldRect(parentCenter, parentSize);
+            return new Rect(parentRect.position + optionLocalPosition, optionSize);
+        }
+
+        public static void DrawConnectionLine(Vector2 startCenter, Vector2 startSize, Vector2 endCenter, Vector2 endSize, float lineThickness, Color lineColor, System.Func<Vector2, Vector2> worldToGraph, ConversationNodeType startType = ConversationNodeType.Dialogue, ConversationNodeType endType = ConversationNodeType.Dialogue)
+        {
+            DrawConnectionLine(GetNodeWorldRect(startCenter, startSize), GetNodeWorldRect(endCenter, endSize), lineThickness, lineColor, worldToGraph, startType, endType);
+        }
+
+        public static void DrawConnectionLine(Rect startRect, Rect endRect, float lineThickness, Color lineColor, System.Func<Vector2, Vector2> worldToGraph, ConversationNodeType startType = ConversationNodeType.Dialogue, ConversationNodeType endType = ConversationNodeType.Dialogue)
+        {
+            if (worldToGraph == null) return;
+            Vector2 startPoint = GetConnectionPoint(startRect, endRect.center, startType);
+            Vector2 endPoint = GetConnectionPoint(endRect, startRect.center, endType);
+            DrawBezierConnection(worldToGraph(startPoint), worldToGraph(endPoint), lineThickness, lineColor);
+        }
+
+        private static Vector2 GetConnectionPoint(Rect nodeRect, Vector2 fromWorldPosition, ConversationNodeType nodeType)
+        {
+            if (nodeRect.width <= 0f || nodeRect.height <= 0f) return nodeRect.center;
+            Vector2 center = nodeRect.center;
+            Vector2 direction = fromWorldPosition - center;
+            switch (nodeType)
+            {
+                case ConversationNodeType.Conditional:
+                    float halfWidth = nodeRect.width * 0.5f;
+                    float halfHeight = nodeRect.height * 0.5f;
+                    if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+                        return direction.x < 0f ? new Vector2(center.x - halfWidth, center.y) : new Vector2(center.x + halfWidth, center.y);
+                    return direction.y < 0f ? new Vector2(center.x, center.y - halfHeight) : new Vector2(center.x, center.y + halfHeight);
+                default:
+                    if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+                        return direction.x < 0f ? new Vector2(nodeRect.xMin, center.y) : new Vector2(nodeRect.xMax, center.y);
+                    return direction.y < 0f ? new Vector2(center.x, nodeRect.yMin) : new Vector2(center.x, nodeRect.yMax);
+            }
+        }
+
+        private static void DrawBezierConnection(Vector2 start, Vector2 end, float lineThickness, Color lineColor)
+        {
+            Handles.color = lineColor;
+            Vector2 delta = end - start;
+            Vector2 startTangent;
+            Vector2 endTangent;
+            if (delta.sqrMagnitude < 0.0001f)
+            {
+                Vector2 fallback = Vector2.right * 50f;
+                startTangent = start + fallback;
+                endTangent = end - fallback;
+            }
+            else
+            {
+                float distance = delta.magnitude;
+                float tangentLength = Mathf.Clamp(distance * 0.5f, 50f, 200f);
+                Vector2 tangent = delta.normalized * tangentLength;
+                startTangent = start + tangent;
+                endTangent = end - tangent;
+            }
+            Handles.DrawBezier(start, end, startTangent, endTangent, lineColor, null, lineThickness);
+            Vector2 direction = (end - endTangent).normalized;
+            if (direction.sqrMagnitude < 0.0001f) direction = Vector2.down;
+            float arrowLength = Mathf.Max(10f, lineThickness * 2f);
+            float arrowWidth = Mathf.Max(5f, lineThickness);
+            Vector2 arrowPoint1 = end - direction * arrowLength + new Vector2(-direction.y, direction.x) * arrowWidth;
+            Vector2 arrowPoint2 = end - direction * arrowLength - new Vector2(-direction.y, direction.x) * arrowWidth;
+            Handles.DrawAAPolyLine(lineThickness, end, arrowPoint1);
+            Handles.DrawAAPolyLine(lineThickness, end, arrowPoint2);
+        }
+        #endregion
 
         /// <summary>
         /// Auto-arrange nodes in a horizontal or vertical layout
@@ -56,37 +129,24 @@ namespace ConversationEditor
         public static void AutoArrangeNodes(List<ConversationNode> nodes, float spacing, bool horizontal = true)
         {
             if (nodes == null || nodes.Count == 0) return;
-
-            // Find start node
             var startNode = nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
             if (startNode == null) return;
-
-            // Build graph
             Dictionary<int, List<ConversationNode>> layers = new Dictionary<int, List<ConversationNode>>();
             HashSet<int> visited = new HashSet<int>();
             Queue<(ConversationNode node, int layer)> queue = new Queue<(ConversationNode, int)>();
-
             queue.Enqueue((startNode, 0));
             visited.Add(startNode.Id);
-
             int maxLayer = 0;
-
             while (queue.Count > 0)
             {
                 var (currentNode, layer) = queue.Dequeue();
-
                 if (!layers.ContainsKey(layer))
                     layers[layer] = new List<ConversationNode>();
-
                 layers[layer].Add(currentNode);
                 maxLayer = Mathf.Max(maxLayer, layer);
-
-                // Get all connected nodes
                 List<int> connectedIds = new List<int>();
-
                 if (currentNode.NextNodeId > 0)
                     connectedIds.Add(currentNode.NextNodeId);
-
                 if (currentNode.Options != null)
                 {
                     foreach (var option in currentNode.Options)
@@ -95,15 +155,12 @@ namespace ConversationEditor
                             connectedIds.Add(option.NextNodeId);
                     }
                 }
-
                 if (currentNode.conditionalBranch != null)
                 {
                     var branch = currentNode.conditionalBranch;
                     if (branch.NextNodeIdTrue > 0) connectedIds.Add(branch.NextNodeIdTrue);
                     if (branch.NextNodeIdFalse > 0) connectedIds.Add(branch.NextNodeIdFalse);
                 }
-
-                // Enqueue unvisited connected nodes
                 foreach (var id in connectedIds)
                 {
                     if (!visited.Contains(id))
@@ -117,21 +174,16 @@ namespace ConversationEditor
                     }
                 }
             }
-
-            // Position nodes
             float currentOffset = 0;
             foreach (var layer in layers.OrderBy(kvp => kvp.Key))
             {
                 int layerIndex = layer.Key;
                 var layerNodes = layer.Value;
-
-                float layerHeight = layerNodes.Count * 120; // Approximate node height
+                float layerHeight = layerNodes.Count * 120;
                 float startY = -layerHeight / 2;
-
                 for (int i = 0; i < layerNodes.Count; i++)
                 {
                     var node = layerNodes[i];
-
                     if (horizontal)
                     {
                         node.EditorPosition = new Vector2(layerIndex * spacing, startY + i * 120);
@@ -150,11 +202,9 @@ namespace ConversationEditor
         public static string GetNodeDropdownText(ConversationNode node)
         {
             if (node == null) return "NINGUNO";
-
             string actorPart = string.IsNullOrEmpty(node.SpeakerActorId) ? "" : $" - {node.SpeakerActorId}";
             string textPart = string.IsNullOrEmpty(node.Text) ? "" : $" - {(node.Text.Length > 30 ? node.Text.Substring(0, 30) + "..." : node.Text)}";
             string nodeTypePart = "";
-
             switch (node.NodeType)
             {
                 case ConversationNodeType.Start:
@@ -170,7 +220,6 @@ namespace ConversationEditor
                     nodeTypePart = " [COND]";
                     break;
             }
-
             return $"{node.Id}{actorPart}{textPart}{nodeTypePart}";
         }
 

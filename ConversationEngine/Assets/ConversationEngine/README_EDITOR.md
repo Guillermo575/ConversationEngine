@@ -170,6 +170,8 @@ Note: For `Conditional` nodes the dialogue-specific fields above (Speaker Actor,
 - Option nodes are rendered as individual draggable blocks.
 - Each option node stores a local position and size relative to its parent dialogue node.
 - Parent-to-option link lines are drawn to identify option ownership.
+- Connection lines now use a shared renderer for dialogue, option, and conditional links.
+- Option link and target lines use the option world rect translated from the parent node.
 - Preview text length adapts to current option node size to reduce overflow.
 - Left click selects an option node and opens its inspector.
 - Drag with left click to move only the selected option node.
@@ -177,14 +179,15 @@ Note: For `Conditional` nodes the dialogue-specific fields above (Speaker Actor,
   - Duplicate option
   - Create new option (default text: `-`)
   - Delete option
-
+ 
 #### Conditional Node Properties
 - **Conditional Branches**: Multiple branch support
   - TRUE path - dropdown selector
   - FALSE path - dropdown selector
   - Condition rule list per branch
 - **Default Branch Node**: Fallback dropdown selector
-
+- Conditional branch connections use the same shared renderer and vertex selection rules as the rest of the graph.
+ 
 ### Next Node Dropdown
 
 All Next Node ID fields now use dropdowns instead of manual text entry:
