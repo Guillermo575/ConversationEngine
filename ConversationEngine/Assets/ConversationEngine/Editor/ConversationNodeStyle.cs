@@ -33,9 +33,15 @@ namespace ConversationEditor
         public GUIStyle startNodeStyle;
         public GUIStyle startNodeSelectedStyle;
         public GUIStyle startNodeDraggingStyle;
+        public Texture2D startCircleTexture;
+        public Texture2D startCircleSelectedTexture;
+        public Texture2D startCircleDraggingTexture;
         public GUIStyle endNodeStyle;
         public GUIStyle endNodeSelectedStyle;
         public GUIStyle endNodeDraggingStyle;
+        public Texture2D endCircleTexture;
+        public Texture2D endCircleSelectedTexture;
+        public Texture2D endCircleDraggingTexture;
         public GUIStyle functionNodeStyle;
         public GUIStyle functionNodeSelectedStyle;
         public GUIStyle functionNodeDraggingStyle;
@@ -80,6 +86,10 @@ namespace ConversationEditor
             startNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.4f, 0.8f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
             startNodeDraggingStyle = new GUIStyle(startNodeStyle);
             startNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.2f, 0.4f, 0.8f, 0.9f), Color.white, borderWidth);
+            // circular textures for start node
+            startCircleTexture = MakeCircularTexture(64, 64, new Color(0.2f, 0.4f, 0.8f, 0.9f), Color.black, borderWidth);
+            startCircleSelectedTexture = MakeCircularTexture(64, 64, new Color(0.2f, 0.4f, 0.8f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
+            startCircleDraggingTexture = MakeCircularTexture(64, 64, new Color(0.2f, 0.4f, 0.8f, 0.9f), Color.white, borderWidth);
             endNodeStyle = new GUIStyle(nodeStyle);
             endNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.2f, 0.2f, 0.9f), Color.black, borderWidth);
             endNodeStyle.alignment = TextAnchor.MiddleCenter;
@@ -89,6 +99,10 @@ namespace ConversationEditor
             endNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.2f, 0.2f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
             endNodeDraggingStyle = new GUIStyle(endNodeStyle);
             endNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.8f, 0.2f, 0.2f, 0.9f), Color.white, borderWidth);
+            // circular textures for end node
+            endCircleTexture = MakeCircularTexture(64, 64, new Color(0.8f, 0.2f, 0.2f, 0.9f), Color.black, borderWidth);
+            endCircleSelectedTexture = MakeCircularTexture(64, 64, new Color(0.8f, 0.2f, 0.2f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
+            endCircleDraggingTexture = MakeCircularTexture(64, 64, new Color(0.8f, 0.2f, 0.2f, 0.9f), Color.white, borderWidth);
             functionNodeStyle = new GUIStyle(nodeStyle);
             functionNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.6f, 0.6f, 0.6f, 0.9f), Color.black, borderWidth);
             functionNodeSelectedStyle = new GUIStyle(functionNodeStyle);
@@ -142,6 +156,34 @@ namespace ConversationEditor
             Texture2D texture = new Texture2D(totalWidth, totalHeight, TextureFormat.RGBA32, false);
             texture.SetPixels(pixels);
             texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.Apply();
+            return texture;
+        }
+
+        private Texture2D MakeCircularTexture(int width, int height, Color fillColor, Color borderColor, int borderWidth)
+        {
+            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[width * height];
+            Vector2 center = new Vector2(width / 2f, height / 2f);
+            float radius = Mathf.Min(width, height) * 0.5f;
+            float innerRadius = Mathf.Max(0f, radius - borderWidth);
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    float dx = x + 0.5f - center.x;
+                    float dy = y + 0.5f - center.y;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    Color c = Color.clear;
+                    if (dist <= innerRadius) c = fillColor;
+                    else if (dist <= radius) c = borderColor;
+                    else c = Color.clear;
+                    pixels[y * width + x] = c;
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.filterMode = FilterMode.Bilinear;
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.Apply();
             return texture;

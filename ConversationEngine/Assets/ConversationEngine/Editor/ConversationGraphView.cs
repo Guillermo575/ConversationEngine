@@ -283,6 +283,31 @@ namespace ConversationEditor
                 GUILayout.FlexibleSpace();
                 GUILayout.EndArea();
             }
+            else if (node.NodeType == ConversationNodeType.Start || node.NodeType == ConversationNodeType.End)
+            {
+                // draw circular node for Start/End
+                float size = Mathf.Min(nodeRect.width, nodeRect.height);
+                Rect circleRect = new Rect(nodeRect.center.x - size * 0.5f, nodeRect.center.y - size * 0.5f, size, size);
+                bool isSelected = selectedNode == node;
+                bool isDragging = isNodeBeingDragged && isSelected;
+                Texture2D tex = null;
+                if (node.NodeType == ConversationNodeType.Start)
+                {
+                    if (isDragging) tex = conversationNodeStyle.startCircleDraggingTexture;
+                    else if (isSelected) tex = conversationNodeStyle.startCircleSelectedTexture;
+                    else tex = conversationNodeStyle.startCircleTexture;
+                }
+                else
+                {
+                    if (isDragging) tex = conversationNodeStyle.endCircleDraggingTexture;
+                    else if (isSelected) tex = conversationNodeStyle.endCircleSelectedTexture;
+                    else tex = conversationNodeStyle.endCircleTexture;
+                }
+                if (tex != null) GUI.DrawTexture(circleRect, tex, ScaleMode.StretchToFill, true);
+                GUILayout.BeginArea(circleRect);
+                DrawNodeContent(node);
+                GUILayout.EndArea();
+            }
             else
             {
                 GUI.Box(nodeRect, "", style);
