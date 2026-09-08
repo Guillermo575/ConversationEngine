@@ -25,6 +25,14 @@ All panels are resizable by dragging the splitter bars between them.
 - **Save** (Ctrl+S): Save changes to current file
 - **Save As**: Save to a new .conversation file
 - **Inspector Preview**: Selecting a `.conversation` file in the Project window shows a read-only graph preview in the Inspector so the conversation can be examined without opening the editor
+- **Conversation Metadata Persistence**: `Title` and `Description` are saved in the `.conversation` JSON and reloaded automatically
+
+### Conversation Metadata
+- `Title` and `Description` can be edited from the left **Resources** panel.
+- `Title` uses a single-line text field.
+- `Description` uses a multi-line word-wrapped text area that expands to panel width.
+- In both the editor center panel and the Unity Inspector preview, metadata is shown above the node graph.
+- Title text uses a bold, slightly larger style than description text (styles provided by `ConversationNodeStyle`)
 
 ## Features
 

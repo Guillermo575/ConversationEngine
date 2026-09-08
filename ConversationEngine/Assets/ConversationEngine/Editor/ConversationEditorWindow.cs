@@ -430,6 +430,7 @@ namespace ConversationEditor
         {
             if (conversationData?.ResourceManager == null) return;
             resourceScrollPos = EditorGUILayout.BeginScrollView(resourceScrollPos);
+            DrawConversationMetadataEditor();
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Scene Backgrounds", EditorStyles.boldLabel);
             DrawResourceList(conversationData.ResourceManager.SceneBackgrounds, "Background");
@@ -441,6 +442,25 @@ namespace ConversationEditor
             DrawActorList(conversationData.ResourceManager.Actors);
             EditorGUILayout.EndScrollView();
         }
+
+        private void DrawConversationMetadataEditor()
+        {
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Conversation", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            string newTitulo = EditorGUILayout.TextField(new GUIContent("Title", ""), conversationData.Title ?? "", GUILayout.ExpandWidth(true));
+            EditorGUILayout.LabelField(new GUIContent("Description", ""));
+            var descriptionFieldStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+            string newDescripcion = EditorGUILayout.TextArea(conversationData.Description ?? "", descriptionFieldStyle, GUILayout.ExpandWidth(true), GUILayout.MinHeight(70f));
+            if (EditorGUI.EndChangeCheck())
+            {
+                conversationData.Title = newTitulo;
+                conversationData.Description = newDescripcion;
+                MarkDirty();
+            }
+            EditorGUILayout.EndVertical();
+        }
+
         private void DrawResourceList<T>(List<T> resources, string typeName) where T : Resource, new()
         {
             EditorGUI.indentLevel++;
@@ -530,8 +550,24 @@ namespace ConversationEditor
         private void DrawConversationGraph()
         {
             if (graphView == null) return;
+            DrawConversationHeader();
             graphView.SetReadOnlyMode(false);
             graphView.Draw();
+        }
+
+        private void DrawConversationHeader()
+        {
+            var styleProvider = ConversationNodeStyle.GetSingleton();
+            string titulo = string.IsNullOrWhiteSpace(conversationData?.Title) ? "" : conversationData.Title;
+            string descripcion = conversationData?.Description ?? "";
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField(titulo, styleProvider.conversationTitleStyle ?? EditorStyles.boldLabel, GUILayout.ExpandWidth(true));
+            if (!string.IsNullOrWhiteSpace(descripcion))
+            {
+                EditorGUILayout.LabelField(descripcion, styleProvider.conversationDescriptionStyle ?? EditorStyles.wordWrappedLabel, GUILayout.ExpandWidth(true));
+            }
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(4f);
         }
         #endregion
 

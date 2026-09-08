@@ -54,6 +54,8 @@ namespace ConversationEditor
         public GUIStyle nodeHeaderStyle;
         public GUIStyle nodeBodyTextStyle;
         public GUIStyle nodeActorTextStyle;
+        public GUIStyle conversationTitleStyle;
+        public GUIStyle conversationDescriptionStyle;
         #endregion
 
         #region Variables
@@ -135,6 +137,17 @@ namespace ConversationEditor
             nodeActorTextStyle.wordWrap = true;
             nodeActorTextStyle.fontSize = nodeBodyBaseFontSize;
             nodeActorTextStyle.normal.textColor = Color.white;
+
+            conversationTitleStyle = new GUIStyle(EditorStyles.boldLabel);
+            conversationTitleStyle.fontStyle = FontStyle.Bold;
+            conversationTitleStyle.fontSize = nodeHeaderBaseFontSize + 3;
+            conversationTitleStyle.wordWrap = true;
+
+            conversationDescriptionStyle = new GUIStyle(EditorStyles.label);
+            conversationDescriptionStyle.fontStyle = FontStyle.Normal;
+            conversationDescriptionStyle.fontSize = nodeHeaderBaseFontSize + 1;
+            conversationDescriptionStyle.wordWrap = true;
+
             stylesInitialized = true;
         }
         #endregion

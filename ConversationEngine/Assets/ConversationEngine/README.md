@@ -5,6 +5,8 @@
 
 ## Main Structure
 - `ConversationData`
+  - `Title`: conversation title shown in editor/inspector previews.
+  - `Description`: conversation description shown in editor/inspector previews.
   - `ResourceManager`: references to scenery, audio and actors.
   - `ConversationManager`: conversation nodes and branching flow.
   - `EditorSettings`: editor-only persisted configuration (currently graph zoom).

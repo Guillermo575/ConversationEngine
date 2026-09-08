@@ -19,6 +19,9 @@ namespace ConversationEditor
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("{");
 
+            sb.AppendLine($"  \"Title\": \"{EscapeString(data.Title)}\",");
+            sb.AppendLine($"  \"Description\": \"{EscapeString(data.Description)}\",");
+
             // ResourceManager
             sb.AppendLine("  \"ResourceManager\": {");
             SerializeResourceManager(sb, data.ResourceManager);

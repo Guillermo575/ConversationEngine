@@ -89,8 +89,25 @@ namespace ConversationEditor
             EditorGUILayout.LabelField(new GUIContent("Nodes", "Total number of nodes in this conversation."), nodeCount.ToString());
             EditorGUILayout.HelpBox("This preview is read-only. You can pan, zoom, and select nodes to inspect the graph safely.", MessageType.Info);
         }
+
+        private void DrawConversationMetadataHeader()
+        {
+            var styleProvider = ConversationNodeStyle.GetSingleton();
+            string titulo = string.IsNullOrWhiteSpace(conversationData?.Title) ? "" : conversationData.Title;
+            string descripcion = conversationData?.Description ?? "";
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField(titulo, styleProvider.conversationTitleStyle ?? EditorStyles.boldLabel, GUILayout.ExpandWidth(true));
+            if (!string.IsNullOrWhiteSpace(descripcion))
+            {
+                EditorGUILayout.LabelField(descripcion, styleProvider.conversationDescriptionStyle ?? EditorStyles.wordWrappedLabel, GUILayout.ExpandWidth(true));
+            }
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(4f);
+        }
+
         private void DrawGraphPreview()
         {
+            DrawConversationMetadataHeader();
             Rect graphRect = GUILayoutUtility.GetRect(10f, graphPreviewHeight, GUILayout.ExpandWidth(true));
             if (shouldFrameGraph && Event.current.type != EventType.Layout)
             {

@@ -8,6 +8,8 @@ namespace ConversationScheme
     [Serializable]
     public class ConversationData
     {
+        public string Title = "";
+        public string Description = "";
         public ResourceManager ResourceManager = new ResourceManager();
         public ConversationManager ConversationManager = new ConversationManager();
         public ConversationEditorSettings EditorSettings = new ConversationEditorSettings();
