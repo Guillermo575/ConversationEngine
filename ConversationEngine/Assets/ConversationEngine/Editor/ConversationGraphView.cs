@@ -1459,20 +1459,22 @@ namespace ConversationEditor
 
         private int GetNodePreviewTextLength(ConversationNode node, bool hasActorLine)
         {
-            int bodyFontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            float usableWidth = Mathf.Max(minEditorNodeSize, node.EditorSize.x - nodeHorizontalPadding);
+            int bodyFontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
+            float scaledZoom = Mathf.Max(minZoom, zoom);
+            float usableWidth = Mathf.Max(minEditorNodeSize, (node.EditorSize.x - nodeHorizontalPadding) * scaledZoom);
             float headerHeight = GetScaledNodeFontSize(nodeHeaderBaseFontSize) + estimatedLineSpacing;
             float actorHeight = hasActorLine ? bodyFontSize + estimatedLineSpacing : 0f;
-            float usableHeight = Mathf.Max(minEditorNodeSize, node.EditorSize.y - headerHeight - actorHeight - nodeVerticalPadding);
+            float usableHeight = Mathf.Max(minEditorNodeSize, (node.EditorSize.y - nodeVerticalPadding) * scaledZoom - headerHeight - actorHeight);
             return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
         }
 
         private int GetOptionPreviewTextLength(ConversationOption option)
         {
             int bodyFontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            float usableWidth = Mathf.Max(minEditorNodeSize, option.EditorSize.x - nodeHorizontalPadding);
+            float scaledZoom = Mathf.Max(minZoom, zoom);
+            float usableWidth = Mathf.Max(minEditorNodeSize, (option.EditorSize.x - nodeHorizontalPadding) * scaledZoom);
             float headerHeight = bodyFontSize + estimatedLineSpacing;
-            float usableHeight = Mathf.Max(minEditorNodeSize, option.EditorSize.y - headerHeight - nodeVerticalPadding);
+            float usableHeight = Mathf.Max(minEditorNodeSize, (option.EditorSize.y - nodeVerticalPadding) * scaledZoom - headerHeight);
             return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
         }
 
