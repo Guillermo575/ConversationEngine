@@ -550,7 +550,7 @@ namespace ConversationEditor
         private void DrawConversationGraph()
         {
             if (graphView == null) return;
-            DrawConversationHeader();
+            //DrawConversationHeader();
             graphView.SetReadOnlyMode(false);
             graphView.Draw();
         }
