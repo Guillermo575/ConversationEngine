@@ -46,7 +46,7 @@ All panels are resizable by dragging the splitter bars between them.
 - **Color-Coded Nodes**: Each node type has a distinct color for easy identification
 - **Visual Feedback**: Nodes have thick black borders that turn golden when selected, white while dragging
 - **Zoom-Aware Text**: Node text and headers scale with graph zoom
-- **Resizable Nodes**: Adjust node size to fit content
+- **Resizable Nodes**: Dialogue and option nodes can be resized by dragging invisible edge/corner resize zones around each node
 - **Grid Background**: Aligned grid for precise node placement
 - **Infinite Canvas**: Auto-expanding workspace as nodes are added
 
@@ -86,26 +86,6 @@ All panels are resizable by dragging the splitter bars between them.
 - Multiple condition rules with AND/OR logic
 - Fallback default branch
 
-### Node Visual States
-
-All nodes provide clear visual feedback through border colors:
-
-- **Default State (Black Border)**: Normal node state when not selected
-- **Selected State (Golden Border)**: Node is selected and inspector panel is showing its properties
-- **Dragging State (White Border)**: Node is being moved with mouse drag
-- **Border Thickness**: All borders are prominently visible (3x thicker than standard) for better visibility
-
-The thick borders ensure clear visual distinction between states without obscuring node content.
-
-### Connection System
-- **Main Connection**: White line from node to next node
-- **Option Connections**: Cyan lines from player options
-- **Conditional Branches**: Green (TRUE) and Red (FALSE) lines
-- **Thicker Lines**: Connection lines are now thicker (5px) for easier interaction
-- **Interactive Creation**: Right-click on node > "Connect to Node" > click target node
-- **Clear Connections**: Right-click on a connection line to clear it
-- **Auto-routing**: Automatic connection cleanup when nodes are deleted
-
 ### Mouse Controls
 
 #### Left Click
@@ -114,6 +94,7 @@ The thick borders ensure clear visual distinction between states without obscuri
 - **Drag on Node**: Move the node (border turns white while dragging)
 - **Drag on Empty Space**: Pan the camera/canvas view
 - **On Connection Line + Drag**: Move the nearest connected node
+- **On Dialogue/Option Border Handles + Drag**: Resize node from edges or corners
 
 #### Right Click
 - **On Node**: Show node context menu
@@ -177,6 +158,9 @@ Note: For `Conditional` nodes the dialogue-specific fields above (Speaker Actor,
 ### Option Nodes In Graph
 - Option nodes are rendered as individual draggable blocks.
 - Each option node stores a local position and size relative to its parent dialogue node.
+- Option and dialogue resize interaction uses 8 invisible resizers (4 edge centers + 4 corners).
+- Top/bottom resizers use `75%` of node width, left/right resizers use `75%` of node height.
+- Each corner resizer is square and uses the same fixed size as edge thickness.
 - Parent-to-option link lines are drawn to identify option ownership.
 - Connection lines now use a shared renderer for dialogue, option, and conditional links.
 - Option link and target lines use the option world rect translated from the parent node.

@@ -43,6 +43,14 @@ namespace ConversationEditor
         private bool isOptionBeingDragged = false;
         private ConversationNode optionDragParentNode;
         private ConversationOption optionBeingDragged;
+        private bool isResizingNode = false;
+        private bool isResizingOption = false;
+        private ConversationNode resizingNode;
+        private ConversationNode resizingOptionParentNode;
+        private ConversationOption resizingOption;
+        private ResizeHandleType activeResizeHandle = ResizeHandleType.None;
+        private Vector2 resizeStartMouseWorldPosition;
+        private Rect resizeStartWorldRect;
         #endregion
 
         #region Layout State
@@ -65,9 +73,25 @@ namespace ConversationEditor
         private const float nodeHorizontalPadding = 16f;
         private const float nodeVerticalPadding = 12f;
         private const float estimatedLineSpacing = 3f;
+        private const float resizeHandleThickness = 10f;
         #endregion
 
-        #region
+        #region Resize Types
+        private enum ResizeHandleType
+        {
+            None,
+            Top,
+            Bottom,
+            Left,
+            Right,
+            TopLeft,
+            TopRight,
+            BottomLeft,
+            BottomRight
+        }
+        #endregion
+
+        #region Style State
         private ConversationNodeStyle conversationNodeStyle;
         #endregion
 
@@ -318,8 +342,7 @@ namespace ConversationEditor
             HandleNodeInteraction(node, nodeRect);
             if (node.Options != null && node.Options.Count > 0) DrawNodeOptions(node, nodeRect);
             if (node.NodeType == ConversationNodeType.Conditional) DrawConditionalIndicators(node, nodeRect);
-            if (!isReadOnly && selectedNode == node && node.NodeType != ConversationNodeType.Start && node.NodeType != ConversationNodeType.End)
-                DrawResizeHandle(node, nodeRect);
+            if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue) DrawResizeHandles(nodeRect);
         }
 
         private void DrawNodeContent(ConversationNode node)
@@ -366,6 +389,7 @@ namespace ConversationEditor
             Rect zoomControlsRect = GetZoomControlsRect(graphRect);
             bool isPointerOverZoomControls = zoomControlsRect.Contains(e.mousePosition);
             if (isPointerOverZoomControls && !isDraggingView) return;
+            if (!isReadOnly && HandleActiveResizeInteraction()) return;
             if (e.type == EventType.ScrollWheel)
             {
                 float oldZoom = zoom;
@@ -439,10 +463,79 @@ namespace ConversationEditor
             }
         }
 
+        private bool HandleActiveResizeInteraction()
+        {
+            Event e = Event.current;
+            if (!isResizingNode && !isResizingOption) return false;
+            if (e.type == EventType.MouseDrag && e.button == 0)
+            {
+                if (activeResizeHandle == ResizeHandleType.None) return false;
+                Vector2 mouseWorldPosition = WindowToWorld(e.mousePosition);
+                Vector2 worldDelta = mouseWorldPosition - resizeStartMouseWorldPosition;
+                Rect resizedRect = CalculateResizedRect(resizeStartWorldRect, worldDelta, activeResizeHandle);
+                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Resize Node");
+                if (isResizingNode && resizingNode != null)
+                {
+                    resizingNode.EditorPosition = resizedRect.center;
+                    resizingNode.EditorSize = ClampEditorSize(resizedRect.size);
+                }
+                else if (isResizingOption && resizingOptionParentNode != null && resizingOption != null)
+                {
+                    Rect parentRect = GetNodeWorldRect(resizingOptionParentNode);
+                    resizingOption.EditorSize = ClampEditorSize(resizedRect.size);
+                    resizingOption.EditorPosition = resizedRect.position - parentRect.position;
+                }
+                MarkDirty();
+                e.Use();
+                RequestRepaint();
+                return true;
+            }
+            if (e.type == EventType.MouseUp && e.button == 0)
+            {
+                StopActiveResize();
+                e.Use();
+                RequestRepaint();
+                return true;
+            }
+            return false;
+        }
+
+        private void StopActiveResize()
+        {
+            isResizingNode = false;
+            isResizingOption = false;
+            resizingNode = null;
+            resizingOptionParentNode = null;
+            resizingOption = null;
+            activeResizeHandle = ResizeHandleType.None;
+        }
+
         private void HandleNodeInteraction(ConversationNode node, Rect nodeRect)
         {
             Event e = Event.current;
             Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
+            if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && e.type == EventType.MouseDown && e.button == 0)
+            {
+                if (TryGetResizeHandle(nodeRect, mouseGraphPos, out var resizeHandle, out _))
+                {
+                    SetSelection(node, null, null);
+                    isMouseOverNode = false;
+                    isNodeBeingDragged = false;
+                    isOptionBeingDragged = false;
+                    isDraggingView = false;
+                    isResizingNode = true;
+                    isResizingOption = false;
+                    resizingNode = node;
+                    resizingOptionParentNode = null;
+                    resizingOption = null;
+                    activeResizeHandle = resizeHandle;
+                    resizeStartMouseWorldPosition = WindowToWorld(e.mousePosition);
+                    resizeStartWorldRect = GetNodeWorldRect(node);
+                    e.Use();
+                    RequestRepaint();
+                    return;
+                }
+            }
             if (e.type == EventType.MouseDown && nodeRect.Contains(mouseGraphPos))
             {
                 if (e.button == 0)
@@ -484,7 +577,7 @@ namespace ConversationEditor
                 }
             }
             if (isReadOnly) return;
-            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode)
+            if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode && !isResizingNode && !isResizingOption)
             {
                 if (!isNodeBeingDragged) isNodeBeingDragged = true;
                 if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Move Node");
@@ -524,6 +617,7 @@ namespace ConversationEditor
                 string optionPreview = BuildPreviewText(option.Text, maxPreviewLength, "(empty)");
                 GUILayout.Label(new GUIContent(optionPreview, "Option text preview sized to the current option node dimensions."));
                 GUILayout.EndArea();
+                if (!isReadOnly) DrawResizeHandles(optionRect);
                 HandleOptionInteraction(node, option, optionRect, i);
             }
         }
@@ -532,6 +626,29 @@ namespace ConversationEditor
         {
             Event e = Event.current;
             Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
+            if (!isReadOnly && e.type == EventType.MouseDown && e.button == 0)
+            {
+                if (TryGetResizeHandle(optionRect, mouseGraphPos, out var resizeHandle, out _))
+                {
+                    SetSelection(node, option, null);
+                    isMouseOverNode = false;
+                    isMouseOverOption = false;
+                    isNodeBeingDragged = false;
+                    isOptionBeingDragged = false;
+                    isDraggingView = false;
+                    isResizingNode = false;
+                    isResizingOption = true;
+                    resizingOptionParentNode = node;
+                    resizingOption = option;
+                    resizingNode = null;
+                    activeResizeHandle = resizeHandle;
+                    resizeStartMouseWorldPosition = WindowToWorld(e.mousePosition);
+                    resizeStartWorldRect = GetOptionWorldRect(node, option, index);
+                    e.Use();
+                    RequestRepaint();
+                    return;
+                }
+            }
             if (e.type == EventType.MouseDown && optionRect.Contains(mouseGraphPos))
             {
                 if (!isReadOnly && e.button == 0 && (e.control || e.command))
@@ -564,7 +681,7 @@ namespace ConversationEditor
                 }
             }
             if (isReadOnly) return;
-            if (e.type == EventType.MouseDrag && selectedNode == node && selectedOption == option && !isConnecting && e.button == 0 && isMouseOverOption && optionDragParentNode == node && optionBeingDragged == option)
+            if (e.type == EventType.MouseDrag && selectedNode == node && selectedOption == option && !isConnecting && e.button == 0 && isMouseOverOption && optionDragParentNode == node && optionBeingDragged == option && !isResizingNode && !isResizingOption)
             {
                 if (!isOptionBeingDragged) isOptionBeingDragged = true;
                 if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Move Option Node");
@@ -648,13 +765,177 @@ namespace ConversationEditor
             }
         }
 
-        private void DrawResizeHandle(ConversationNode node, Rect nodeRect)
+        private void DrawResizeHandles(Rect targetRect)
         {
-            Rect handleRect = new Rect(nodeRect.xMax - 10, nodeRect.yMax - 10, 10, 10);
-            EditorGUIUtility.AddCursorRect(new Rect(currentGraphRect.x + handleRect.x, currentGraphRect.y + handleRect.y, handleRect.width, handleRect.height), MouseCursor.ResizeUpLeft);
-            Event e = Event.current;
-            Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
-            if (e.type == EventType.MouseDown && handleRect.Contains(mouseGraphPos)) e.Use();
+            var resizeHandles = GetResizeHandleRects(targetRect);
+            DrawInvisibleResizeBoxes(resizeHandles);
+            AddResizeCursor(resizeHandles.topRect, MouseCursor.ResizeVertical);
+            AddResizeCursor(resizeHandles.bottomRect, MouseCursor.ResizeVertical);
+            AddResizeCursor(resizeHandles.leftRect, MouseCursor.ResizeHorizontal);
+            AddResizeCursor(resizeHandles.rightRect, MouseCursor.ResizeHorizontal);
+            AddResizeCursor(resizeHandles.topLeftRect, MouseCursor.ResizeUpLeft);
+            AddResizeCursor(resizeHandles.bottomRightRect, MouseCursor.ResizeUpLeft);
+            AddResizeCursor(resizeHandles.topRightRect, MouseCursor.ResizeUpRight);
+            AddResizeCursor(resizeHandles.bottomLeftRect, MouseCursor.ResizeUpRight);
+            Rect centerRect = GetCenterCursorRect(targetRect);
+            if (centerRect.width > 0f && centerRect.height > 0f)
+                EditorGUIUtility.AddCursorRect(ToWindowRect(centerRect), MouseCursor.Pan);
+        }
+
+        private void DrawInvisibleResizeBoxes((Rect topRect, Rect bottomRect, Rect leftRect, Rect rightRect, Rect topLeftRect, Rect topRightRect, Rect bottomLeftRect, Rect bottomRightRect) resizeHandles)
+        {
+            GUI.Box(resizeHandles.topRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.bottomRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.leftRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.rightRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.topLeftRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.topRightRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.bottomLeftRect, GUIContent.none, GUIStyle.none);
+            GUI.Box(resizeHandles.bottomRightRect, GUIContent.none, GUIStyle.none);
+        }
+
+        private (Rect topRect, Rect bottomRect, Rect leftRect, Rect rightRect, Rect topLeftRect, Rect topRightRect, Rect bottomLeftRect, Rect bottomRightRect) GetResizeHandleRects(Rect targetRect)
+        {
+            float cornerSize = resizeHandleThickness;
+            float horizontalLength = targetRect.width * 0.75f;
+            float verticalLength = targetRect.height * 0.75f;
+            Rect topRect = new Rect(targetRect.center.x - horizontalLength * 0.5f, targetRect.yMin - cornerSize * 0.5f, horizontalLength, cornerSize);
+            Rect bottomRect = new Rect(targetRect.center.x - horizontalLength * 0.5f, targetRect.yMax - cornerSize * 0.5f, horizontalLength, cornerSize);
+            Rect leftRect = new Rect(targetRect.xMin - cornerSize * 0.5f, targetRect.center.y - verticalLength * 0.5f, cornerSize, verticalLength);
+            Rect rightRect = new Rect(targetRect.xMax - cornerSize * 0.5f, targetRect.center.y - verticalLength * 0.5f, cornerSize, verticalLength);
+            Rect topLeftRect = new Rect(targetRect.xMin - cornerSize * 0.5f, targetRect.yMin - cornerSize * 0.5f, cornerSize, cornerSize);
+            Rect topRightRect = new Rect(targetRect.xMax - cornerSize * 0.5f, targetRect.yMin - cornerSize * 0.5f, cornerSize, cornerSize);
+            Rect bottomLeftRect = new Rect(targetRect.xMin - cornerSize * 0.5f, targetRect.yMax - cornerSize * 0.5f, cornerSize, cornerSize);
+            Rect bottomRightRect = new Rect(targetRect.xMax - cornerSize * 0.5f, targetRect.yMax - cornerSize * 0.5f, cornerSize, cornerSize);
+            return (topRect, bottomRect, leftRect, rightRect, topLeftRect, topRightRect, bottomLeftRect, bottomRightRect);
+        }
+
+        private void AddResizeCursor(Rect graphRect, MouseCursor cursor)
+        {
+            EditorGUIUtility.AddCursorRect(ToWindowRect(graphRect), cursor);
+        }
+
+        private Rect ToWindowRect(Rect graphRect)
+        {
+            return new Rect(currentGraphRect.x + graphRect.x, currentGraphRect.y + graphRect.y, graphRect.width, graphRect.height);
+        }
+
+        private Rect GetCenterCursorRect(Rect targetRect)
+        {
+            float inset = resizeHandleThickness;
+            return new Rect(targetRect.x + inset, targetRect.y + inset, targetRect.width - inset * 2f, targetRect.height - inset * 2f);
+        }
+
+        private bool TryGetResizeHandle(Rect targetRect, Vector2 mouseGraphPosition, out ResizeHandleType handleType, out MouseCursor cursor)
+        {
+            handleType = ResizeHandleType.None;
+            cursor = MouseCursor.Arrow;
+            var resizeHandles = GetResizeHandleRects(targetRect);
+            if (resizeHandles.topLeftRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.TopLeft;
+                cursor = MouseCursor.ResizeUpLeft;
+                return true;
+            }
+            if (resizeHandles.topRightRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.TopRight;
+                cursor = MouseCursor.ResizeUpRight;
+                return true;
+            }
+            if (resizeHandles.bottomLeftRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.BottomLeft;
+                cursor = MouseCursor.ResizeUpRight;
+                return true;
+            }
+            if (resizeHandles.bottomRightRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.BottomRight;
+                cursor = MouseCursor.ResizeUpLeft;
+                return true;
+            }
+            if (resizeHandles.topRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.Top;
+                cursor = MouseCursor.ResizeVertical;
+                return true;
+            }
+            if (resizeHandles.bottomRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.Bottom;
+                cursor = MouseCursor.ResizeVertical;
+                return true;
+            }
+            if (resizeHandles.leftRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.Left;
+                cursor = MouseCursor.ResizeHorizontal;
+                return true;
+            }
+            if (resizeHandles.rightRect.Contains(mouseGraphPosition))
+            {
+                handleType = ResizeHandleType.Right;
+                cursor = MouseCursor.ResizeHorizontal;
+                return true;
+            }
+            return false;
+        }
+
+        private Rect CalculateResizedRect(Rect startRect, Vector2 worldDelta, ResizeHandleType handleType)
+        {
+            float xMin = startRect.xMin;
+            float xMax = startRect.xMax;
+            float yMin = startRect.yMin;
+            float yMax = startRect.yMax;
+            switch (handleType)
+            {
+                case ResizeHandleType.Top:
+                    yMin += worldDelta.y;
+                    break;
+                case ResizeHandleType.Bottom:
+                    yMax += worldDelta.y;
+                    break;
+                case ResizeHandleType.Left:
+                    xMin += worldDelta.x;
+                    break;
+                case ResizeHandleType.Right:
+                    xMax += worldDelta.x;
+                    break;
+                case ResizeHandleType.TopLeft:
+                    xMin += worldDelta.x;
+                    yMin += worldDelta.y;
+                    break;
+                case ResizeHandleType.TopRight:
+                    xMax += worldDelta.x;
+                    yMin += worldDelta.y;
+                    break;
+                case ResizeHandleType.BottomLeft:
+                    xMin += worldDelta.x;
+                    yMax += worldDelta.y;
+                    break;
+                case ResizeHandleType.BottomRight:
+                    xMax += worldDelta.x;
+                    yMax += worldDelta.y;
+                    break;
+                default:
+                    break;
+            }
+            float width = xMax - xMin;
+            float height = yMax - yMin;
+            bool modifiesLeft = handleType == ResizeHandleType.Left || handleType == ResizeHandleType.TopLeft || handleType == ResizeHandleType.BottomLeft;
+            bool modifiesTop = handleType == ResizeHandleType.Top || handleType == ResizeHandleType.TopLeft || handleType == ResizeHandleType.TopRight;
+            if (width < minEditorNodeSize)
+            {
+                if (modifiesLeft) xMin = xMax - minEditorNodeSize;
+                else xMax = xMin + minEditorNodeSize;
+            }
+            if (height < minEditorNodeSize)
+            {
+                if (modifiesTop) yMin = yMax - minEditorNodeSize;
+                else yMax = yMin + minEditorNodeSize;
+            }
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
         #endregion
 
@@ -669,9 +950,7 @@ namespace ConversationEditor
                 {
                     var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == node.NextNodeId);
                     if (targetNode != null)
-                    {
                         ConversationEditorHelpers.DrawConnectionLine(node.EditorPosition, node.EditorSize, targetNode.EditorPosition, targetNode.EditorSize, 5f, Color.white, WorldToGraph, node.NodeType, targetNode.NodeType);
-                    }
                 }
                 if (node.Options != null)
                 {
@@ -684,9 +963,7 @@ namespace ConversationEditor
                         {
                             var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == option.NextNodeId);
                             if (targetNode != null)
-                            {
                                 ConversationEditorHelpers.DrawConnectionLine(optionRect.center, optionRect.size, targetNode.EditorPosition, targetNode.EditorSize, 5f, Color.cyan, WorldToGraph, ConversationNodeType.Dialogue, targetNode.NodeType);
-                            }
                         }
                     }
                 }
@@ -701,17 +978,13 @@ namespace ConversationEditor
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
                         if (targetNode != null)
-                        {
                             ConversationEditorHelpers.DrawConnectionLine(new Rect(trueAnchor, Vector2.zero), new Rect(targetNode.EditorPosition, targetNode.EditorSize), 5f, Color.green, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
-                        }
                     }
                     if (branch.NextNodeIdFalse > 0)
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
                         if (targetNode != null)
-                        {
                             ConversationEditorHelpers.DrawConnectionLine(new Rect(falseAnchor, Vector2.zero), new Rect(targetNode.EditorPosition, targetNode.EditorSize), 5f, Color.red, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
-                        }
                     }
                 }
             }
@@ -728,8 +1001,7 @@ namespace ConversationEditor
                 var node = connectingFromNode;
                 int optionIndex = node.Options.IndexOf(connectingFromOption);
                 if (optionIndex < 0) return;
-                Rect optionRect = GetOptionWorldRect(node, connectingFromOption, optionIndex);
-                startRect = optionRect;
+                startRect = GetOptionWorldRect(node, connectingFromOption, optionIndex);
             }
             else if (connectingFromBranch != null)
             {
@@ -1404,16 +1676,19 @@ namespace ConversationEditor
         private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
         {
             if (conversationData?.ConversationManager?.Nodes == null) return false;
+            Vector2 mouseGraphPosition = WorldToGraph(mouseWorldPos);
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
-                Rect nodeRect = GetNodeWorldRect(node);
-                if (nodeRect.Contains(mouseWorldPos)) return true;
+                Rect nodeRect = WorldToGraphRect(GetNodeWorldRect(node));
+                if (nodeRect.Contains(mouseGraphPosition)) return true;
+                if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && TryGetResizeHandle(nodeRect, mouseGraphPosition, out _, out _)) return true;
                 if (node.Options != null)
                 {
                     for (int i = 0; i < node.Options.Count; i++)
                     {
-                        Rect optionRect = GetOptionWorldRect(node, node.Options[i], i);
-                        if (optionRect.Contains(mouseWorldPos)) return true;
+                        Rect optionRect = WorldToGraphRect(GetOptionWorldRect(node, node.Options[i], i));
+                        if (optionRect.Contains(mouseGraphPosition)) return true;
+                        if (!isReadOnly && TryGetResizeHandle(optionRect, mouseGraphPosition, out _, out _)) return true;
                     }
                 }
                 if (node.NodeType != ConversationNodeType.Conditional || node.conditionalBranch == null) continue;
