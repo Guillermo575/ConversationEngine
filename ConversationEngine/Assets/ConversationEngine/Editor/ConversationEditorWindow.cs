@@ -12,7 +12,6 @@ namespace ConversationEditor
     /// </summary>
     public class ConversationEditorWindow : EditorWindow
     {
-
         #region Core Data
         private ConversationData conversationData;
         private string currentFilePath;
@@ -21,34 +20,11 @@ namespace ConversationEditor
         #endregion
 
         #region View State
-        private Vector2 panOffset = Vector2.zero;
         private float zoom = 1.0f;
-        private const float minZoom = 0.1f;
-        private const float maxZoom = 5.0f;
-        private Rect currentGraphRect;
-        #endregion
-
-        #region Selection and Interaction
-        private ConversationNode selectedNode;
-        private ConversationOption selectedOption;
-        private ConditionalBranch selectedBranch;
-        private Vector2 dragStartPos;
-        private bool isDraggingView = false;
-        private bool isDraggingNode = false;
-        private bool isConnecting = false;
-        private ConversationNode connectingFromNode;
-        private ConversationOption connectingFromOption;
-        private ConditionalBranch connectingFromBranch;
-        private int connectingBranchIndex = 0;
-        private ConversationNode draggedNode = null;
-        private bool isMouseOverNode = false;
-        private bool isRightClickMenuActive = false;
-        private bool isNodeBeingDragged = false;
         #endregion
 
         #region UI State
         private Vector2 resourceScrollPos;
-        private Vector2 nodeScrollPos;
         private Vector2 inspectorScrollPos;
         #endregion
 
@@ -91,15 +67,6 @@ namespace ConversationEditor
         private bool showInspector = false;
         #endregion
 
-        #region Auto-layout
-        private float autoLayoutSpacing = 250f;
-        private float autoLayoutVerticalSpacing = 150f;
-        #endregion
-
-        #region Context Menu
-        private Vector2 contextMenuPosition;
-        #endregion
-
         #region Styles
         private GUIStyle nodeStyle;
         private GUIStyle nodeSelectedStyle;
@@ -123,13 +90,7 @@ namespace ConversationEditor
         private bool stylesInitialized = false;
         #endregion
 
-        #region Grid Constants
-        private const float gridSpacing = 20f;
-        private Color gridColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
-        #endregion
-
         #region Zoom Controls
-        private const float zoomControlScale = 1.5f;
         private const int minNodeFontSize = 8;
         private const int nodeHeaderBaseFontSize = 11;
         private const int nodeBodyBaseFontSize = 12;
@@ -1275,11 +1236,7 @@ namespace ConversationEditor
             graphView?.SetConversationData(conversationData);
             currentFilePath = null;
             isDirty = false;
-            selectedNode = null;
-            selectedOption = null;
-            selectedBranch = null;
             showInspector = false;
-            panOffset = Vector2.zero;
             Repaint();
         }
         #endregion
@@ -1301,11 +1258,7 @@ namespace ConversationEditor
             graphView?.SetConversationData(conversationData);
             currentFilePath = filePath;
             isDirty = false;
-            selectedNode = null;
-            selectedOption = null;
-            selectedBranch = null;
             showInspector = false;
-            panOffset = Vector2.zero;
             Repaint();
         }
 
