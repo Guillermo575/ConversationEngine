@@ -304,20 +304,20 @@ namespace ConversationEditor
             {
                 centerPanelWidth -= (rightPanelWidth + 5f);
             }
-
-            Rect centerPanelRect = new Rect(centerPanelX, toolbarHeight, centerPanelWidth, totalHeight);
-            GUILayout.BeginArea(centerPanelRect);
-            DrawConversationGraph();
-            GUILayout.EndArea();
-
             if (!isResourcePanelVisible)
             {
                 Rect showButtonRect = new Rect(10f, toolbarHeight + 6f, 130f, 22f);
                 if (GUI.Button(showButtonRect, "Show properties"))
                 {
                     SetResourceManagerVisibility(true);
+                    Event.current.Use();
                 }
             }
+
+            Rect centerPanelRect = new Rect(centerPanelX, toolbarHeight, centerPanelWidth, totalHeight);
+            GUILayout.BeginArea(centerPanelRect);
+            DrawConversationGraph();
+            GUILayout.EndArea();
 
             if (showInspector)
             {
@@ -691,8 +691,6 @@ namespace ConversationEditor
             option.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Local graph position relative to the parent node."), option.EditorPosition, GUILayout.ExpandWidth(true));
             option.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this option node. Minimum X/Y is 20."), option.EditorSize, GUILayout.ExpandWidth(true)));
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
-            DrawConditionList(option.Conditions);
             if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
         }
