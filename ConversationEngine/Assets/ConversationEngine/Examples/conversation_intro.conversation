@@ -47,8 +47,8 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 371.3635,
-          "Y": 420.9089
+          "X": 397.6135,
+          "Y": 485.2839
         },
         "EditorSize": {
           "X": 150,
@@ -102,11 +102,11 @@
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
           "X": 402.7272,
-          "Y": 874.5449
+          "Y": 877.9824
         },
         "EditorSize": {
           "X": 200,
-          "Y": 100
+          "Y": 93.125
         }
       },
       {
@@ -184,11 +184,11 @@
             "NextNodeId": 8,
             "EditorPosition": {
               "X": 230.9499,
-              "Y": 6.806464
+              "Y": 26.03723
             },
             "EditorSize": {
               "X": 150,
-              "Y": 60
+              "Y": 40.76929
             },
             "Conditions": []
           },
@@ -237,8 +237,8 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 588.1819,
-          "Y": 1653.183
+          "X": 622.0286,
+          "Y": 1647.8
         },
         "EditorSize": {
           "X": 200,
@@ -258,12 +258,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 200,
-          "Y": 1818.57
+          "X": 231.9231,
+          "Y": 1819.339
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "X": 200.7692,
+          "Y": 109.2308
         }
       },
       {
@@ -300,12 +300,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 125,
-          "Y": 1950
+          "X": 178.8462,
+          "Y": 1959.231
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "X": 258.4615,
+          "Y": 93.84607
         }
       },
       {
@@ -395,6 +395,11 @@
     ]
   },
   "EditorSettings": {
-    "Zoom": 0.4000001
+    "Zoom": 0.85,
+    "IsResourcePanelHidden": false,
+    "CameraPosition": {
+      "X": 491.2251,
+      "Y": -727.2859
+    }
   }
 }

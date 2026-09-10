@@ -281,23 +281,50 @@ namespace ConversationEditor
             float toolbarHeight = 40f;
             float totalWidth = position.width;
             float totalHeight = position.height - toolbarHeight;
-            Rect leftPanelRect = new Rect(0, toolbarHeight, leftPanelWidth, totalHeight);
-            GUILayout.BeginArea(leftPanelRect);
-            DrawResourceManager();
-            GUILayout.EndArea();
-            Rect leftSplitterRect = new Rect(leftPanelWidth, toolbarHeight, 5, totalHeight);
-            DrawSplitter(leftSplitterRect, ref isDraggingLeftSplitter, ref leftPanelWidth, 150f, totalWidth * 0.5f);
-            float centerWidth = showInspector ? totalWidth - leftPanelWidth - rightPanelWidth - 10 : totalWidth - leftPanelWidth - 5;
-            Rect centerPanelRect = new Rect(leftPanelWidth + 5, toolbarHeight, centerWidth, totalHeight);
+            bool isResourcePanelVisible = IsResourceManagerVisible();
+
+            float centerPanelX = 0f;
+            float centerPanelWidth = totalWidth;
+
+            if (isResourcePanelVisible)
+            {
+                Rect leftPanelRect = new Rect(0f, toolbarHeight, leftPanelWidth, totalHeight);
+                GUILayout.BeginArea(leftPanelRect);
+                DrawResourceManager();
+                GUILayout.EndArea();
+
+                Rect leftSplitterRect = new Rect(leftPanelWidth, toolbarHeight, 5f, totalHeight);
+                DrawSplitter(leftSplitterRect, ref isDraggingLeftSplitter, ref leftPanelWidth, 150f, totalWidth * 0.5f);
+
+                centerPanelX = leftPanelWidth + 5f;
+                centerPanelWidth -= (leftPanelWidth + 5f);
+            }
+
+            if (showInspector)
+            {
+                centerPanelWidth -= (rightPanelWidth + 5f);
+            }
+
+            Rect centerPanelRect = new Rect(centerPanelX, toolbarHeight, centerPanelWidth, totalHeight);
             GUILayout.BeginArea(centerPanelRect);
             DrawConversationGraph();
             GUILayout.EndArea();
+
+            if (!isResourcePanelVisible)
+            {
+                Rect showButtonRect = new Rect(10f, toolbarHeight + 6f, 130f, 22f);
+                if (GUI.Button(showButtonRect, "Show properties"))
+                {
+                    SetResourceManagerVisibility(true);
+                }
+            }
+
             if (showInspector)
             {
-                float rightSplitterX = leftPanelWidth + 5 + centerWidth;
-                Rect rightSplitterRect = new Rect(rightSplitterX, toolbarHeight, 5, totalHeight);
+                float rightSplitterX = centerPanelX + centerPanelWidth;
+                Rect rightSplitterRect = new Rect(rightSplitterX, toolbarHeight, 5f, totalHeight);
                 DrawSplitter(rightSplitterRect, ref isDraggingRightSplitter, ref rightPanelWidth, 200f, totalWidth * 0.5f);
-                Rect rightPanelRect = new Rect(rightSplitterX + 5, toolbarHeight, rightPanelWidth, totalHeight);
+                Rect rightPanelRect = new Rect(rightSplitterX + 5f, toolbarHeight, rightPanelWidth, totalHeight);
                 GUILayout.BeginArea(rightPanelRect);
                 DrawInspectorPanel();
                 GUILayout.EndArea();
@@ -389,6 +416,11 @@ namespace ConversationEditor
         #region Resource Manager
         private void DrawResourceManager()
         {
+            if (GUILayout.Button("Hide", GUILayout.Width(80f)))
+            {
+                SetResourceManagerVisibility(false);
+            }
+
             if (conversationData?.ResourceManager == null) return;
             resourceScrollPos = EditorGUILayout.BeginScrollView(resourceScrollPos);
             DrawConversationMetadataEditor();
@@ -1208,6 +1240,21 @@ namespace ConversationEditor
         {
             if (conversationData == null) return;
             if (conversationData.EditorSettings == null) conversationData.EditorSettings = new ConversationEditorSettings();
+        }
+
+        private bool IsResourceManagerVisible()
+        {
+            if (conversationData == null) return true;
+            EnsureEditorSettings();
+            return !conversationData.EditorSettings.IsResourcePanelHidden;
+        }
+
+        private void SetResourceManagerVisibility(bool isVisible)
+        {
+            if (conversationData == null) return;
+            EnsureEditorSettings();
+            conversationData.EditorSettings.IsResourcePanelHidden = !isVisible;
+            Repaint();
         }
 
         private void CreateNewConversation()

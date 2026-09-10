@@ -99,11 +99,10 @@ namespace ConversationEditor
         {
             conversationData = data;
             EnsureEditorSettings();
-            ApplyZoomFromConversationSettings();
+            ApplyViewFromConversationSettings();
             EnsureMinimumEditorSizesInConversation();
             EnsureOptionEditorDataInConversation();
             ClearSelection();
-            panOffset = Vector2.zero;
         }
         public void Draw()
         {
@@ -148,7 +147,7 @@ namespace ConversationEditor
             zoom = Mathf.Clamp(Mathf.Min(zoomX, zoomY), minZoom, maxZoom);
             Vector2 graphCenter = new Vector2(graphRect.width, graphRect.height) * 0.5f;
             panOffset = graphCenter / zoom - bounds.center;
-            if (!isReadOnly) SaveEditorZoomSetting();
+            if (!isReadOnly) SaveEditorViewSettings();
         }
 
         public void SetReadOnlyMode(bool readOnly)
@@ -382,7 +381,7 @@ namespace ConversationEditor
                     Vector2 worldMouse = (graphLocalMouse / oldZoom) - panOffset;
                     zoom = newZoom;
                     panOffset = (graphLocalMouse / zoom) - worldMouse;
-                    if (!isReadOnly) SaveEditorZoomSetting();
+                    if (!isReadOnly) SaveEditorViewSettings();
                 }
                 e.Use();
                 RequestRepaint();
@@ -424,6 +423,7 @@ namespace ConversationEditor
             if (e.type == EventType.MouseDrag && isDraggingView)
             {
                 panOffset += e.delta / zoom;
+                if (!isReadOnly) SaveEditorViewSettings();
                 e.Use();
                 RequestRepaint();
                 return;
@@ -1284,7 +1284,7 @@ namespace ConversationEditor
             if (!Mathf.Approximately(newZoom, zoom))
             {
                 zoom = Mathf.Clamp(newZoom, minZoom, maxZoom);
-                if (!isReadOnly) SaveEditorZoomSetting();
+                if (!isReadOnly) SaveEditorViewSettings();
                 RequestRepaint();
             }
         }
@@ -1304,30 +1304,31 @@ namespace ConversationEditor
             if (conversationData.EditorSettings == null) conversationData.EditorSettings = new ConversationEditorSettings();
         }
 
-        private void ApplyZoomFromConversationSettings()
+        private void ApplyViewFromConversationSettings()
         {
             if (conversationData == null)
             {
                 zoom = 1f;
+                panOffset = Vector2.zero;
                 return;
             }
+
             EnsureEditorSettings();
             float savedZoom = conversationData.EditorSettings.Zoom;
             if (savedZoom <= 0f) savedZoom = 1f;
             zoom = Mathf.Clamp(savedZoom, minZoom, maxZoom);
+            panOffset = conversationData.EditorSettings.CameraPosition;
             conversationData.EditorSettings.Zoom = zoom;
+            conversationData.EditorSettings.CameraPosition = panOffset;
         }
 
-        private void SaveEditorZoomSetting()
+        private void SaveEditorViewSettings()
         {
             if (conversationData == null) return;
             EnsureEditorSettings();
             float clampedZoom = Mathf.Clamp(zoom, minZoom, maxZoom);
-            if (!Mathf.Approximately(conversationData.EditorSettings.Zoom, clampedZoom))
-            {
-                conversationData.EditorSettings.Zoom = clampedZoom;
-                MarkDirty();
-            }
+            conversationData.EditorSettings.Zoom = clampedZoom;
+            conversationData.EditorSettings.CameraPosition = panOffset;
             zoom = clampedZoom;
         }
         #endregion

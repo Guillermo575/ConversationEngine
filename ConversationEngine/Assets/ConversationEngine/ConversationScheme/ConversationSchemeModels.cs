@@ -174,5 +174,7 @@ namespace ConversationScheme
     public class ConversationEditorSettings
     {
         public float Zoom = 1f;
+        public bool IsResourcePanelHidden = false;
+        public Vector2 CameraPosition = Vector2.zero;
     }
 }

@@ -12,6 +12,11 @@ The editor features a three-panel layout:
 
 All panels are resizable by dragging the splitter bars between them.
 
+Resource panel visibility can be toggled from the editor UI:
+- **Hide** button appears when the left resources panel is visible.
+- **Show properties** button appears when the left resources panel is hidden.
+- Both buttons are mutually exclusive and the hidden/visible state is persisted in `EditorSettings`.
+
 ## File Management
 
 ### Supported File Types
@@ -111,6 +116,8 @@ All panels are resizable by dragging the splitter bars between them.
 - **Vertical Zoom Slider**: Available in the top-right corner of the graph panel
 - **Range Validation**: Minimum `0.1x` and maximum `5.0x`
 - **Persistent Zoom**: Current zoom value is saved in the conversation file and restored when reopened
+- **Persistent Camera Position**: Graph pan/camera position is saved and restored when reopening the conversation
+- **Editor Settings Changes**: Updating zoom/camera/panel visibility does not mark the conversation as content-dirty
 - **Scaled Node Fonts**: Node text and headers scale with the current zoom value
 
 ### Keyboard Shortcuts
@@ -189,6 +196,11 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 - **Valid Targets**: Excludes Start nodes and the current node itself
 
 ### Resource Management
+
+- **Panel Visibility Toggle**:
+  - Click **Hide** in the left panel to collapse it.
+  - Click **Show properties** in the graph area to restore it.
+  - Visibility is stored in `ConversationEditorSettings.IsResourcePanelHidden`.
 
 #### Scene Backgrounds
 - Manage background images and scenes

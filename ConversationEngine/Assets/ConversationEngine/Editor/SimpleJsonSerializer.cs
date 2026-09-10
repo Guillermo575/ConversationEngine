@@ -35,7 +35,14 @@ namespace ConversationEditor
             // EditorSettings
             sb.AppendLine("  \"EditorSettings\": {");
             float zoom = data.EditorSettings != null ? data.EditorSettings.Zoom : 1f;
-            sb.AppendLine($"    \"Zoom\": {zoom}");
+            bool isResourcePanelHidden = data.EditorSettings != null && data.EditorSettings.IsResourcePanelHidden;
+            Vector2 cameraPosition = data.EditorSettings != null ? data.EditorSettings.CameraPosition : Vector2.zero;
+            sb.AppendLine($"    \"Zoom\": {zoom},");
+            sb.AppendLine($"    \"IsResourcePanelHidden\": {(isResourcePanelHidden ? "true" : "false")},");
+            sb.AppendLine("    \"CameraPosition\": {");
+            sb.AppendLine($"      \"X\": {cameraPosition.x},");
+            sb.AppendLine($"      \"Y\": {cameraPosition.y}");
+            sb.AppendLine("    }");
             sb.AppendLine("  }");
 
             sb.AppendLine("}");
