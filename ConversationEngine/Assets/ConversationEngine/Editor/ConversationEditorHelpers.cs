@@ -236,5 +236,22 @@ namespace ConversationEditor
             );
             return transformedRect.Contains(point);
         }
+        public static bool ParseBooleanCondition(string value)
+        {
+            return NormalizeBooleanValue(value) == "true";
+        }
+        public static string NormalizeBooleanValue(string rawValue)
+        {
+            string value = (rawValue ?? "").Trim();
+            if (string.IsNullOrEmpty(value)) return "true";
+            string lowerValue = value.ToLowerInvariant();
+            if (lowerValue == "true" || lowerValue == "1") return "true";
+            if (lowerValue == "false" || lowerValue == "0") return "false";
+            if ("true".StartsWith(lowerValue) || lowerValue.StartsWith("true")) return "true";
+            if ("false".StartsWith(lowerValue) || lowerValue.StartsWith("false")) return "false";
+            if (lowerValue[0] == 't') return "true";
+            if (lowerValue[0] == 'f') return "false";
+            return "true";
+        }
     }
 }

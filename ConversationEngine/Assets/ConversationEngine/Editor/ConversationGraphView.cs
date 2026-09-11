@@ -9,7 +9,8 @@ namespace ConversationEditor
     public class ConversationGraphView
     {
         #region Core Data
-        private ConversationData conversationData;
+        private ConversationEditorCore conversationEditorCore = ConversationEditorCore.GetSingleton();
+        private ConversationData conversationData { set { conversationEditorCore.conversationData = value; } get { return conversationEditorCore.conversationData; } }
         private readonly EditorWindow ownerWindow;
         private bool isReadOnly;
         #endregion
@@ -29,7 +30,6 @@ namespace ConversationEditor
         #endregion
 
         #region Interaction State
-        private Vector2 dragStartPos;
         private bool isDraggingView = false;
         private bool isConnecting = false;
         private ConversationNode connectingFromNode;
@@ -408,7 +408,6 @@ namespace ConversationEditor
                     return;
                 }
                 isDraggingView = true;
-                dragStartPos = e.mousePosition;
                 e.Use();
                 RequestRepaint();
                 return;
@@ -416,7 +415,6 @@ namespace ConversationEditor
             if (e.type == EventType.MouseDown && (e.button == 2 || (e.button == 0 && e.alt)))
             {
                 isDraggingView = true;
-                dragStartPos = e.mousePosition;
                 e.Use();
                 return;
             }
