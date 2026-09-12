@@ -263,66 +263,71 @@ namespace ConversationEditor
             Rect nodeWorldRect = GetNodeWorldRect(node);
             Rect nodeRect = WorldToGraphRect(nodeWorldRect);
             GUIStyle style = GetNodeStyle(node);
-            if (node.NodeType == ConversationNodeType.Conditional)
+            switch (node.NodeType)
             {
-                // Draw diamond shape for conditional node
-                Vector2 center = node.EditorPosition;
-                float hx = node.EditorSize.x * 0.5f;
-                float hy = node.EditorSize.y * 0.5f;
-                Vector3[] points = new Vector3[4];
-                points[0] = WorldToGraph(new Vector2(center.x - hx, center.y)); // left
-                points[1] = WorldToGraph(new Vector2(center.x, center.y - hy)); // top
-                points[2] = WorldToGraph(new Vector2(center.x + hx, center.y)); // right
-                points[3] = WorldToGraph(new Vector2(center.x, center.y + hy)); // bottom
-                Handles.BeginGUI();
-                Handles.color = new Color(0.9f, 0.8f, 0.2f, 0.9f);
-                Handles.DrawAAConvexPolygon(points);
-                Handles.color = Color.black;
-                Handles.DrawAAPolyLine(3f, points[0], points[1], points[2], points[3], points[0]);
-                Handles.EndGUI();
-                // draw label
-                GUILayout.BeginArea(nodeRect);
-                GUILayout.FlexibleSpace();
-                GUILayout.Label("Conditional", conversationNodeStyle.nodeHeaderStyle);
-                GUILayout.FlexibleSpace();
-                GUILayout.EndArea();
-            }
-            else if (node.NodeType == ConversationNodeType.Start || node.NodeType == ConversationNodeType.End)
-            {
-                // draw circular node for Start/End
-                float size = Mathf.Min(nodeRect.width, nodeRect.height);
-                Rect circleRect = new Rect(nodeRect.center.x - size * 0.5f, nodeRect.center.y - size * 0.5f, size, size);
-                bool isSelected = selectedNode == node;
-                bool isDragging = isNodeBeingDragged && isSelected;
-                Texture2D tex = null;
-                if (node.NodeType == ConversationNodeType.Start)
-                {
-                    if (isDragging) tex = conversationNodeStyle.startCircleDraggingTexture;
-                    else if (isSelected) tex = conversationNodeStyle.startCircleSelectedTexture;
-                    else tex = conversationNodeStyle.startCircleTexture;
-                }
-                else
-                {
-                    if (isDragging) tex = conversationNodeStyle.endCircleDraggingTexture;
-                    else if (isSelected) tex = conversationNodeStyle.endCircleSelectedTexture;
-                    else tex = conversationNodeStyle.endCircleTexture;
-                }
-                if (tex != null) GUI.DrawTexture(circleRect, tex, ScaleMode.StretchToFill, true);
-                GUILayout.BeginArea(circleRect);
-                DrawNodeContent(node);
-                GUILayout.EndArea();
-            }
-            else
-            {
-                GUI.Box(nodeRect, "", style);
-                GUILayout.BeginArea(nodeRect);
-                DrawNodeContent(node);
-                GUILayout.EndArea();
+                case ConversationNodeType.Conditional:
+                    Vector2 center = node.EditorPosition;
+                    float hx = node.EditorSize.x * 0.5f;
+                    float hy = node.EditorSize.y * 0.5f;
+                    Vector3[] points = new Vector3[4];
+                    points[0] = WorldToGraph(new Vector2(center.x - hx, center.y)); // left
+                    points[1] = WorldToGraph(new Vector2(center.x, center.y - hy)); // top
+                    points[2] = WorldToGraph(new Vector2(center.x + hx, center.y)); // right
+                    points[3] = WorldToGraph(new Vector2(center.x, center.y + hy)); // bottom
+                    Handles.BeginGUI();
+                    Handles.color = new Color(0.9f, 0.8f, 0.2f, 0.9f);
+                    Handles.DrawAAConvexPolygon(points);
+                    Handles.color = Color.black;
+                    Handles.DrawAAPolyLine(3f, points[0], points[1], points[2], points[3], points[0]);
+                    Handles.EndGUI();
+                    GUILayout.BeginArea(nodeRect);
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label("Conditional", conversationNodeStyle.nodeHeaderStyle);
+                    GUILayout.FlexibleSpace();
+                    GUILayout.EndArea();
+                    break;
+                case ConversationNodeType.Start:
+                    DrawNodeStartEnd(node, nodeRect);
+                    break;
+                case ConversationNodeType.End:
+                    DrawNodeStartEnd(node, nodeRect);
+                    break;
+                default:
+                    GUI.Box(nodeRect, "", style);
+                    GUILayout.BeginArea(nodeRect);
+                    DrawNodeContent(node);
+                    GUILayout.EndArea();
+                    break;
             }
             HandleNodeInteraction(node, nodeRect);
             if (node.Options != null && node.Options.Count > 0) DrawNodeOptions(node, nodeRect);
             if (node.NodeType == ConversationNodeType.Conditional) DrawConditionalIndicators(node, nodeRect);
             if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
+        }
+
+        private void DrawNodeStartEnd(ConversationNode node, Rect nodeRect)
+        {
+            float size = Mathf.Min(nodeRect.width, nodeRect.height);
+            Rect circleRect = new Rect(nodeRect.center.x - size * 0.5f, nodeRect.center.y - size * 0.5f, size, size);
+            bool isSelected = selectedNode == node;
+            bool isDragging = isNodeBeingDragged && isSelected;
+            Texture2D tex = null;
+            if (node.NodeType == ConversationNodeType.Start)
+            {
+                if (isDragging) tex = conversationNodeStyle.startCircleDraggingTexture;
+                else if (isSelected) tex = conversationNodeStyle.startCircleSelectedTexture;
+                else tex = conversationNodeStyle.startCircleTexture;
+            }
+            else
+            {
+                if (isDragging) tex = conversationNodeStyle.endCircleDraggingTexture;
+                else if (isSelected) tex = conversationNodeStyle.endCircleSelectedTexture;
+                else tex = conversationNodeStyle.endCircleTexture;
+            }
+            if (tex != null) GUI.DrawTexture(circleRect, tex, ScaleMode.StretchToFill, true);
+            GUILayout.BeginArea(circleRect);
+            DrawNodeContent(node);
+            GUILayout.EndArea();
         }
 
         private void DrawNodeContent(ConversationNode node)

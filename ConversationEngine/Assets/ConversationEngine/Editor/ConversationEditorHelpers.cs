@@ -11,6 +11,7 @@ namespace ConversationEditor
     /// </summary>
     public static class ConversationEditorHelpers
     {
+        #region Deprecated code
         /// <summary>
         /// Check if a point is near a bezier curve
         /// </summary>
@@ -45,6 +46,94 @@ namespace ConversationEditor
             p += ttt * p3;
             return p;
         }
+
+        /// <summary>
+        /// Auto-arrange nodes in a horizontal or vertical layout
+        /// </summary>
+        public static void AutoArrangeNodes(List<ConversationNode> nodes, float spacing, bool horizontal = true)
+        {
+            if (nodes == null || nodes.Count == 0) return;
+            var startNode = nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
+            if (startNode == null) return;
+            Dictionary<int, List<ConversationNode>> layers = new Dictionary<int, List<ConversationNode>>();
+            HashSet<int> visited = new HashSet<int>();
+            Queue<(ConversationNode node, int layer)> queue = new Queue<(ConversationNode, int)>();
+            queue.Enqueue((startNode, 0));
+            visited.Add(startNode.Id);
+            int maxLayer = 0;
+            while (queue.Count > 0)
+            {
+                var (currentNode, layer) = queue.Dequeue();
+                if (!layers.ContainsKey(layer))
+                    layers[layer] = new List<ConversationNode>();
+                layers[layer].Add(currentNode);
+                maxLayer = Mathf.Max(maxLayer, layer);
+                List<int> connectedIds = new List<int>();
+                if (currentNode.NextNodeId > 0)
+                    connectedIds.Add(currentNode.NextNodeId);
+                if (currentNode.Options != null)
+                {
+                    foreach (var option in currentNode.Options)
+                    {
+                        if (option.NextNodeId > 0)
+                            connectedIds.Add(option.NextNodeId);
+                    }
+                }
+                if (currentNode.conditionalBranch != null)
+                {
+                    var branch = currentNode.conditionalBranch;
+                    if (branch.NextNodeIdTrue > 0) connectedIds.Add(branch.NextNodeIdTrue);
+                    if (branch.NextNodeIdFalse > 0) connectedIds.Add(branch.NextNodeIdFalse);
+                }
+                foreach (var id in connectedIds)
+                {
+                    if (!visited.Contains(id))
+                    {
+                        var nextNode = nodes.FirstOrDefault(n => n.Id == id);
+                        if (nextNode != null)
+                        {
+                            visited.Add(id);
+                            queue.Enqueue((nextNode, layer + 1));
+                        }
+                    }
+                }
+            }
+            float currentOffset = 0;
+            foreach (var layer in layers.OrderBy(kvp => kvp.Key))
+            {
+                int layerIndex = layer.Key;
+                var layerNodes = layer.Value;
+                float layerHeight = layerNodes.Count * 120;
+                float startY = -layerHeight / 2;
+                for (int i = 0; i < layerNodes.Count; i++)
+                {
+                    var node = layerNodes[i];
+                    if (horizontal)
+                    {
+                        node.EditorPosition = new Vector2(layerIndex * spacing, startY + i * 120);
+                    }
+                    else
+                    {
+                        node.EditorPosition = new Vector2(startY + i * 120, layerIndex * spacing);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if a rect contains a point, accounting for zoom and pan
+        /// </summary>
+        public static bool RectContainsPoint(Rect rect, Vector2 point, Vector2 panOffset, float zoom)
+        {
+            Rect transformedRect = new Rect(
+                rect.x * zoom + panOffset.x,
+                rect.y * zoom + panOffset.y,
+                rect.width * zoom,
+                rect.height * zoom
+            );
+            return transformedRect.Contains(point);
+        }
+        #endregion
 
         #region Connections
         public static Rect GetNodeWorldRect(Vector2 nodeCenter, Vector2 nodeSize)
@@ -123,79 +212,7 @@ namespace ConversationEditor
         }
         #endregion
 
-        /// <summary>
-        /// Auto-arrange nodes in a horizontal or vertical layout
-        /// </summary>
-        public static void AutoArrangeNodes(List<ConversationNode> nodes, float spacing, bool horizontal = true)
-        {
-            if (nodes == null || nodes.Count == 0) return;
-            var startNode = nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
-            if (startNode == null) return;
-            Dictionary<int, List<ConversationNode>> layers = new Dictionary<int, List<ConversationNode>>();
-            HashSet<int> visited = new HashSet<int>();
-            Queue<(ConversationNode node, int layer)> queue = new Queue<(ConversationNode, int)>();
-            queue.Enqueue((startNode, 0));
-            visited.Add(startNode.Id);
-            int maxLayer = 0;
-            while (queue.Count > 0)
-            {
-                var (currentNode, layer) = queue.Dequeue();
-                if (!layers.ContainsKey(layer))
-                    layers[layer] = new List<ConversationNode>();
-                layers[layer].Add(currentNode);
-                maxLayer = Mathf.Max(maxLayer, layer);
-                List<int> connectedIds = new List<int>();
-                if (currentNode.NextNodeId > 0)
-                    connectedIds.Add(currentNode.NextNodeId);
-                if (currentNode.Options != null)
-                {
-                    foreach (var option in currentNode.Options)
-                    {
-                        if (option.NextNodeId > 0)
-                            connectedIds.Add(option.NextNodeId);
-                    }
-                }
-                if (currentNode.conditionalBranch != null)
-                {
-                    var branch = currentNode.conditionalBranch;
-                    if (branch.NextNodeIdTrue > 0) connectedIds.Add(branch.NextNodeIdTrue);
-                    if (branch.NextNodeIdFalse > 0) connectedIds.Add(branch.NextNodeIdFalse);
-                }
-                foreach (var id in connectedIds)
-                {
-                    if (!visited.Contains(id))
-                    {
-                        var nextNode = nodes.FirstOrDefault(n => n.Id == id);
-                        if (nextNode != null)
-                        {
-                            visited.Add(id);
-                            queue.Enqueue((nextNode, layer + 1));
-                        }
-                    }
-                }
-            }
-            float currentOffset = 0;
-            foreach (var layer in layers.OrderBy(kvp => kvp.Key))
-            {
-                int layerIndex = layer.Key;
-                var layerNodes = layer.Value;
-                float layerHeight = layerNodes.Count * 120;
-                float startY = -layerHeight / 2;
-                for (int i = 0; i < layerNodes.Count; i++)
-                {
-                    var node = layerNodes[i];
-                    if (horizontal)
-                    {
-                        node.EditorPosition = new Vector2(layerIndex * spacing, startY + i * 120);
-                    }
-                    else
-                    {
-                        node.EditorPosition = new Vector2(startY + i * 120, layerIndex * spacing);
-                    }
-                }
-            }
-        }
-
+        #region Text Formatting
         /// <summary>
         /// Get a formatted node description for dropdowns
         /// </summary>
@@ -222,20 +239,6 @@ namespace ConversationEditor
             }
             return $"{node.Id}{actorPart}{textPart}{nodeTypePart}";
         }
-
-        /// <summary>
-        /// Check if a rect contains a point, accounting for zoom and pan
-        /// </summary>
-        public static bool RectContainsPoint(Rect rect, Vector2 point, Vector2 panOffset, float zoom)
-        {
-            Rect transformedRect = new Rect(
-                rect.x * zoom + panOffset.x,
-                rect.y * zoom + panOffset.y,
-                rect.width * zoom,
-                rect.height * zoom
-            );
-            return transformedRect.Contains(point);
-        }
         public static bool ParseBooleanCondition(string value)
         {
             return NormalizeBooleanValue(value) == "true";
@@ -253,5 +256,6 @@ namespace ConversationEditor
             if (lowerValue[0] == 'f') return "false";
             return "true";
         }
+        #endregion
     }
 }
