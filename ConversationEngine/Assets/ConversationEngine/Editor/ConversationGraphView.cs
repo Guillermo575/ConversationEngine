@@ -1336,38 +1336,14 @@ namespace ConversationEditor
         {
             bool isSelected = selectedNode == node;
             bool isDragging = isNodeBeingDragged && isSelected;
-            switch (node.NodeType)
-            {
-                case ConversationNodeType.Start:
-                    if (isDragging) return conversationNodeStyle.startNodeDraggingStyle;
-                    if (isSelected) return conversationNodeStyle.startNodeSelectedStyle;
-                    return conversationNodeStyle.startNodeStyle;
-                case ConversationNodeType.End:
-                    if (isDragging) return conversationNodeStyle.endNodeDraggingStyle;
-                    if (isSelected) return conversationNodeStyle.endNodeSelectedStyle;
-                    return conversationNodeStyle.endNodeStyle;
-                case ConversationNodeType.Function:
-                    if (isDragging) return conversationNodeStyle.functionNodeDraggingStyle;
-                    if (isSelected) return conversationNodeStyle.functionNodeSelectedStyle;
-                    return conversationNodeStyle.functionNodeStyle;
-                case ConversationNodeType.Conditional:
-                    if (isDragging) return conversationNodeStyle.conditionalNodeDraggingStyle;
-                    if (isSelected) return conversationNodeStyle.conditionalNodeSelectedStyle;
-                    return conversationNodeStyle.conditionalNodeStyle;
-                default:
-                    if (isDragging) return conversationNodeStyle.nodeDraggingStyle;
-                    if (isSelected) return conversationNodeStyle.nodeSelectedStyle;
-                    return conversationNodeStyle.nodeStyle;
-            }
+            return conversationNodeStyle.GetNodeStyle(node, isSelected, isDragging);
         }
 
         private GUIStyle GetOptionStyle(ConversationOption option)
         {
             bool isSelected = selectedOption == option;
             bool isDragging = isOptionBeingDragged && isSelected;
-            if (isDragging) return conversationNodeStyle.optionNodeDraggingStyle;
-            if (isSelected) return conversationNodeStyle.optionNodeSelectedStyle;
-            return conversationNodeStyle.optionNodeStyle;
+            return conversationNodeStyle.GetOptionStyle(option, isSelected, isDragging);
         }
 
         private int GetScaledNodeFontSize(int baseFontSize)

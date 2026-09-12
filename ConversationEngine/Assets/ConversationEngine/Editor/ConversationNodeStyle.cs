@@ -1,3 +1,4 @@
+using ConversationScheme;
 using UnityEditor;
 using UnityEngine;
 namespace ConversationEditor
@@ -200,6 +201,40 @@ namespace ConversationEditor
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.Apply();
             return texture;
+        }
+
+        public GUIStyle GetNodeStyle(ConversationNode node, bool isSelected, bool isDragging)
+        {
+            switch (node.NodeType)
+            {
+                case ConversationNodeType.Start:
+                    if (isDragging) return startNodeDraggingStyle;
+                    if (isSelected) return startNodeSelectedStyle;
+                    return startNodeStyle;
+                case ConversationNodeType.End:
+                    if (isDragging) return endNodeDraggingStyle;
+                    if (isSelected) return endNodeSelectedStyle;
+                    return endNodeStyle;
+                case ConversationNodeType.Function:
+                    if (isDragging) return functionNodeDraggingStyle;
+                    if (isSelected) return functionNodeSelectedStyle;
+                    return functionNodeStyle;
+                case ConversationNodeType.Conditional:
+                    if (isDragging) return conditionalNodeDraggingStyle;
+                    if (isSelected) return conditionalNodeSelectedStyle;
+                    return conditionalNodeStyle;
+                default:
+                    if (isDragging) return nodeDraggingStyle;
+                    if (isSelected) return nodeSelectedStyle;
+                    return nodeStyle;
+            }
+        }
+
+        public GUIStyle GetOptionStyle(ConversationOption option, bool isSelected, bool isDragging)
+        {
+            if (isDragging) return optionNodeDraggingStyle;
+            if (isSelected) return optionNodeSelectedStyle;
+            return optionNodeStyle;
         }
         #endregion
     }
