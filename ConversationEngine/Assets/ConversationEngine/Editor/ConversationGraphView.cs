@@ -56,19 +56,19 @@ namespace ConversationEditor
         #endregion
 
         #region Constants
-        private const float gridSpacing = 20f;
-        private static readonly Color gridColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
-        private const float zoomControlScale = 1.5f;
-        private const int minNodeFontSize = 8;
-        private const int nodeHeaderBaseFontSize = 11;
-        private const int nodeBodyBaseFontSize = 12;
-        private const float optionDefaultWidth = 150f;
-        private const float optionDefaultHeight = 60f;
-        private const float optionDefaultSpacing = 10f;
-        private const float minEditorNodeSize = 20f;
-        private const float nodeHorizontalPadding = 16f;
-        private const float nodeVerticalPadding = 12f;
-        private const float estimatedLineSpacing = 3f;
+        private const float gridSpacing = ConversationEditorCore.gridSpacing;
+        private static readonly Color gridColor = ConversationEditorCore.gridColor;
+        private const float zoomControlScale = ConversationEditorCore.zoomControlScale;
+        private const int minNodeFontSize = ConversationEditorCore.minNodeFontSize;
+        private const int nodeHeaderBaseFontSize = ConversationEditorCore.nodeHeaderBaseFontSize;
+        private const int nodeBodyBaseFontSize = ConversationEditorCore.nodeBodyBaseFontSize;
+        private const float optionDefaultWidth = ConversationEditorCore.optionDefaultWidth;
+        private const float optionDefaultHeight = ConversationEditorCore.optionDefaultHeight;
+        private const float optionDefaultSpacing = ConversationEditorCore.optionDefaultSpacing;
+        private const float minEditorNodeSize = ConversationEditorCore.minEditorNodeSize;
+        private const float nodeHorizontalPadding = ConversationEditorCore.nodeHorizontalPadding;
+        private const float nodeVerticalPadding = ConversationEditorCore.nodeVerticalPadding;
+        private const float estimatedLineSpacing = ConversationEditorCore.estimatedLineSpacing;
         #endregion
 
         #region Style State

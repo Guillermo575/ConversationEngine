@@ -49,10 +49,10 @@ namespace ConversationEditor.Panel
         #endregion
 
         #region Zoom Controls
-        private const float optionDefaultWidth = 150f;
-        private const float optionDefaultHeight = 60f;
-        private const float optionDefaultSpacing = 10f;
-        private const float minEditorNodeSize = 20f;
+        private const float optionDefaultWidth = ConversationEditorCore.optionDefaultWidth;
+        private const float optionDefaultHeight = ConversationEditorCore.optionDefaultHeight;
+        private const float optionDefaultSpacing = ConversationEditorCore.optionDefaultSpacing;
+        private const float minEditorNodeSize = ConversationEditorCore.minEditorNodeSize;
         #endregion
 
         #region UI State
@@ -61,17 +61,15 @@ namespace ConversationEditor.Panel
 
         #region Events
         public System.Action OnDirty;
-        //public System.Action OnSelectionChanged;
-        //public System.Action OnRepaintRequested;
         #endregion
 
+        #region Inspector Panel
         public EditorInspector(EditorWindow ownerWindow, ConversationGraphView graphView)
         {
             this.ownerWindow = ownerWindow;
             this.graphView = graphView;
         }
 
-        #region Inspector Panel
         public void DrawInspectorPanel()
         {
             inspectorScrollPos = EditorGUILayout.BeginScrollView(inspectorScrollPos);
@@ -714,11 +712,11 @@ namespace ConversationEditor.Panel
             EditorGUI.DrawRect(separatorRect, new Color(0.35f, 0.35f, 0.35f, 1f));
             EditorGUILayout.Space(6);
         }
-        #endregion
 
         private void MarkDirty()
         {
             OnDirty?.Invoke();
         }
+        #endregion
     }
 }
