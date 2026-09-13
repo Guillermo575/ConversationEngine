@@ -12,14 +12,14 @@ namespace ConversationEditor
         private ConversationEditorCore conversationEditorCore = ConversationEditorCore.GetSingleton();
         private ConversationData conversationData { set { conversationEditorCore.conversationData = value; } get { return conversationEditorCore.conversationData; } }
         private readonly EditorWindow ownerWindow;
-        private bool isReadOnly;
+        private bool isReadOnly { set { conversationEditorCore.isReadOnly = value; } get { return conversationEditorCore.isReadOnly; } }
         #endregion
 
         #region View State
         private Vector2 panOffset = Vector2.zero;
         private float zoom = 1.0f;
-        private const float minZoom = 0.1f;
-        private const float maxZoom = 5.0f;
+        private const float minZoom = ConversationEditorCore.minZoom;
+        private const float maxZoom = ConversationEditorCore.maxZoom;
         private Rect currentGraphRect;
         #endregion
 
@@ -358,7 +358,7 @@ namespace ConversationEditor
                     if (!string.IsNullOrEmpty(node.Text))
                     {
                         int previewLength = GetNodePreviewTextLength(node, !string.IsNullOrEmpty(node.SpeakerActorId));
-                        string preview = BuildPreviewText(node.Text, previewLength);
+                        string preview = ConversationEditorHelpers.BuildPreviewText(node.Text, previewLength);
                         GUILayout.Label(preview, conversationNodeStyle.nodeBodyTextStyle);
                     }
                     break;
@@ -569,7 +569,7 @@ namespace ConversationEditor
                 GUILayout.BeginArea(optionContentRect);
                 GUILayout.Label(new GUIContent($"Option {i + 1}", "Option node index inside the parent dialogue node."), EditorStyles.boldLabel);
                 int maxPreviewLength = GetOptionPreviewTextLength(option);
-                string optionPreview = BuildPreviewText(option.Text, maxPreviewLength, "(empty)");
+                string optionPreview = ConversationEditorHelpers.BuildPreviewText(option.Text, maxPreviewLength, "(empty)");
                 GUILayout.Label(new GUIContent(optionPreview, "Option text preview sized to the current option node dimensions."));
                 GUILayout.EndArea();
                 if (!isReadOnly) nodeResizer.DrawResizeHandles(optionRect, ToWindowRect);
@@ -826,11 +826,6 @@ namespace ConversationEditor
         {
             EnsureOptionEditorData(node, option, optionIndex);
             return ConversationEditorHelpers.GetOptionWorldRect(node.EditorPosition, node.EditorSize, option.EditorPosition, option.EditorSize);
-        }
-
-        private Vector2 TranslateNodeDrawPosition(Vector2 position, Vector2 size)
-        {
-            return position - size * 0.5f;
         }
 
         private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
@@ -1516,15 +1511,6 @@ namespace ConversationEditor
             int charsPerLine = Mathf.Max(1, Mathf.FloorToInt(width / estimatedCharacterWidth));
             int maxLines = Mathf.Max(1, Mathf.FloorToInt(height / lineHeight));
             return charsPerLine * maxLines;
-        }
-
-        private string BuildPreviewText(string sourceText, int maxLength, string emptyFallback = "")
-        {
-            if (string.IsNullOrEmpty(sourceText)) return emptyFallback;
-            int safeLength = Mathf.Max(1, maxLength);
-            if (sourceText.Length <= safeLength) return sourceText;
-            int trimmedLength = Mathf.Max(1, safeLength - 3);
-            return sourceText.Substring(0, trimmedLength) + "...";
         }
         #endregion
     }

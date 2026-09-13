@@ -256,6 +256,14 @@ namespace ConversationEditor
             if (lowerValue[0] == 'f') return "false";
             return "true";
         }
+        public static string BuildPreviewText(string sourceText, int maxLength, string emptyFallback = "")
+        {
+            if (string.IsNullOrEmpty(sourceText)) return emptyFallback;
+            int safeLength = Mathf.Max(1, maxLength);
+            if (sourceText.Length <= safeLength) return sourceText;
+            int trimmedLength = Mathf.Max(1, safeLength - 3);
+            return sourceText.Substring(0, trimmedLength) + "...";
+        }
         #endregion
     }
 }

@@ -29,6 +29,7 @@ namespace ConversationEditor
         public ConversationData conversationData;
         public string currentFilePath;
         public bool isDirty = false;
+        public bool isReadOnly;
         #endregion
 
         #region Constants
@@ -45,6 +46,8 @@ namespace ConversationEditor
         public const float nodeHorizontalPadding = 16f;
         public const float nodeVerticalPadding = 12f;
         public const float estimatedLineSpacing = 3f;
+        public const float minZoom = 0.1f;
+        public const float maxZoom = 5.0f;
         #endregion
     }
 }
