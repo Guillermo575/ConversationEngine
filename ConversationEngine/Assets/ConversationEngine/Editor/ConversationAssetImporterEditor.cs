@@ -48,7 +48,7 @@ namespace ConversationEditor
         private void EnsureGraphView()
         {
             if (graphView != null) return;
-            graphView = new ConversationGraphView(null, true);
+            graphView = new ConversationGraphView(null, true, false);
             graphView.SetReadOnlyMode(true);
         }
         private void LoadConversationData()

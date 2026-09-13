@@ -5,14 +5,14 @@ using UnityEditor;
 using UnityEngine;
 namespace ConversationEditor
 {
-    using System.Collections.Generic;
     public class ConversationGraphView
     {
         #region Core Data
-        private ConversationEditorCore conversationEditorCore = ConversationEditorCore.GetSingleton();
-        private ConversationData conversationData { set { conversationEditorCore.conversationData = value; } get { return conversationEditorCore.conversationData; } }
+        private ConversationEditorCore conversationEditorCore;
+        private ConversationData internalConversationData;
+        private ConversationData conversationData { set { if (conversationEditorCore != null) conversationEditorCore.conversationData = value; else internalConversationData = value; } get { return conversationEditorCore != null ? conversationEditorCore.conversationData : internalConversationData; } }
         private readonly EditorWindow ownerWindow;
-        private bool isReadOnly { set { conversationEditorCore.isReadOnly = value; } get { return conversationEditorCore.isReadOnly; } }
+        private bool isReadOnly { set { if (conversationEditorCore != null) conversationEditorCore.isReadOnly = value; } get { return conversationEditorCore != null ? conversationEditorCore.isReadOnly : false; } }
         #endregion
 
         #region View State
@@ -90,9 +90,14 @@ namespace ConversationEditor
         #endregion
 
         #region Public API
-        public ConversationGraphView(EditorWindow ownerWindow, bool isReadOnly = false)
+        public ConversationGraphView(EditorWindow ownerWindow, bool isReadOnly = false, bool useGlobalCore = true)
         {
             this.ownerWindow = ownerWindow;
+            this.conversationEditorCore = useGlobalCore ? ConversationEditorCore.GetSingleton() : null;
+            if (this.conversationEditorCore != null)
+            {
+                this.conversationEditorCore.isReadOnly = isReadOnly;
+            }
             this.isReadOnly = isReadOnly;
         }
         public void SetConversationData(ConversationData data)
@@ -152,6 +157,10 @@ namespace ConversationEditor
 
         public void SetReadOnlyMode(bool readOnly)
         {
+            if (conversationEditorCore != null)
+            {
+                conversationEditorCore.isReadOnly = readOnly;
+            }
             isReadOnly = readOnly;
             if (isReadOnly)
             {
