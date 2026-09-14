@@ -2,7 +2,7 @@ using ConversationScheme;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditor
+namespace ConversationEditor.Panel
 {
     public class EditorProperties
     {
