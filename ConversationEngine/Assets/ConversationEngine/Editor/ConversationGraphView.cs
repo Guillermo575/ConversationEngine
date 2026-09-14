@@ -8,11 +8,16 @@ namespace ConversationEditor
     public class ConversationGraphView
     {
         #region Core Data
-        private ConversationEditorCore conversationEditorCore;
+        private bool useGlobalCore = true;
+        private ConversationEditorCore conversationEditorCore = ConversationEditorCore.GetSingleton();
         private ConversationData internalConversationData;
-        private ConversationData conversationData { set { if (conversationEditorCore != null) conversationEditorCore.conversationData = value; else internalConversationData = value; } get { return conversationEditorCore != null ? conversationEditorCore.conversationData : internalConversationData; } }
+        private ConversationData conversationData
+        {
+            set { if (useGlobalCore) conversationEditorCore.conversationData = value; else internalConversationData = value; }
+            get { return useGlobalCore ? conversationEditorCore.conversationData : internalConversationData; }
+        }
         private readonly EditorWindow ownerWindow;
-        private bool isReadOnly { set { if (conversationEditorCore != null) conversationEditorCore.isReadOnly = value; } get { return conversationEditorCore != null ? conversationEditorCore.isReadOnly : false; } }
+        private bool isReadOnly;
         #endregion
 
         #region View State
@@ -93,11 +98,7 @@ namespace ConversationEditor
         public ConversationGraphView(EditorWindow ownerWindow, bool isReadOnly = false, bool useGlobalCore = true)
         {
             this.ownerWindow = ownerWindow;
-            this.conversationEditorCore = useGlobalCore ? ConversationEditorCore.GetSingleton() : null;
-            if (this.conversationEditorCore != null)
-            {
-                this.conversationEditorCore.isReadOnly = isReadOnly;
-            }
+            this.useGlobalCore = useGlobalCore;
             this.isReadOnly = isReadOnly;
         }
         public void SetConversationData(ConversationData data)
@@ -157,10 +158,6 @@ namespace ConversationEditor
 
         public void SetReadOnlyMode(bool readOnly)
         {
-            if (conversationEditorCore != null)
-            {
-                conversationEditorCore.isReadOnly = readOnly;
-            }
             isReadOnly = readOnly;
             if (isReadOnly)
             {
@@ -311,7 +308,7 @@ namespace ConversationEditor
             HandleNodeInteraction(node, nodeRect);
             if (node.Options != null && node.Options.Count > 0) DrawNodeOptions(node, nodeRect);
             if (node.NodeType == ConversationNodeType.Conditional) DrawConditionalIndicators(node, nodeRect);
-            if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
+            if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && !isReadOnly) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
         }
 
         private void DrawNodeStartEnd(ConversationNode node, Rect nodeRect)

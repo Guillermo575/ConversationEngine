@@ -29,7 +29,6 @@ namespace ConversationEditor
         public ConversationData conversationData;
         public string currentFilePath;
         public bool isDirty = false;
-        public bool isReadOnly;
         #endregion
 
         #region Constants
