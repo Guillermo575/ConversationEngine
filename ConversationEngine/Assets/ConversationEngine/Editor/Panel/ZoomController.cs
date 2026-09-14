@@ -1,22 +1,26 @@
 using System;
 using UnityEngine;
 using UnityEditor;
-
 namespace ConversationEditor
 {
     internal class ZoomController
     {
+        #region Variables
         private readonly float zoomControlScale;
         private readonly float minZoom;
         private readonly float maxZoom;
+        #endregion
 
+        #region Constructor
         public ZoomController(float zoomControlScale, float minZoom, float maxZoom)
         {
             this.zoomControlScale = zoomControlScale;
             this.minZoom = minZoom;
             this.maxZoom = maxZoom;
         }
+        #endregion
 
+        #region Methods
         public void Draw(Rect area, ref float zoom, ref Vector2 panOffset, bool isReadOnly, Action saveEditorViewSettings, Action requestRepaint)
         {
             Rect containerRect = GetZoomControlsRect(area);
@@ -58,5 +62,6 @@ namespace ConversationEditor
             if (!isReadOnly) saveEditorViewSettings?.Invoke();
             return true;
         }
+        #endregion
     }
 }
