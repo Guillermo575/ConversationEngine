@@ -7,8 +7,15 @@ namespace ConversationEditor
     public class EditorProperties
     {
         #region Core Data
+        private bool useGlobalCore = true;
         private ConversationEditorCore conversationEditorCore = ConversationEditorCore.GetSingleton();
-        private ConversationData conversationData { set { conversationEditorCore.conversationData = value; } get { return conversationEditorCore.conversationData; } }
+        private ConversationData internalConversationData;
+        private ConversationData conversationData
+        {
+            set { if (useGlobalCore) conversationEditorCore.conversationData = value; else internalConversationData = value; }
+            get { return useGlobalCore ? conversationEditorCore.conversationData : internalConversationData; }
+        }
+        public bool isReadOnly { get; private set; }
         private readonly EditorWindow ownerWindow;
         #endregion
 
@@ -22,9 +29,11 @@ namespace ConversationEditor
         #endregion
 
         #region Resource Manager
-        public EditorProperties(EditorWindow ownerWindow)
+        public EditorProperties(EditorWindow ownerWindow, bool isReadOnly = false, bool useGlobalCore = true)
         {
             this.ownerWindow = ownerWindow;
+            this.useGlobalCore = useGlobalCore;
+            this.isReadOnly = isReadOnly;
         }
         public void DrawResourceManager()
         {

@@ -17,7 +17,7 @@ namespace ConversationEditor
             get { return useGlobalCore ? conversationEditorCore.conversationData : internalConversationData; }
         }
         private readonly EditorWindow ownerWindow;
-        private bool isReadOnly;
+        public bool isReadOnly { get; private set; }
         #endregion
 
         #region View State
@@ -91,7 +91,6 @@ namespace ConversationEditor
         public ConversationOption SelectedOption => selectedOption;
         public ConditionalBranch SelectedBranch => selectedBranch;
         public bool HasSelection => selectedNode != null || selectedOption != null || selectedBranch != null;
-        public bool IsReadOnly => isReadOnly;
         #endregion
 
         #region Public API

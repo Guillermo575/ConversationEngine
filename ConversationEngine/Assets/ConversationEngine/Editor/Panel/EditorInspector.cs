@@ -11,8 +11,15 @@ namespace ConversationEditor.Panel
     public class EditorInspector
     {
         #region Core Data
+        private bool useGlobalCore = true;
         private ConversationEditorCore conversationEditorCore = ConversationEditorCore.GetSingleton();
-        private ConversationData conversationData { set { conversationEditorCore.conversationData = value; } get { return conversationEditorCore.conversationData; } }
+        private ConversationData internalConversationData;
+        private ConversationData conversationData
+        {
+            set { if (useGlobalCore) conversationEditorCore.conversationData = value; else internalConversationData = value; }
+            get { return useGlobalCore ? conversationEditorCore.conversationData : internalConversationData; }
+        }
+        public bool isReadOnly { get; private set; }
         private readonly EditorWindow ownerWindow;
         private ConversationGraphView graphView;
         #endregion
@@ -64,10 +71,12 @@ namespace ConversationEditor.Panel
         #endregion
 
         #region Inspector Panel
-        public EditorInspector(EditorWindow ownerWindow, ConversationGraphView graphView)
+        public EditorInspector(EditorWindow ownerWindow, ConversationGraphView graphView, bool isReadOnly = false, bool useGlobalCore = true)
         {
             this.ownerWindow = ownerWindow;
             this.graphView = graphView;
+            this.useGlobalCore = useGlobalCore;
+            this.isReadOnly = isReadOnly;
         }
 
         public void DrawInspectorPanel()
