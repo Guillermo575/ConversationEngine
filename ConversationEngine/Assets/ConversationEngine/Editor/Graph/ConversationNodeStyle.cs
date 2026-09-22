@@ -1,7 +1,7 @@
 using ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditor
+namespace ConversationEditor.Graph
 {
     public class ConversationNodeStyle
     {

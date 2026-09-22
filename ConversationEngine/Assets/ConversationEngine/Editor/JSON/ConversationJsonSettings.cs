@@ -1,6 +1,5 @@
 using UnityEngine;
-
-namespace ConversationEditor
+namespace ConversationEditor.JSON
 {
     /// <summary>
     /// Provides JSON serialization utilities for Conversation data using SimpleJsonSerializer

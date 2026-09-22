@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-
-namespace ConversationEditor
+namespace ConversationEditor.Helper
 {
     /// <summary>
     /// Library of predefined conversation functions with parameter definitions

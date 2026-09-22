@@ -3,7 +3,7 @@ using UnityEngine;
 using System.IO;
 using ConversationScheme;
 using BodyPartType = ConversationScheme.BodyPart;
-
+using ConversationEditor.JSON;
 namespace ConversationEditor
 {
     /// <summary>

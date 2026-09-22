@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using ConversationScheme;
-
-namespace ConversationEditor
+namespace ConversationEditor.JSON
 {
     /// <summary>
     /// Simple JSON serializer/deserializer for ConversationData

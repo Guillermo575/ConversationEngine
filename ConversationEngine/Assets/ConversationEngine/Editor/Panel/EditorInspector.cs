@@ -1,10 +1,10 @@
+using ConversationEditor.Graph;
+using ConversationEditor.Helper;
 using ConversationScheme;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 namespace ConversationEditor.Panel
 {

@@ -3,8 +3,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 using ConversationScheme;
-
-namespace ConversationEditor
+namespace ConversationEditor.Helper
 {
     /// <summary>
     /// Helper methods for the Conversation Editor Window

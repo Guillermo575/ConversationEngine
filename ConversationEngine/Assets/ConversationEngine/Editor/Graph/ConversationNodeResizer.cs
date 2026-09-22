@@ -1,8 +1,8 @@
+using ConversationEditor.Helper;
 using ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-
-namespace ConversationEditor
+namespace ConversationEditor.Graph
 {
     /// <summary>
     /// Encapsulates all resize-related logic for conversation nodes and options.
