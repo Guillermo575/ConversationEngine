@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using ConversationScheme;
 using ConversationEditor.JSON;
-namespace ConversationEditor
+namespace ConversationEditor.Setup
 {
     /// <summary>
     /// Custom asset importer for conversation JSON files
@@ -19,19 +19,13 @@ namespace ConversationEditor
         {
             // Read the JSON file
             string jsonContent = File.ReadAllText(ctx.assetPath);
-
             try
             {
-                // Try to deserialize as ConversationData
                 var conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
-
-                // Check if it's a valid conversation file
                 if (conversationData != null && 
                     conversationData.ConversationManager != null && 
                     conversationData.ResourceManager != null)
                 {
-                    // Mark this as a conversation asset
-                    // We'll use a TextAsset to represent it in Unity
                     var textAsset = new UnityEngine.TextAsset(jsonContent);
                     ctx.AddObjectToAsset("conversation", textAsset);
                     ctx.SetMainObject(textAsset);
@@ -39,8 +33,6 @@ namespace ConversationEditor
             }
             catch
             {
-                // If deserialization fails, it's not a conversation file
-                // Import as regular text asset
                 var textAsset = new UnityEngine.TextAsset(jsonContent);
                 ctx.AddObjectToAsset("text", textAsset);
                 ctx.SetMainObject(textAsset);
@@ -57,31 +49,22 @@ namespace ConversationEditor
         public static bool OnOpenAsset(int instanceID, int line)
         {
             string assetPath = AssetDatabase.GetAssetPath(instanceID);
-
-            if (!assetPath.EndsWith(".conversation"))
-                return false;
-
-            // Try to load as conversation file
+            if (!assetPath.EndsWith(".conversation")) return false;
             try
             {
                 string jsonContent = File.ReadAllText(assetPath);
                 var conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
-
-                // Check if it's a valid conversation file
                 if (conversationData != null && 
                     conversationData.ConversationManager != null && 
                     conversationData.ResourceManager != null)
                 {
-                    // Open in conversation editor
                     ConversationEditorWindow.OpenConversationFile(assetPath);
                     return true;
                 }
             }
             catch
             {
-                // Not a conversation file or invalid format
             }
-
             return false;
         }
     }

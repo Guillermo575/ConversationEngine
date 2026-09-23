@@ -5,7 +5,7 @@ using ConversationScheme;
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
-namespace ConversationEditor
+namespace ConversationEditor.Setup
 {
     [CustomEditor(typeof(ConversationAssetImporter))]
     public class ConversationAssetImporterEditor : ScriptedImporterEditor
@@ -13,12 +13,14 @@ namespace ConversationEditor
         #region Constants
         private const float graphPreviewHeight = 420f;
         #endregion
+
         #region State
         private ConversationData conversationData;
         private ConversationGraphView graphView;
         private bool shouldFrameGraph = true;
         private bool isValidConversation;
         #endregion
+
         #region Unity Lifecycle
         public override bool showImportedObject => false;
         public override void OnEnable()
@@ -46,6 +48,7 @@ namespace ConversationEditor
             ApplyRevertGUI();
         }
         #endregion
+
         #region Setup
         private void EnsureGraphView()
         {
@@ -76,6 +79,7 @@ namespace ConversationEditor
             }
         }
         #endregion
+
         #region Drawing
         private void DrawHeader()
         {
@@ -91,7 +95,6 @@ namespace ConversationEditor
             EditorGUILayout.LabelField(new GUIContent("Nodes", "Total number of nodes in this conversation."), nodeCount.ToString());
             EditorGUILayout.HelpBox("This preview is read-only. You can pan, zoom, and select nodes to inspect the graph safely.", MessageType.Info);
         }
-
         private void DrawConversationMetadataHeader()
         {
             var styleProvider = ConversationNodeStyle.GetSingleton();
@@ -106,7 +109,6 @@ namespace ConversationEditor
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space(4f);
         }
-
         private void DrawGraphPreview()
         {
             DrawConversationMetadataHeader();

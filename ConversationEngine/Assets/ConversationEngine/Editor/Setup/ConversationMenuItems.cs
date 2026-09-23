@@ -4,7 +4,7 @@ using System.IO;
 using ConversationScheme;
 using BodyPartType = ConversationScheme.BodyPart;
 using ConversationEditor.JSON;
-namespace ConversationEditor
+namespace ConversationEditor.Setup
 {
     /// <summary>
     /// Menu items for creating conversation engine assets
@@ -16,10 +16,8 @@ namespace ConversationEditor
         {
             // Get the selected folder path
             string path = GetSelectedPathOrFallback();
-
             // Create a new conversation data with Start and End nodes
             ConversationData conversationData = new ConversationData();
-
             // Create Start node
             var startNode = new ConversationNode
             {
@@ -28,7 +26,6 @@ namespace ConversationEditor
                 EditorPosition = new Vector2(0, 0),
                 EditorSize = new Vector2(150, 80)
             };
-
             // Create End node
             var endNode = new ConversationNode
             {
@@ -37,41 +34,31 @@ namespace ConversationEditor
                 EditorPosition = new Vector2(400, 0),
                 EditorSize = new Vector2(150, 80)
             };
-
             startNode.NextNodeId = endNode.Id;
-
             conversationData.ConversationManager.Nodes.Add(startNode);
             conversationData.ConversationManager.Nodes.Add(endNode);
-
             // Serialize to JSON
             string json = ConversationJsonSettings.Serialize(conversationData);
-
             // Find unique filename
             string fileName = "NewConversation.conversation";
             string fullPath = Path.Combine(path, fileName);
             int counter = 1;
-
             while (File.Exists(fullPath))
             {
                 fileName = $"NewConversation{counter}.conversation";
                 fullPath = Path.Combine(path, fileName);
                 counter++;
             }
-
             // Write file
             File.WriteAllText(fullPath, json);
-
             // Refresh and select the asset
             AssetDatabase.Refresh();
-
             // Convert to relative path for Unity
             string relativePath = "Assets" + fullPath.Substring(Application.dataPath.Length);
-
             // Select the newly created asset
             Object asset = AssetDatabase.LoadAssetAtPath<Object>(relativePath);
             Selection.activeObject = asset;
             EditorGUIUtility.PingObject(asset);
-
             Debug.Log($"Created conversation file at: {relativePath}");
         }
 
@@ -80,7 +67,6 @@ namespace ConversationEditor
         {
             // Get the selected folder path
             string path = GetSelectedPathOrFallback();
-
             // Create a new actor
             Actor actor = new Actor
             {
@@ -90,7 +76,6 @@ namespace ConversationEditor
                 SoundEffectPaths = new System.Collections.Generic.List<string>(),
                 BodyParts = new System.Collections.Generic.List<BodyPartType>()
             };
-
             // Add default body parts
             actor.BodyParts.Add(new BodyPartType
             {
@@ -100,39 +85,30 @@ namespace ConversationEditor
                 NestedResources = new System.Collections.Generic.List<BodyPartResource>(),
                 PivotPoints = new System.Collections.Generic.List<PivotPoint>()
             });
-
             // Serialize to JSON
             string json = ConversationJsonSettings.Serialize(actor);
-
             // Find unique filename
             string fileName = "NewActor.actor";
             string fullPath = Path.Combine(path, fileName);
             int counter = 1;
-
             while (File.Exists(fullPath))
             {
                 fileName = $"NewActor{counter}.actor";
                 fullPath = Path.Combine(path, fileName);
                 counter++;
             }
-
             // Write file
             File.WriteAllText(fullPath, json);
-
             // Refresh and select the asset
             AssetDatabase.Refresh();
-
             // Convert to relative path for Unity
             string relativePath = "Assets" + fullPath.Substring(Application.dataPath.Length);
-
             // Select the newly created asset
             Object asset = AssetDatabase.LoadAssetAtPath<Object>(relativePath);
             Selection.activeObject = asset;
             EditorGUIUtility.PingObject(asset);
-
             Debug.Log($"Created actor file at: {relativePath}");
         }
-
         /// <summary>
         /// Gets the selected folder path in the Project window, or falls back to Assets folder
         /// </summary>
@@ -149,7 +125,6 @@ namespace ConversationEditor
                 }
                 break;
             }
-
             return path;
         }
     }
