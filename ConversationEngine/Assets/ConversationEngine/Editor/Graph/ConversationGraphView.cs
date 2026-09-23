@@ -160,7 +160,6 @@ namespace ConversationEditor.Graph
             panOffset = graphCenter / zoom - bounds.center;
             if (!isReadOnly) SaveEditorViewSettings();
         }
-
         public void SetReadOnlyMode(bool readOnly)
         {
             isReadOnly = readOnly;
@@ -173,19 +172,16 @@ namespace ConversationEditor.Graph
                 nodeResizer.StopResize();
             }
         }
-
         public void DeleteSelectedNode()
         {
             if (isReadOnly || selectedNode == null) return;
             DeleteNode(selectedNode);
         }
-
         public void FrameSelectedNode()
         {
             if (selectedNode == null) return;
             FrameNode(selectedNode);
         }
-
         public void HandleEscapeAction()
         {
             if (isConnecting)
@@ -199,7 +195,6 @@ namespace ConversationEditor.Graph
             }
             if (HasSelection) ClearSelection();
         }
-
         public bool IsInConnectionMode()
         {
             return isConnecting;
@@ -211,28 +206,23 @@ namespace ConversationEditor.Graph
         {
             return GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
         }
-
         private Vector2 WorldToGraph(Vector2 worldPos)
         {
             return (worldPos + panOffset) * zoom;
         }
-
         private Rect WorldToGraphRect(Rect worldRect)
         {
             return new Rect(WorldToGraph(worldRect.position), worldRect.size * zoom);
         }
-
         private Vector2 WindowToWorld(Vector2 windowPos)
         {
             Vector2 graphLocalPos = windowPos - currentGraphRect.position;
             return (graphLocalPos / zoom) - panOffset;
         }
-
         private Vector2 WindowToGraphLocal(Vector2 windowPos)
         {
             return windowPos - currentGraphRect.position;
         }
-
         private void DrawGrid(Rect rect)
         {
             Handles.BeginGUI();
@@ -259,7 +249,6 @@ namespace ConversationEditor.Graph
             }
             Handles.EndGUI();
         }
-
         private void DrawNodes()
         {
             if (conversationData?.ConversationManager?.Nodes == null) return;
@@ -268,7 +257,6 @@ namespace ConversationEditor.Graph
                 DrawNode(node);
             }
         }
-
         private void DrawNode(ConversationNode node)
         {
             Rect nodeWorldRect = GetNodeWorldRect(node);
@@ -315,7 +303,6 @@ namespace ConversationEditor.Graph
             if (node.NodeType == ConversationNodeType.Conditional) DrawConditionalIndicators(node, nodeRect);
             if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && !isReadOnly) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
         }
-
         private void DrawNodeStartEnd(ConversationNode node, Rect nodeRect)
         {
             float size = Mathf.Min(nodeRect.width, nodeRect.height);
@@ -340,7 +327,6 @@ namespace ConversationEditor.Graph
             DrawNodeContent(node);
             GUILayout.EndArea();
         }
-
         private void DrawNodeContent(ConversationNode node)
         {
             conversationNodeStyle.nodeHeaderStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
@@ -386,14 +372,12 @@ namespace ConversationEditor.Graph
             bool isPointerOverZoomControls = zoomControlsRect.Contains(e.mousePosition);
             if (isPointerOverZoomControls && !isDraggingView) return;
             if (!isReadOnly && HandleActiveResizeInteraction(e)) return;
-
             if (zoomController.HandleScrollWheel(e, graphRect, ref zoom, ref panOffset, isReadOnly, SaveEditorViewSettings))
             {
                 e.Use();
                 RequestRepaint();
                 return;
             }
-
             if (e.type == EventType.MouseDown && e.button == 0)
             {
                 if (isRightClickMenuActive)
@@ -448,7 +432,6 @@ namespace ConversationEditor.Graph
                 e.Use();
             }
         }
-
         private bool HandleActiveResizeInteraction(Event e)
         {
             if (!nodeResizer.IsResizing) return false;
@@ -470,7 +453,6 @@ namespace ConversationEditor.Graph
             }
             return false;
         }
-
         private void HandleNodeInteraction(ConversationNode node, Rect nodeRect)
         {
             Event e = Event.current;
@@ -574,7 +556,6 @@ namespace ConversationEditor.Graph
                 HandleOptionInteraction(node, option, optionRect, i);
             }
         }
-
         private void HandleOptionInteraction(ConversationNode node, ConversationOption option, Rect optionRect, int index)
         {
             Event e = Event.current;
@@ -647,10 +628,8 @@ namespace ConversationEditor.Graph
                 optionBeingDragged = null;
             }
         }
-
         private void DrawConditionalIndicators(ConversationNode node, Rect nodeRect)
         {
-            // Draw small interactive indicators to the left (true) and right (false) of the conditional diamond
             Vector2 center = node.EditorPosition;
             float indicatorSize = 16f;
             Rect trueWorldRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
@@ -667,7 +646,6 @@ namespace ConversationEditor.Graph
             GUILayout.EndArea();
             HandleBranchInteraction(node, node.conditionalBranch, trueRect, falseRect);
         }
-
         private void HandleBranchInteraction(ConversationNode node, ConditionalBranch branch, Rect trueRect, Rect falseRect)
         {
             Event e = Event.current;
@@ -762,7 +740,6 @@ namespace ConversationEditor.Graph
             }
             Handles.EndGUI();
         }
-
         private void DrawConnectionLine()
         {
             if (!isConnecting || isReadOnly) return;
@@ -795,7 +772,6 @@ namespace ConversationEditor.Graph
             Handles.EndGUI();
             RequestRepaint();
         }
-
         private void CompleteConnection(ConversationNode targetNode)
         {
             if (!isConnecting || connectingFromNode == null || isReadOnly) return;
@@ -814,18 +790,15 @@ namespace ConversationEditor.Graph
             connectingFromBranch = null;
             RequestRepaint();
         }
-
         private Rect GetNodeWorldRect(ConversationNode node)
         {
             return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
         }
-
         private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
         {
             EnsureOptionEditorData(node, option, optionIndex);
             return ConversationEditorHelpers.GetOptionWorldRect(node.EditorPosition, node.EditorSize, option.EditorPosition, option.EditorSize);
         }
-
         private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
         {
             return drawPosition + size * 0.5f;
@@ -847,23 +820,18 @@ namespace ConversationEditor.Graph
             isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
-
         private void ShowNodeContextMenu(ConversationNode node)
         {
             if (isReadOnly) return;
             GenericMenu menu = new GenericMenu();
-
-            // Use switch for node type handling per project rules
             switch (node.NodeType)
             {
                 case ConversationNodeType.Conditional:
-                    // Provide two explicit connect actions for conditional true/false branches
                     menu.AddItem(new GUIContent("Connect to Node (true)"), false, () =>
                     {
                         isConnecting = true;
                         connectingFromNode = node;
                         connectingFromOption = null;
-                        // ensure branch exists
                         if (node.conditionalBranch == null) node.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
                         connectingFromBranch = node.conditionalBranch;
                         connectingBranchIndex = 0;
@@ -884,7 +852,6 @@ namespace ConversationEditor.Graph
                     menu.AddSeparator("");
                     break;
                 case ConversationNodeType.Dialogue:
-                    // Dialogue-specific: allow adding options
                     menu.AddItem(new GUIContent("Add Option"), false, () =>
                     {
                         if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Add Option");
@@ -924,7 +891,6 @@ namespace ConversationEditor.Graph
             isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
-
         private void ShowOptionContextMenu(ConversationNode node, ConversationOption option, int index)
         {
             if (isReadOnly) return;
@@ -984,7 +950,6 @@ namespace ConversationEditor.Graph
             }
             return hasStart && hasEnd;
         }
-
         private void TryAutoLinkStartNode(ConversationNode newNode)
         {
             if (conversationData?.ConversationManager?.Nodes == null || newNode == null) return;
@@ -992,7 +957,6 @@ namespace ConversationEditor.Graph
             if (startNode == null) return;
             startNode.NextNodeId = newNode.Id;
         }
-
         private void CreateNode(ConversationNodeType nodeType)
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
@@ -1014,7 +978,6 @@ namespace ConversationEditor.Graph
             MarkDirty();
             RequestRepaint();
         }
-
         private void CreateNodeWithOptions()
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
@@ -1038,7 +1001,6 @@ namespace ConversationEditor.Graph
             MarkDirty();
             RequestRepaint();
         }
-
         private void DuplicateNode(ConversationNode node)
         {
             if (isReadOnly || node == null || conversationData?.ConversationManager?.Nodes == null) return;
@@ -1079,7 +1041,6 @@ namespace ConversationEditor.Graph
             MarkDirty();
             RequestRepaint();
         }
-
         private void DeleteNode(ConversationNode node)
         {
             if (isReadOnly || node == null || conversationData?.ConversationManager?.Nodes == null) return;
@@ -1098,7 +1059,6 @@ namespace ConversationEditor.Graph
                 RequestRepaint();
             }
         }
-
         private void FrameNode(ConversationNode node)
         {
             if (node == null) return;
@@ -1126,7 +1086,6 @@ namespace ConversationEditor.Graph
             }
             return hasBounds ? bounds : new Rect(0f, 0f, 1f, 1f);
         }
-
         private Rect GetNodeVisualBounds(ConversationNode node)
         {
             Rect bounds = GetNodeWorldRect(node);
@@ -1140,7 +1099,6 @@ namespace ConversationEditor.Graph
             }
             if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
             {
-                // include small left/right indicators in visual bounds
                 Vector2 center = node.EditorPosition;
                 float indicatorSize = 16f;
                 Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
@@ -1150,7 +1108,6 @@ namespace ConversationEditor.Graph
             }
             return bounds;
         }
-
         private Rect EncapsulateRect(Rect a, Rect b)
         {
             float xMin = Mathf.Min(a.xMin, b.xMin);
@@ -1159,7 +1116,6 @@ namespace ConversationEditor.Graph
             float yMax = Mathf.Max(a.yMax, b.yMax);
             return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
-
         private void AutoLayoutNodes(bool horizontal)
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null || conversationData.ConversationManager.Nodes.Count == 0) return;
@@ -1173,7 +1129,6 @@ namespace ConversationEditor.Graph
             MarkDirty();
             RequestRepaint();
         }
-
         private float LayoutNodesHorizontal(ConversationNode node, float x, float y, HashSet<int> visited, Dictionary<int, float> levelPositions, int level)
         {
             if (node == null || visited.Contains(node.Id)) return y;
@@ -1199,7 +1154,6 @@ namespace ConversationEditor.Graph
             levelPositions[level] = Mathf.Max(levelPositions[level], maxY);
             return maxY;
         }
-
         private float LayoutNodesVertical(ConversationNode node, float x, float y, HashSet<int> visited, Dictionary<int, float> levelPositions, int level)
         {
             if (node == null || visited.Contains(node.Id)) return x;
@@ -1225,7 +1179,6 @@ namespace ConversationEditor.Graph
             levelPositions[level] = Mathf.Max(levelPositions[level], maxX);
             return maxX;
         }
-
         private List<ConversationNode> GetConnectedNodes(ConversationNode node)
         {
             var nextNodes = new List<ConversationNode>();
@@ -1274,7 +1227,6 @@ namespace ConversationEditor.Graph
             if (conversationData == null) return;
             if (conversationData.EditorSettings == null) conversationData.EditorSettings = new ConversationEditorSettings();
         }
-
         private void ApplyViewFromConversationSettings()
         {
             if (conversationData == null)
@@ -1283,7 +1235,6 @@ namespace ConversationEditor.Graph
                 panOffset = Vector2.zero;
                 return;
             }
-
             EnsureEditorSettings();
             float savedZoom = conversationData.EditorSettings.Zoom;
             if (savedZoom <= 0f) savedZoom = 1f;
@@ -1292,7 +1243,6 @@ namespace ConversationEditor.Graph
             conversationData.EditorSettings.Zoom = zoom;
             conversationData.EditorSettings.CameraPosition = panOffset;
         }
-
         private void SaveEditorViewSettings()
         {
             if (conversationData == null) return;
@@ -1311,14 +1261,12 @@ namespace ConversationEditor.Graph
             bool isDragging = isNodeBeingDragged && isSelected;
             return conversationNodeStyle.GetNodeStyle(node, isSelected, isDragging);
         }
-
         private GUIStyle GetOptionStyle(ConversationOption option)
         {
             bool isSelected = selectedOption == option;
             bool isDragging = isOptionBeingDragged && isSelected;
             return conversationNodeStyle.GetOptionStyle(option, isSelected, isDragging);
         }
-
         private int GetScaledNodeFontSize(int baseFontSize)
         {
             return Mathf.Max(minNodeFontSize, Mathf.RoundToInt(baseFontSize * zoom));
@@ -1333,7 +1281,6 @@ namespace ConversationEditor.Graph
             selectedBranch = branch;
             OnSelectionChanged?.Invoke();
         }
-
         private void ClearSelection()
         {
             selectedNode = null;
@@ -1341,23 +1288,19 @@ namespace ConversationEditor.Graph
             selectedBranch = null;
             OnSelectionChanged?.Invoke();
         }
-
         private void MarkDirty()
         {
             OnDirty?.Invoke();
         }
-
         private void RequestRepaint()
         {
             OnRepaintRequested?.Invoke();
             ownerWindow?.Repaint();
         }
-
         private Rect ToWindowRect(Rect graphRect)
         {
             return new Rect(currentGraphRect.x + graphRect.x, currentGraphRect.y + graphRect.y, graphRect.width, graphRect.height);
         }
-
         private void EnsureOptionEditorDataInConversation()
         {
             if (conversationData?.ConversationManager?.Nodes == null) return;
@@ -1370,21 +1313,18 @@ namespace ConversationEditor.Graph
                 }
             }
         }
-
         private void EnsureOptionEditorData(ConversationNode node, ConversationOption option, int optionIndex)
         {
             if (node == null || option == null) return;
             option.EditorSize = ClampEditorSize(option.EditorSize);
             if (option.EditorPosition == Vector2.zero) option.EditorPosition = GenerateOptionPosition(node, optionIndex);
         }
-
         private Vector2 GenerateOptionPosition(ConversationNode node, int optionIndex)
         {
             float baseX = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
             float baseY = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
             return new Vector2(baseX, baseY);
         }
-
         private ConversationOption CreateOption(ConversationNode node, string text, int optionIndex)
         {
             return new ConversationOption
@@ -1396,7 +1336,6 @@ namespace ConversationEditor.Graph
                 EditorPosition = GenerateOptionPosition(node, optionIndex)
             };
         }
-
         private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
         {
             if (conversationData?.ConversationManager?.Nodes == null) return false;
@@ -1424,7 +1363,6 @@ namespace ConversationEditor.Graph
             }
             return false;
         }
-
         private void EnsureMinimumEditorSizesInConversation()
         {
             if (conversationData?.ConversationManager?.Nodes == null) return;
@@ -1450,12 +1388,10 @@ namespace ConversationEditor.Graph
             }
             if (hasChanges) MarkDirty();
         }
-
         private Vector2 ClampEditorSize(Vector2 size)
         {
             return new Vector2(Mathf.Max(minEditorNodeSize, size.x), Mathf.Max(minEditorNodeSize, size.y));
         }
-
         private int GetNodePreviewTextLength(ConversationNode node, bool hasActorLine)
         {
             int bodyFontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
@@ -1466,7 +1402,6 @@ namespace ConversationEditor.Graph
             float usableHeight = Mathf.Max(minEditorNodeSize, (node.EditorSize.y - nodeVerticalPadding) * scaledZoom - headerHeight - actorHeight);
             return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
         }
-
         private int GetOptionPreviewTextLength(ConversationOption option)
         {
             int bodyFontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
@@ -1476,7 +1411,6 @@ namespace ConversationEditor.Graph
             float usableHeight = Mathf.Max(minEditorNodeSize, (option.EditorSize.y - nodeVerticalPadding) * scaledZoom - headerHeight);
             return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
         }
-
         private int EstimatePreviewLength(float width, float height, int fontSize)
         {
             float estimatedCharacterWidth = Mathf.Max(1f, fontSize * 0.55f);
