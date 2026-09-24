@@ -69,16 +69,11 @@ namespace ConversationEditor.Graph
         private const float gridSpacing = ConversationEditorCore.gridSpacing;
         private static readonly Color gridColor = ConversationEditorCore.gridColor;
         private const float zoomControlScale = ConversationEditorCore.zoomControlScale;
-        private const int minNodeFontSize = ConversationEditorCore.minNodeFontSize;
         private const int nodeHeaderBaseFontSize = ConversationEditorCore.nodeHeaderBaseFontSize;
         private const int nodeBodyBaseFontSize = ConversationEditorCore.nodeBodyBaseFontSize;
         private const float optionDefaultWidth = ConversationEditorCore.optionDefaultWidth;
         private const float optionDefaultHeight = ConversationEditorCore.optionDefaultHeight;
         private const float optionDefaultSpacing = ConversationEditorCore.optionDefaultSpacing;
-        private const float minEditorNodeSize = ConversationEditorCore.minEditorNodeSize;
-        private const float nodeHorizontalPadding = ConversationEditorCore.nodeHorizontalPadding;
-        private const float nodeVerticalPadding = ConversationEditorCore.nodeVerticalPadding;
-        private const float estimatedLineSpacing = ConversationEditorCore.estimatedLineSpacing;
         #endregion
 
         #region Style State
@@ -205,23 +200,6 @@ namespace ConversationEditor.Graph
         private Rect CalculateGraphRect()
         {
             return GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-        }
-        private Vector2 WorldToGraph(Vector2 worldPos)
-        {
-            return (worldPos + panOffset) * zoom;
-        }
-        private Rect WorldToGraphRect(Rect worldRect)
-        {
-            return new Rect(WorldToGraph(worldRect.position), worldRect.size * zoom);
-        }
-        private Vector2 WindowToWorld(Vector2 windowPos)
-        {
-            Vector2 graphLocalPos = windowPos - currentGraphRect.position;
-            return (graphLocalPos / zoom) - panOffset;
-        }
-        private Vector2 WindowToGraphLocal(Vector2 windowPos)
-        {
-            return windowPos - currentGraphRect.position;
         }
         private void DrawGrid(Rect rect)
         {
@@ -790,19 +768,6 @@ namespace ConversationEditor.Graph
             connectingFromBranch = null;
             RequestRepaint();
         }
-        private Rect GetNodeWorldRect(ConversationNode node)
-        {
-            return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
-        }
-        private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
-        {
-            EnsureOptionEditorData(node, option, optionIndex);
-            return ConversationEditorHelpers.GetOptionWorldRect(node.EditorPosition, node.EditorSize, option.EditorPosition, option.EditorSize);
-        }
-        private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
-        {
-            return drawPosition + size * 0.5f;
-        }
         #endregion
 
         #region Menus
@@ -1082,7 +1047,7 @@ namespace ConversationEditor.Graph
                     hasBounds = true;
                     continue;
                 }
-                bounds = EncapsulateRect(bounds, nodeBounds);
+                bounds = ConversationEditorHelpers.EncapsulateRect(bounds, nodeBounds);
             }
             return hasBounds ? bounds : new Rect(0f, 0f, 1f, 1f);
         }
@@ -1094,7 +1059,7 @@ namespace ConversationEditor.Graph
                 for (int i = 0; i < node.Options.Count; i++)
                 {
                     Rect optionRect = GetOptionWorldRect(node, node.Options[i], i);
-                    bounds = EncapsulateRect(bounds, optionRect);
+                    bounds = ConversationEditorHelpers.EncapsulateRect(bounds, optionRect);
                 }
             }
             if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
@@ -1103,18 +1068,10 @@ namespace ConversationEditor.Graph
                 float indicatorSize = 16f;
                 Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
                 Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
-                bounds = EncapsulateRect(bounds, trueRect);
-                bounds = EncapsulateRect(bounds, falseRect);
+                bounds = ConversationEditorHelpers.EncapsulateRect(bounds, trueRect);
+                bounds = ConversationEditorHelpers.EncapsulateRect(bounds, falseRect);
             }
             return bounds;
-        }
-        private Rect EncapsulateRect(Rect a, Rect b)
-        {
-            float xMin = Mathf.Min(a.xMin, b.xMin);
-            float yMin = Mathf.Min(a.yMin, b.yMin);
-            float xMax = Mathf.Max(a.xMax, b.xMax);
-            float yMax = Mathf.Max(a.yMax, b.yMax);
-            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
         private void AutoLayoutNodes(bool horizontal)
         {
@@ -1267,10 +1224,6 @@ namespace ConversationEditor.Graph
             bool isDragging = isOptionBeingDragged && isSelected;
             return conversationNodeStyle.GetOptionStyle(option, isSelected, isDragging);
         }
-        private int GetScaledNodeFontSize(int baseFontSize)
-        {
-            return Mathf.Max(minNodeFontSize, Mathf.RoundToInt(baseFontSize * zoom));
-        }
         #endregion
 
         #region Internal Helpers
@@ -1388,36 +1341,54 @@ namespace ConversationEditor.Graph
             }
             if (hasChanges) MarkDirty();
         }
+        #endregion
+
+        #region Formula Helpers
+        private int GetScaledNodeFontSize(int baseFontSize)
+        {
+            return conversationEditorCore.GetScaledNodeFontSize(baseFontSize, zoom);
+        }
         private Vector2 ClampEditorSize(Vector2 size)
         {
-            return new Vector2(Mathf.Max(minEditorNodeSize, size.x), Mathf.Max(minEditorNodeSize, size.y));
+            return conversationEditorCore.ClampEditorSize(size);
         }
         private int GetNodePreviewTextLength(ConversationNode node, bool hasActorLine)
         {
-            int bodyFontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
-            float scaledZoom = Mathf.Max(minZoom, zoom);
-            float usableWidth = Mathf.Max(minEditorNodeSize, (node.EditorSize.x - nodeHorizontalPadding) * scaledZoom);
-            float headerHeight = GetScaledNodeFontSize(nodeHeaderBaseFontSize) + estimatedLineSpacing;
-            float actorHeight = hasActorLine ? bodyFontSize + estimatedLineSpacing : 0f;
-            float usableHeight = Mathf.Max(minEditorNodeSize, (node.EditorSize.y - nodeVerticalPadding) * scaledZoom - headerHeight - actorHeight);
-            return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
+            return conversationEditorCore.GetNodePreviewTextLength(node, hasActorLine, zoom);
         }
         private int GetOptionPreviewTextLength(ConversationOption option)
         {
-            int bodyFontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            float scaledZoom = Mathf.Max(minZoom, zoom);
-            float usableWidth = Mathf.Max(minEditorNodeSize, (option.EditorSize.x - nodeHorizontalPadding) * scaledZoom);
-            float headerHeight = bodyFontSize + estimatedLineSpacing;
-            float usableHeight = Mathf.Max(minEditorNodeSize, (option.EditorSize.y - nodeVerticalPadding) * scaledZoom - headerHeight);
-            return EstimatePreviewLength(usableWidth, usableHeight, bodyFontSize);
+            return conversationEditorCore.GetOptionPreviewTextLength(option, zoom);
         }
-        private int EstimatePreviewLength(float width, float height, int fontSize)
+        private Vector2 WorldToGraph(Vector2 worldPos)
         {
-            float estimatedCharacterWidth = Mathf.Max(1f, fontSize * 0.55f);
-            float lineHeight = Mathf.Max(1f, fontSize + estimatedLineSpacing);
-            int charsPerLine = Mathf.Max(1, Mathf.FloorToInt(width / estimatedCharacterWidth));
-            int maxLines = Mathf.Max(1, Mathf.FloorToInt(height / lineHeight));
-            return charsPerLine * maxLines;
+            return (worldPos + panOffset) * zoom;
+        }
+        private Rect WorldToGraphRect(Rect worldRect)
+        {
+            return new Rect(WorldToGraph(worldRect.position), worldRect.size * zoom);
+        }
+        private Vector2 WindowToWorld(Vector2 windowPos)
+        {
+            Vector2 graphLocalPos = windowPos - currentGraphRect.position;
+            return (graphLocalPos / zoom) - panOffset;
+        }
+        private Vector2 WindowToGraphLocal(Vector2 windowPos)
+        {
+            return windowPos - currentGraphRect.position;
+        }
+        private Rect GetNodeWorldRect(ConversationNode node)
+        {
+            return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
+        }
+        private Rect GetOptionWorldRect(ConversationNode node, ConversationOption option, int optionIndex)
+        {
+            EnsureOptionEditorData(node, option, optionIndex);
+            return ConversationEditorHelpers.GetOptionWorldRect(node.EditorPosition, node.EditorSize, option.EditorPosition, option.EditorSize);
+        }
+        private Vector2 ToNodeCenterPosition(Vector2 drawPosition, Vector2 size)
+        {
+            return drawPosition + size * 0.5f;
         }
         #endregion
     }

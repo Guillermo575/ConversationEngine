@@ -135,22 +135,27 @@ namespace ConversationEditor.Helper
         #endregion
 
         #region Connections
+        public static Rect EncapsulateRect(Rect a, Rect b)
+        {
+            float xMin = Mathf.Min(a.xMin, b.xMin);
+            float yMin = Mathf.Min(a.yMin, b.yMin);
+            float xMax = Mathf.Max(a.xMax, b.xMax);
+            float yMax = Mathf.Max(a.yMax, b.yMax);
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
         public static Rect GetNodeWorldRect(Vector2 nodeCenter, Vector2 nodeSize)
         {
             return new Rect(nodeCenter - nodeSize * 0.5f, nodeSize);
         }
-
         public static Rect GetOptionWorldRect(Vector2 parentCenter, Vector2 parentSize, Vector2 optionLocalPosition, Vector2 optionSize)
         {
             Rect parentRect = GetNodeWorldRect(parentCenter, parentSize);
             return new Rect(parentRect.position + optionLocalPosition, optionSize);
         }
-
         public static void DrawConnectionLine(Vector2 startCenter, Vector2 startSize, Vector2 endCenter, Vector2 endSize, float lineThickness, Color lineColor, System.Func<Vector2, Vector2> worldToGraph, ConversationNodeType startType = ConversationNodeType.Dialogue, ConversationNodeType endType = ConversationNodeType.Dialogue)
         {
             DrawConnectionLine(GetNodeWorldRect(startCenter, startSize), GetNodeWorldRect(endCenter, endSize), lineThickness, lineColor, worldToGraph, startType, endType);
         }
-
         public static void DrawConnectionLine(Rect startRect, Rect endRect, float lineThickness, Color lineColor, System.Func<Vector2, Vector2> worldToGraph, ConversationNodeType startType = ConversationNodeType.Dialogue, ConversationNodeType endType = ConversationNodeType.Dialogue)
         {
             if (worldToGraph == null) return;
@@ -158,7 +163,6 @@ namespace ConversationEditor.Helper
             Vector2 endPoint = GetConnectionPoint(endRect, startRect.center, endType);
             DrawBezierConnection(worldToGraph(startPoint), worldToGraph(endPoint), lineThickness, lineColor);
         }
-
         private static Vector2 GetConnectionPoint(Rect nodeRect, Vector2 fromWorldPosition, ConversationNodeType nodeType)
         {
             if (nodeRect.width <= 0f || nodeRect.height <= 0f) return nodeRect.center;
@@ -178,7 +182,6 @@ namespace ConversationEditor.Helper
                     return direction.y < 0f ? new Vector2(center.x, nodeRect.yMin) : new Vector2(center.x, nodeRect.yMax);
             }
         }
-
         private static void DrawBezierConnection(Vector2 start, Vector2 end, float lineThickness, Color lineColor)
         {
             Handles.color = lineColor;
