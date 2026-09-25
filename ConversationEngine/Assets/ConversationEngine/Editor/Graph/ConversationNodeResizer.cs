@@ -99,16 +99,19 @@ namespace ConversationEditor.Graph
 
             if (isResizingNode && resizingNode != null)
             {
+                Vector2 finalNodeSize = ClampEditorSize(resizedRect.size);
+                if (UsesUniformNodeSize(resizingNode)) finalNodeSize = ToUniformSize(finalNodeSize);
                 resizingNode.EditorPosition = resizedRect.center;
-                resizingNode.EditorSize = ClampEditorSize(resizedRect.size);
-                onNodeResized?.Invoke(resizingNode, resizedRect.size);
+                resizingNode.EditorSize = finalNodeSize;
+                onNodeResized?.Invoke(resizingNode, finalNodeSize);
             }
             else if (isResizingOption && resizingOptionParentNode != null && resizingOption != null)
             {
                 Rect parentRect = GetNodeWorldRect(resizingOptionParentNode);
-                resizingOption.EditorSize = ClampEditorSize(resizedRect.size);
+                Vector2 finalOptionSize = ClampEditorSize(resizedRect.size);
+                resizingOption.EditorSize = finalOptionSize;
                 resizingOption.EditorPosition = resizedRect.position - parentRect.position;
-                onOptionResized?.Invoke(resizingOption, resizedRect.size);
+                onOptionResized?.Invoke(resizingOption, finalOptionSize);
             }
 
             return true;
@@ -334,6 +337,26 @@ namespace ConversationEditor.Graph
         private Rect GetNodeWorldRect(ConversationNode node)
         {
             return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
+        }
+
+        private bool UsesUniformNodeSize(ConversationNode node)
+        {
+            if (node == null) return false;
+            switch (node.NodeType)
+            {
+                case ConversationNodeType.Start:
+                case ConversationNodeType.End:
+                case ConversationNodeType.Function:
+                case ConversationNodeType.Conditional:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private Vector2 ToUniformSize(Vector2 size)
+        {
+            return new Vector2(size.x, size.x);
         }
 
         #endregion

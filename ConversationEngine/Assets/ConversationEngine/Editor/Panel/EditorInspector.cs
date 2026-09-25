@@ -139,7 +139,22 @@ namespace ConversationEditor.Panel
             DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
             node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph center position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
-            node.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this node. Minimum X/Y is 20."), node.EditorSize, GUILayout.ExpandWidth(true)));
+            if (RequiresSquareNodeSize(node.NodeType))
+            {
+                EditorGUILayout.LabelField(new GUIContent("Size", "Graph size for this node. Y is locked to X."));
+                EditorGUILayout.BeginHorizontal();
+                float editedSizeX = EditorGUILayout.FloatField(new GUIContent("X", "Graph width for this node. Height stays equal to width."), node.EditorSize.x, GUILayout.ExpandWidth(true));
+                Vector2 squareSize = ClampEditorSize(new Vector2(editedSizeX, editedSizeX));
+                EditorGUI.BeginDisabledGroup(true);
+                EditorGUILayout.FloatField(new GUIContent("Y", "Locked to X for this node type."), squareSize.x, GUILayout.ExpandWidth(true));
+                EditorGUI.EndDisabledGroup();
+                EditorGUILayout.EndHorizontal();
+                node.EditorSize = squareSize;
+            }
+            else
+            {
+                node.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this node. Minimum X/Y is 20."), node.EditorSize, GUILayout.ExpandWidth(true)));
+            }
             if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
         }
@@ -342,6 +357,20 @@ namespace ConversationEditor.Panel
             float x = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
             float y = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
             return new Vector2(x, y);
+        }
+
+        private bool RequiresSquareNodeSize(ConversationNodeType nodeType)
+        {
+            switch (nodeType)
+            {
+                case ConversationNodeType.Start:
+                case ConversationNodeType.End:
+                case ConversationNodeType.Function:
+                case ConversationNodeType.Conditional:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private void DrawConditionalBranchSection(ConversationNode node)

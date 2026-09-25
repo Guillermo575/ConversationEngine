@@ -257,17 +257,17 @@ namespace ConversationEditor.Graph
                     Handles.color = Color.black;
                     Handles.DrawAAPolyLine(3f, points[0], points[1], points[2], points[3], points[0]);
                     Handles.EndGUI();
-                    GUILayout.BeginArea(nodeRect);
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("Conditional", conversationNodeStyle.nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    GUILayout.EndArea();
+                    DrawCenteredNodeTitle(nodeRect, "CONDITIONAL", node);
                     break;
                 case ConversationNodeType.Start:
                     DrawNodeStartEnd(node, nodeRect);
                     break;
                 case ConversationNodeType.End:
                     DrawNodeStartEnd(node, nodeRect);
+                    break;
+                case ConversationNodeType.Function:
+                    GUI.Box(nodeRect, "", style);
+                    DrawCenteredNodeTitle(nodeRect, "FUNCTION", node);
                     break;
                 default:
                     GUI.Box(nodeRect, "", style);
@@ -279,7 +279,7 @@ namespace ConversationEditor.Graph
             HandleNodeInteraction(node, nodeRect);
             if (node.Options != null && node.Options.Count > 0) DrawNodeOptions(node, nodeRect);
             if (node.NodeType == ConversationNodeType.Conditional) DrawConditionalIndicators(node, nodeRect);
-            if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && !isReadOnly) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
+            if (!isReadOnly && IsNodeResizeEnabled(node.NodeType)) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
         }
         private void DrawNodeStartEnd(ConversationNode node, Rect nodeRect)
         {
@@ -301,9 +301,8 @@ namespace ConversationEditor.Graph
                 else tex = conversationNodeStyle.endCircleTexture;
             }
             if (tex != null) GUI.DrawTexture(circleRect, tex, ScaleMode.StretchToFill, true);
-            GUILayout.BeginArea(circleRect);
-            DrawNodeContent(node);
-            GUILayout.EndArea();
+            string title = node.NodeType == ConversationNodeType.Start ? "START" : "END";
+            DrawCenteredNodeTitle(circleRect, title, node);
         }
         private void DrawNodeContent(ConversationNode node)
         {
@@ -435,7 +434,7 @@ namespace ConversationEditor.Graph
         {
             Event e = Event.current;
             Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
-            if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && e.type == EventType.MouseDown && e.button == 0)
+            if (!isReadOnly && IsNodeResizeEnabled(node.NodeType) && e.type == EventType.MouseDown && e.button == 0)
             {
                 if (nodeResizer.TryStartNodeResize(node, nodeRect, mouseGraphPos, WindowToWorld(e.mousePosition)))
                 {
@@ -927,7 +926,19 @@ namespace ConversationEditor.Graph
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
             if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node");
             bool shouldAutoLink = HasOnlyStartAndEndNodes();
-            Vector2 editorSize = nodeType == ConversationNodeType.Conditional ? new Vector2(150, 100) : new Vector2(200, 100);
+            Vector2 editorSize;
+            switch (nodeType)
+            {
+                case ConversationNodeType.Conditional:
+                    editorSize = new Vector2(150f, 150f);
+                    break;
+                case ConversationNodeType.Function:
+                    editorSize = new Vector2(200f, 200f);
+                    break;
+                default:
+                    editorSize = new Vector2(200f, 100f);
+                    break;
+            }
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
@@ -970,6 +981,7 @@ namespace ConversationEditor.Graph
         {
             if (isReadOnly || node == null || conversationData?.ConversationManager?.Nodes == null) return;
             if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Duplicate Node");
+            Vector2 duplicatedSize = RequiresSquareNodeSize(node.NodeType) ? ToSquareSize(node.EditorSize) : node.EditorSize;
             var newNode = new ConversationNode
             {
                 Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
@@ -978,7 +990,7 @@ namespace ConversationEditor.Graph
                 Text = node.Text,
                 NextNodeId = 0,
                 EditorPosition = node.EditorPosition + new Vector2(20, 20),
-                EditorSize = node.EditorSize,
+                EditorSize = duplicatedSize,
                 Options = node.Options?.Select(o => new ConversationOption
                 {
                     Text = o.Text,
@@ -1297,7 +1309,7 @@ namespace ConversationEditor.Graph
             {
                 Rect nodeRect = WorldToGraphRect(GetNodeWorldRect(node));
                 if (nodeRect.Contains(mouseGraphPosition)) return true;
-                if (!isReadOnly && node.NodeType == ConversationNodeType.Dialogue && nodeResizer.TryGetResizeHandle(nodeRect, mouseGraphPosition, out _)) return true;
+                if (!isReadOnly && IsNodeResizeEnabled(node.NodeType) && nodeResizer.TryGetResizeHandle(nodeRect, mouseGraphPosition, out _)) return true;
                 if (node.Options != null)
                 {
                     for (int i = 0; i < node.Options.Count; i++)
@@ -1323,6 +1335,7 @@ namespace ConversationEditor.Graph
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
                 Vector2 clampedNodeSize = ClampEditorSize(node.EditorSize);
+                if (RequiresSquareNodeSize(node.NodeType)) clampedNodeSize = ToSquareSize(clampedNodeSize);
                 if (clampedNodeSize != node.EditorSize)
                 {
                     node.EditorSize = clampedNodeSize;
@@ -1340,6 +1353,56 @@ namespace ConversationEditor.Graph
                 }
             }
             if (hasChanges) MarkDirty();
+        }
+        private void DrawCenteredNodeTitle(Rect rect, string title, ConversationNode node)
+        {
+            GUIStyle centeredStyle = new GUIStyle(conversationNodeStyle.nodeHeaderStyle);
+            centeredStyle.alignment = TextAnchor.MiddleCenter;
+            centeredStyle.fontSize = GetAdaptiveNodeTitleFontSize(node);
+            GUILayout.BeginArea(rect);
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(title, centeredStyle);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndArea();
+        }
+        private int GetAdaptiveNodeTitleFontSize(ConversationNode node)
+        {
+            int zoomScaledFont = GetScaledNodeFontSize(nodeHeaderBaseFontSize + 6);
+            float sizeFactor = Mathf.Max(1f, node.EditorSize.x / 140f);
+            int finalSize = Mathf.RoundToInt(zoomScaledFont * sizeFactor);
+            return Mathf.Clamp(finalSize, zoomScaledFont, 90);
+        }
+        private bool IsNodeResizeEnabled(ConversationNodeType nodeType)
+        {
+            switch (nodeType)
+            {
+                case ConversationNodeType.Dialogue:
+                case ConversationNodeType.Start:
+                case ConversationNodeType.End:
+                case ConversationNodeType.Function:
+                case ConversationNodeType.Conditional:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        private bool RequiresSquareNodeSize(ConversationNodeType nodeType)
+        {
+            switch (nodeType)
+            {
+                case ConversationNodeType.Start:
+                case ConversationNodeType.End:
+                case ConversationNodeType.Function:
+                case ConversationNodeType.Conditional:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        private Vector2 ToSquareSize(Vector2 size)
+        {
+            Vector2 clampedSize = ClampEditorSize(size);
+            return new Vector2(clampedSize.x, clampedSize.x);
         }
         #endregion
 
