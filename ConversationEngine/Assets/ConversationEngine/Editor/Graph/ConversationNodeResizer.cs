@@ -1,5 +1,5 @@
-using ConversationEditor.Helper;
 using ConversationScheme;
+using ConversationEditor.Helper;
 using UnityEditor;
 using UnityEngine;
 namespace ConversationEditor.Graph
@@ -61,8 +61,6 @@ namespace ConversationEditor.Graph
 
             if (TryGetResizeHandle(nodeRect, mouseGraphPos, out var resizeHandle))
             {
-                // nodeRect is provided in graph-local coordinates for hit testing.
-                // For resize calculations we must store the world-space rectangle of the node.
                 Rect nodeWorldRect = ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
                 StartResize(node, null, null, resizeHandle, mouseWorldPos, nodeWorldRect);
                 return true;
@@ -79,7 +77,6 @@ namespace ConversationEditor.Graph
 
             if (TryGetResizeHandle(optionRect, mouseGraphPos, out var resizeHandle))
             {
-                // optionRect is in graph-local coordinates for hit testing. Compute world rect for resizing.
                 Rect optionWorldRect = ConversationEditorHelpers.GetOptionWorldRect(parentNode.EditorPosition, parentNode.EditorSize, option.EditorPosition, option.EditorSize);
                 StartResize(null, parentNode, option, resizeHandle, mouseWorldPos, optionWorldRect);
                 return true;
@@ -100,7 +97,7 @@ namespace ConversationEditor.Graph
             if (isResizingNode && resizingNode != null)
             {
                 Vector2 finalNodeSize = ClampEditorSize(resizedRect.size);
-                if (UsesUniformNodeSize(resizingNode)) finalNodeSize = ToUniformSize(finalNodeSize);
+                if (UsesUniformNodeSize(resizingNode)) finalNodeSize = GetUniformNodeSize(resizedRect);
                 resizingNode.EditorPosition = resizedRect.center;
                 resizingNode.EditorSize = finalNodeSize;
                 onNodeResized?.Invoke(resizingNode, finalNodeSize);
@@ -354,9 +351,28 @@ namespace ConversationEditor.Graph
             }
         }
 
-        private Vector2 ToUniformSize(Vector2 size)
+        private Vector2 GetUniformNodeSize(Rect resizedRect)
         {
-            return new Vector2(size.x, size.x);
+            float size = resizedRect.size.x;
+            switch (activeResizeHandle)
+            {
+                case ResizeHandleType.Top:
+                case ResizeHandleType.Bottom:
+                    size = resizedRect.size.y;
+                    break;
+                case ResizeHandleType.Left:
+                case ResizeHandleType.Right:
+                    size = resizedRect.size.x;
+                    break;
+                case ResizeHandleType.TopLeft:
+                case ResizeHandleType.TopRight:
+                case ResizeHandleType.BottomLeft:
+                case ResizeHandleType.BottomRight:
+                    size = Mathf.Max(resizedRect.size.x, resizedRect.size.y);
+                    break;
+            }
+            size = Mathf.Max(minEditorNodeSize, size);
+            return new Vector2(size, size);
         }
 
         #endregion
