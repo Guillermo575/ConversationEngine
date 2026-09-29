@@ -122,6 +122,8 @@ namespace ConversationScheme
         public string Text;
         public int NextNodeId;
         public List<ConditionRule> Conditions = new List<ConditionRule>();
+        public bool HideOption = false;
+        public string BlockText;
         public Vector2 EditorPosition;
         public Vector2 EditorSize = new Vector2(150, 60);
     }
@@ -175,6 +177,7 @@ namespace ConversationScheme
     {
         public float Zoom = 1f;
         public bool IsResourcePanelHidden = false;
+        public bool IsReadOnly = false;
         public Vector2 CameraPosition = Vector2.zero;
     }
 }

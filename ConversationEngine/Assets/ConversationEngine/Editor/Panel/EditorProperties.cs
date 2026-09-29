@@ -35,6 +35,10 @@ namespace ConversationEditor.Panel
             this.useGlobalCore = useGlobalCore;
             this.isReadOnly = isReadOnly;
         }
+        public void SetReadOnlyMode(bool readOnly)
+        {
+            isReadOnly = readOnly;
+        }
         public void DrawResourceManager()
         {
             if (GUILayout.Button("Hide", GUILayout.Width(80f)))
@@ -43,6 +47,7 @@ namespace ConversationEditor.Panel
             }
             if (conversationData?.ResourceManager == null) return;
             resourceScrollPos = EditorGUILayout.BeginScrollView(resourceScrollPos);
+            EditorGUI.BeginDisabledGroup(isReadOnly);
             DrawConversationMetadataEditor();
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Scene Backgrounds", EditorStyles.boldLabel);
@@ -53,6 +58,7 @@ namespace ConversationEditor.Panel
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Actors", EditorStyles.boldLabel);
             DrawActorList(conversationData.ResourceManager.Actors);
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndScrollView();
         }
 
@@ -84,18 +90,18 @@ namespace ConversationEditor.Panel
                 resources[i].Id = EditorGUILayout.TextField("ID", resources[i].Id);
                 resources[i].Path = EditorGUILayout.TextField("Path", resources[i].Path);
                 EditorGUILayout.EndVertical();
-                if (GUILayout.Button("X", GUILayout.Width(25)))
+                if (!isReadOnly && GUILayout.Button("X", GUILayout.Width(25)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Resource");
+                    RegisterUndoState("Remove Resource");
                     resources.RemoveAt(i);
                     MarkDirty();
                     i--;
                 }
                 EditorGUILayout.EndHorizontal();
             }
-            if (GUILayout.Button($"Add {typeName}"))
+            if (!isReadOnly && GUILayout.Button($"Add {typeName}"))
             {
-                Undo.RecordObject(ownerWindow, $"Add {typeName}");
+                RegisterUndoState($"Add {typeName}");
                 resources.Add(new T());
                 MarkDirty();
             }
@@ -112,18 +118,18 @@ namespace ConversationEditor.Panel
                 resources[i].Path = EditorGUILayout.TextField("Path", resources[i].Path);
                 resources[i].AudioType = (AudioChannelType)EditorGUILayout.EnumPopup("Audio Type", resources[i].AudioType);
                 EditorGUILayout.EndVertical();
-                if (GUILayout.Button("X", GUILayout.Width(25)))
+                if (!isReadOnly && GUILayout.Button("X", GUILayout.Width(25)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Audio");
+                    RegisterUndoState("Remove Audio");
                     resources.RemoveAt(i);
                     MarkDirty();
                     i--;
                 }
                 EditorGUILayout.EndHorizontal();
             }
-            if (GUILayout.Button("Add Audio Background"))
+            if (!isReadOnly && GUILayout.Button("Add Audio Background"))
             {
-                Undo.RecordObject(ownerWindow, "Add Audio Background");
+                RegisterUndoState("Add Audio Background");
                 resources.Add(new AudioBackground());
                 MarkDirty();
             }
@@ -140,22 +146,27 @@ namespace ConversationEditor.Panel
                 actors[i].Path = EditorGUILayout.TextField("Actor JSON Path", actors[i].Path);
                 actors[i].IconPath = EditorGUILayout.TextField("Icon Path", actors[i].IconPath);
                 EditorGUILayout.EndVertical();
-                if (GUILayout.Button("X", GUILayout.Width(25)))
+                if (!isReadOnly && GUILayout.Button("X", GUILayout.Width(25)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Actor");
+                    RegisterUndoState("Remove Actor");
                     actors.RemoveAt(i);
                     MarkDirty();
                     i--;
                 }
                 EditorGUILayout.EndHorizontal();
             }
-            if (GUILayout.Button("Add Actor"))
+            if (!isReadOnly && GUILayout.Button("Add Actor"))
             {
-                Undo.RecordObject(ownerWindow, "Add Actor");
+                RegisterUndoState("Add Actor");
                 actors.Add(new Actor());
                 MarkDirty();
             }
             EditorGUI.indentLevel--;
+        }
+
+        private void RegisterUndoState(string actionName)
+        {
+            if (ownerWindow is ConversationEditorWindow editorWindow) editorWindow.RegisterUndoState(actionName);
         }
 
         private void MarkDirty()

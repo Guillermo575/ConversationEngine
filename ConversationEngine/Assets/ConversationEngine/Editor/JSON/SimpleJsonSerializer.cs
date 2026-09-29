@@ -1,55 +1,45 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
-using UnityEngine;
+using System.Text;
+using System.Text.RegularExpressions;
 using ConversationScheme;
+using UnityEngine;
 namespace ConversationEditor.JSON
 {
-    /// <summary>
-    /// Simple JSON serializer/deserializer for ConversationData
-    /// This is a workaround to avoid Newtonsoft.Json dependency
-    /// </summary>
     public static class SimpleJsonSerializer
     {
         public static string Serialize(ConversationData data)
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("{");
-
             sb.AppendLine($"  \"Title\": \"{EscapeString(data.Title)}\",");
             sb.AppendLine($"  \"Description\": \"{EscapeString(data.Description)}\",");
-
-            // ResourceManager
             sb.AppendLine("  \"ResourceManager\": {");
             SerializeResourceManager(sb, data.ResourceManager);
             sb.AppendLine("  },");
-
-            // ConversationManager
             sb.AppendLine("  \"ConversationManager\": {");
             SerializeConversationManager(sb, data.ConversationManager);
             sb.AppendLine("  },");
-
-            // EditorSettings
             sb.AppendLine("  \"EditorSettings\": {");
             float zoom = data.EditorSettings != null ? data.EditorSettings.Zoom : 1f;
             bool isResourcePanelHidden = data.EditorSettings != null && data.EditorSettings.IsResourcePanelHidden;
+            bool isReadOnly = data.EditorSettings != null && data.EditorSettings.IsReadOnly;
             Vector2 cameraPosition = data.EditorSettings != null ? data.EditorSettings.CameraPosition : Vector2.zero;
             sb.AppendLine($"    \"Zoom\": {zoom},");
             sb.AppendLine($"    \"IsResourcePanelHidden\": {(isResourcePanelHidden ? "true" : "false")},");
+            sb.AppendLine($"    \"IsReadOnly\": {(isReadOnly ? "true" : "false")},");
             sb.AppendLine("    \"CameraPosition\": {");
             sb.AppendLine($"      \"X\": {cameraPosition.x},");
             sb.AppendLine($"      \"Y\": {cameraPosition.y}");
             sb.AppendLine("    }");
             sb.AppendLine("  }");
-
             sb.AppendLine("}");
             return sb.ToString();
         }
 
         private static void SerializeResourceManager(StringBuilder sb, ResourceManager rm)
         {
-            // SceneBackgrounds
             sb.AppendLine("    \"SceneBackgrounds\": [");
             for (int i = 0; i < rm.SceneBackgrounds.Count; i++)
             {
@@ -62,8 +52,6 @@ namespace ConversationEditor.JSON
                 sb.AppendLine();
             }
             sb.AppendLine("    ],");
-
-            // AudioBackgrounds
             sb.AppendLine("    \"AudioBackgrounds\": [");
             for (int i = 0; i < rm.AudioBackgrounds.Count; i++)
             {
@@ -77,8 +65,6 @@ namespace ConversationEditor.JSON
                 sb.AppendLine();
             }
             sb.AppendLine("    ],");
-
-            // Actors
             sb.AppendLine("    \"Actors\": [");
             for (int i = 0; i < rm.Actors.Count; i++)
             {
@@ -99,10 +85,7 @@ namespace ConversationEditor.JSON
         private static void SerializeConversationManager(StringBuilder sb, ConversationManager cm)
         {
             sb.AppendLine("    \"Nodes\": [");
-            for (int i = 0; i < cm.Nodes.Count; i++)
-            {
-                SerializeNode(sb, cm.Nodes[i], i < cm.Nodes.Count - 1);
-            }
+            for (int i = 0; i < cm.Nodes.Count; i++) SerializeNode(sb, cm.Nodes[i], i < cm.Nodes.Count - 1);
             sb.AppendLine("    ]");
         }
 
@@ -114,8 +97,6 @@ namespace ConversationEditor.JSON
             sb.AppendLine($"        \"SpeakerActorId\": \"{EscapeString(node.SpeakerActorId)}\",");
             sb.AppendLine($"        \"Text\": \"{EscapeString(node.Text)}\",");
             sb.AppendLine($"        \"NextNodeId\": {node.NextNodeId},");
-
-            // Options
             sb.AppendLine("        \"Options\": [");
             if (node.Options != null)
             {
@@ -125,6 +106,8 @@ namespace ConversationEditor.JSON
                     sb.AppendLine("          {");
                     sb.AppendLine($"            \"Text\": \"{EscapeString(opt.Text)}\",");
                     sb.AppendLine($"            \"NextNodeId\": {opt.NextNodeId},");
+                    sb.AppendLine($"            \"HideOption\": {(opt.HideOption ? "true" : "false")},");
+                    sb.AppendLine($"            \"BlockText\": \"{EscapeString(opt.BlockText)}\",");
                     sb.AppendLine("            \"EditorPosition\": {");
                     sb.AppendLine($"              \"X\": {opt.EditorPosition.x},");
                     sb.AppendLine($"              \"Y\": {opt.EditorPosition.y}");
@@ -140,8 +123,6 @@ namespace ConversationEditor.JSON
                 }
             }
             sb.AppendLine("        ],");
-
-            // Functions
             sb.AppendLine("        \"Functions\": [");
             if (node.Functions != null)
             {
@@ -169,13 +150,9 @@ namespace ConversationEditor.JSON
                 }
             }
             sb.AppendLine("        ],");
-
-            // ConditionalBranches
-            // conditionalBranch (singular) - only for conditional nodes
             if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
             {
                 sb.AppendLine("        \"conditionalBranch\": {");
-                // Conditions (we currently serialize as empty list placeholder)
                 sb.AppendLine("          \"Conditions\": [],");
                 sb.AppendLine($"          \"NextNodeIdTrue\": {node.conditionalBranch.NextNodeIdTrue},");
                 sb.AppendLine($"          \"NextNodeIdFalse\": {node.conditionalBranch.NextNodeIdFalse}");
@@ -202,27 +179,16 @@ namespace ConversationEditor.JSON
         private static string EscapeString(string str)
         {
             if (string.IsNullOrEmpty(str)) return "";
-            return str.Replace("\\", "\\\\")
-                     .Replace("\"", "\\\"")
-                     .Replace("\n", "\\n")
-                     .Replace("\r", "\\r")
-                     .Replace("\t", "\\t");
+            return str.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
         }
 
         public static ConversationData Deserialize(string json)
         {
-            // First, normalize the JSON to handle both "X"/"Y" (old format) and "x"/"y" (Unity format)
-            // and convert enum strings to numbers for Unity's JsonUtility
             json = NormalizeJsonForUnity(json);
-
-            // Use Unity's JsonUtility
             try
             {
                 var data = JsonUtility.FromJson<ConversationData>(json);
-                if (data != null && data.EditorSettings == null)
-                {
-                    data.EditorSettings = new ConversationEditorSettings();
-                }
+                if (data != null && data.EditorSettings == null) data.EditorSettings = new ConversationEditorSettings();
                 return data;
             }
             catch (Exception ex)
@@ -234,18 +200,17 @@ namespace ConversationEditor.JSON
 
         private static string NormalizeJsonForUnity(string json)
         {
-            // Replace "X": with "x": and "Y": with "y": for EditorPosition and EditorSize
             json = json.Replace("\"X\":", "\"x\":");
             json = json.Replace("\"Y\":", "\"y\":");
-            // Convert old ConditionalBranches array to new singular conditionalBranch object
             try
             {
                 string patternWithObject = "\"ConditionalBranches\"\\s*:\\s*\\[(?<inner>\\{.*?\\})\\s*\\]";
-                json = System.Text.RegularExpressions.Regex.Replace(json, patternWithObject, "\"conditionalBranch\": ${inner}", System.Text.RegularExpressions.RegexOptions.Singleline);
-                // empty array case
-                json = System.Text.RegularExpressions.Regex.Replace(json, "\"ConditionalBranches\"\\s*:\\s*\\[\\s*\\]", "\"conditionalBranch\": {}");
+                json = Regex.Replace(json, patternWithObject, "\"conditionalBranch\": ${inner}", RegexOptions.Singleline);
+                json = Regex.Replace(json, "\"ConditionalBranches\"\\s*:\\s*\\[\\s*\\]", "\"conditionalBranch\": {}");
             }
-            catch { }
+            catch
+            {
+            }
             json = ConvertEnumsToNumbers(json);
             return json;
         }
@@ -259,21 +224,19 @@ namespace ConversationEditor.JSON
                 { typeof(ComparisonOperator), "Operator" },
                 { typeof(ConversationScheme.ValueType), "ValueDataType" }
             };
-
             foreach (var mapping in enumMappings)
             {
                 var enumType = mapping.Key;
                 var jsonPropertyName = mapping.Value;
                 var enumNames = Enum.GetNames(enumType);
                 var enumValues = Enum.GetValues(enumType);
-
                 for (int i = 0; i < enumNames.Length; i++)
                 {
                     string enumName = enumNames[i];
                     int enumValue = (int)enumValues.GetValue(i);
                     string pattern = $"\"{jsonPropertyName}\":\\s*\"{enumName}\"";
                     string replacement = $"\"{jsonPropertyName}\": {enumValue}";
-                    json = System.Text.RegularExpressions.Regex.Replace(json, pattern, replacement);
+                    json = Regex.Replace(json, pattern, replacement);
                 }
             }
             return json;

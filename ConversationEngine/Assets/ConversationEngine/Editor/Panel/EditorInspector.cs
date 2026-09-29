@@ -79,9 +79,15 @@ namespace ConversationEditor.Panel
             this.isReadOnly = isReadOnly;
         }
 
+        public void SetReadOnlyMode(bool readOnly)
+        {
+            isReadOnly = readOnly;
+        }
+
         public void DrawInspectorPanel()
         {
             inspectorScrollPos = EditorGUILayout.BeginScrollView(inspectorScrollPos);
+            EditorGUI.BeginDisabledGroup(isReadOnly);
             var graphSelectedNode = graphView?.SelectedNode;
             var graphSelectedOption = graphView?.SelectedOption;
             var graphSelectedBranch = graphView?.SelectedBranch;
@@ -102,6 +108,7 @@ namespace ConversationEditor.Panel
             {
                 EditorGUILayout.HelpBox("Select a node to edit its properties", MessageType.Info);
             }
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndScrollView();
         }
 
@@ -217,6 +224,9 @@ namespace ConversationEditor.Panel
             EnsureOptionEditorData(graphView?.SelectedNode, option, Mathf.Max(0, selectedOptionIndex));
             option.Text = EditorGUILayout.TextField(new GUIContent("Text", "Option text shown to the player."), option.Text, GUILayout.ExpandWidth(true));
             option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode, "Target node for this option.");
+            option.HideOption = EditorGUILayout.Toggle(new GUIContent("Hide Option", "If enabled, this option will stay hidden."), option.HideOption, GUILayout.ExpandWidth(true));
+            EditorGUILayout.LabelField(new GUIContent("Block Text", "Text shown when this option is blocked."));
+            option.BlockText = EditorGUILayout.TextArea(option.BlockText ?? "", GUILayout.MinHeight(48f), GUILayout.ExpandWidth(true));
             option.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Local graph position relative to the parent node."), option.EditorPosition, GUILayout.ExpandWidth(true));
             option.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this option node. Minimum X/Y is 20."), option.EditorSize, GUILayout.ExpandWidth(true)));
             EditorGUILayout.Space();
@@ -290,12 +300,12 @@ namespace ConversationEditor.Panel
             pendingOption.NextNodeId = DrawNodeIdDropdownCompact("", pendingOption.NextNodeId, node, "Target node for the new option.");
             Color oldColor = GUI.backgroundColor;
             GUI.backgroundColor = Color.green;
-            if (GUILayout.Button(new GUIContent("+", "Add option."), GUILayout.Width(28)))
+            if (!isReadOnly && GUILayout.Button(new GUIContent("+", "Add option."), GUILayout.Width(28)))
             {
                 if (string.IsNullOrWhiteSpace(pendingOption.Text)) EditorUtility.DisplayDialog("Invalid Option", "Option text cannot be empty.", "OK");
                 else
                 {
-                    Undo.RecordObject(ownerWindow, "Add Option");
+                    RegisterUndoState("Add Option");
                     node.Options.Add(CreateOptionForNode(node, pendingOption.Text.Trim(), pendingOption.NextNodeId, node.Options.Count));
                     pendingOption.Text = "";
                     pendingOption.NextNodeId = 0;
@@ -313,9 +323,9 @@ namespace ConversationEditor.Panel
                 node.Options[i].NextNodeId = DrawNodeIdDropdownCompact("", node.Options[i].NextNodeId, node, "Target node for this option.");
                 oldColor = GUI.backgroundColor;
                 GUI.backgroundColor = Color.red;
-                if (GUILayout.Button(new GUIContent("X", "Remove this option."), GUILayout.Width(28)))
+                if (!isReadOnly && GUILayout.Button(new GUIContent("X", "Remove this option."), GUILayout.Width(28)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Option");
+                    RegisterUndoState("Remove Option");
                     node.Options.RemoveAt(i);
                     MarkDirty();
                     GUI.backgroundColor = oldColor;
@@ -334,6 +344,8 @@ namespace ConversationEditor.Panel
                 Text = text,
                 NextNodeId = nextNodeId,
                 Conditions = new List<ConditionRule>(),
+                HideOption = false,
+                BlockText = "",
                 EditorPosition = GenerateOptionPosition(node, optionIndex),
                 EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight)
             };
@@ -412,13 +424,13 @@ namespace ConversationEditor.Panel
             pendingCondition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name for this condition."), pendingCondition.VariableName ?? "", GUILayout.ExpandWidth(true));
             pendingCondition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), pendingCondition.Operator);
             DrawConditionValueRow(pendingCondition, false);
-            if (GUILayout.Button(new GUIContent("Add", "Add this condition to the branch."), GUILayout.ExpandWidth(true)))
+            if (!isReadOnly && GUILayout.Button(new GUIContent("Add", "Add this condition to the branch."), GUILayout.ExpandWidth(true)))
             {
                 if (string.IsNullOrWhiteSpace(pendingCondition.VariableName)) EditorUtility.DisplayDialog("Invalid Condition", "Variable name cannot be empty.", "OK");
                 else if (!IsConditionValueValid(pendingCondition)) EditorUtility.DisplayDialog("Invalid Condition", "Value does not match the selected value type.", "OK");
                 else
                 {
-                    Undo.RecordObject(ownerWindow, "Add Condition");
+                    RegisterUndoState("Add Condition");
                     branch.Conditions.Add(new ConditionRule
                     {
                         VariableName = pendingCondition.VariableName.Trim(),
@@ -449,9 +461,9 @@ namespace ConversationEditor.Panel
                 EditorGUI.EndDisabledGroup();
                 condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), condition.Operator);
                 DrawConditionValueRow(condition, true);
-                if (GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
+                if (!isReadOnly && GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Condition");
+                    RegisterUndoState("Remove Condition");
                     conditions.RemoveAt(i);
                     MarkDirty();
                     EditorGUILayout.EndVertical();
@@ -516,9 +528,9 @@ namespace ConversationEditor.Panel
                 condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), condition.Operator);
                 condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for this condition."), condition.ValueDataType, GUILayout.ExpandWidth(true));
                 DrawConditionValueRow(condition, false);
-                if (GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
+                if (!isReadOnly && GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Condition");
+                    RegisterUndoState("Remove Condition");
                     conditions.RemoveAt(i);
                     MarkDirty();
                     EditorGUILayout.EndVertical();
@@ -526,9 +538,9 @@ namespace ConversationEditor.Panel
                 }
                 EditorGUILayout.EndVertical();
             }
-            if (GUILayout.Button(new GUIContent("Add", "Add a new condition."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
+            if (!isReadOnly && GUILayout.Button(new GUIContent("Add", "Add a new condition."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
             {
-                Undo.RecordObject(ownerWindow, "Add Condition");
+                RegisterUndoState("Add Condition");
                 var newCondition = new ConditionRule
                 {
                     VariableName = "newVariable",
@@ -575,9 +587,9 @@ namespace ConversationEditor.Panel
                 func.Timestamp = EditorGUILayout.IntField(new GUIContent("Timestamp", "Execution order for this function."), func.Timestamp, GUILayout.ExpandWidth(true));
                 Color oldColor = GUI.backgroundColor;
                 GUI.backgroundColor = Color.red;
-                if (GUILayout.Button(new GUIContent("Remove", "Remove this function."), GUILayout.ExpandWidth(true)))
+                if (!isReadOnly && GUILayout.Button(new GUIContent("Remove", "Remove this function."), GUILayout.ExpandWidth(true)))
                 {
-                    Undo.RecordObject(ownerWindow, "Remove Function");
+                    RegisterUndoState("Remove Function");
                     functionParameterFoldouts.Remove(func);
                     functions.RemoveAt(i);
                     MarkDirty();
@@ -613,7 +625,7 @@ namespace ConversationEditor.Panel
                 pendingCustomParameterValue = EditorGUILayout.TextField(new GUIContent("", "Custom parameter value."), pendingCustomParameterValue ?? "", GUILayout.ExpandWidth(true));
                 Color oldColor = GUI.backgroundColor;
                 GUI.backgroundColor = Color.green;
-                if (GUILayout.Button(new GUIContent("+", "Add custom parameter."), GUILayout.Width(28)))
+                if (!isReadOnly && GUILayout.Button(new GUIContent("+", "Add custom parameter."), GUILayout.Width(28)))
                 {
                     if (string.IsNullOrWhiteSpace(pendingCustomParameterName)) EditorUtility.DisplayDialog("Invalid Parameter", "Parameter name cannot be empty.", "OK");
                     else
@@ -635,7 +647,7 @@ namespace ConversationEditor.Panel
                     pendingFunctionParameters[key] = EditorGUILayout.TextField(new GUIContent("", "Captured parameter value."), pendingFunctionParameters[key] ?? "", GUILayout.ExpandWidth(true));
                     oldColor = GUI.backgroundColor;
                     GUI.backgroundColor = Color.red;
-                    if (GUILayout.Button(new GUIContent("X", "Remove custom parameter."), GUILayout.Width(28)))
+                    if (!isReadOnly && GUILayout.Button(new GUIContent("X", "Remove custom parameter."), GUILayout.Width(28)))
                     {
                         pendingFunctionParameters.Remove(key);
                         GUI.backgroundColor = oldColor;
@@ -682,7 +694,7 @@ namespace ConversationEditor.Panel
                 }
             }
             pendingFunctionTimestamp = EditorGUILayout.IntField(new GUIContent("Timestamp", "Execution order for the new function."), pendingFunctionTimestamp, GUILayout.ExpandWidth(true));
-            if (GUILayout.Button(new GUIContent("Add", "Add function to this node."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
+            if (!isReadOnly && GUILayout.Button(new GUIContent("Add", "Add function to this node."), GUILayout.ExpandWidth(true), GUILayout.Height(25)))
             {
                 string methodName = isCustomCategory ? (customFunctionName ?? "").Trim() : selectedFunctionName;
                 if (string.IsNullOrWhiteSpace(methodName))
@@ -695,7 +707,7 @@ namespace ConversationEditor.Panel
                     EditorUtility.DisplayDialog("Invalid Parameters", "Parameter names cannot be empty.", "OK");
                     return;
                 }
-                Undo.RecordObject(ownerWindow, "Add Function");
+                RegisterUndoState("Add Function");
                 var newFunction = new ConversationFunction
                 {
                     MethodName = methodName,
@@ -718,6 +730,11 @@ namespace ConversationEditor.Panel
                 pendingFunctionTimestamp = 0;
                 MarkDirty();
             }
+        }
+
+        private void RegisterUndoState(string actionName)
+        {
+            if (ownerWindow is ConversationEditorWindow editorWindow) editorWindow.RegisterUndoState(actionName);
         }
 
         private void SetupPendingParametersForFunction(string functionName)

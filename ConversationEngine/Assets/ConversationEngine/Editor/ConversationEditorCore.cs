@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using ConversationEditor.JSON;
 using ConversationScheme;
 using UnityEngine;
 namespace ConversationEditor
@@ -29,6 +31,9 @@ namespace ConversationEditor
         public ConversationData conversationData;
         public string currentFilePath;
         public bool isDirty = false;
+        private readonly List<string> undoHistory = new List<string>();
+        private readonly List<string> redoHistory = new List<string>();
+        private const int maxHistoryEntries = 200;
         #endregion
 
         #region Constants
@@ -84,6 +89,56 @@ namespace ConversationEditor
             int charsPerLine = Mathf.Max(1, Mathf.FloorToInt(width / estimatedCharacterWidth));
             int maxLines = Mathf.Max(1, Mathf.FloorToInt(height / lineHeight));
             return charsPerLine * maxLines;
+        }
+        public void ClearHistory()
+        {
+            undoHistory.Clear();
+            redoHistory.Clear();
+        }
+        public bool CanUndo()
+        {
+            return conversationData != null && undoHistory.Count > 0;
+        }
+        public bool CanRedo()
+        {
+            return conversationData != null && redoHistory.Count > 0;
+        }
+        public void RegisterUndoSnapshot()
+        {
+            if (conversationData == null) return;
+            string currentSnapshot = ConversationJsonSettings.Serialize(conversationData);
+            if (undoHistory.Count > 0 && undoHistory[undoHistory.Count - 1] == currentSnapshot) return;
+            undoHistory.Add(currentSnapshot);
+            if (undoHistory.Count > maxHistoryEntries) undoHistory.RemoveAt(0);
+            redoHistory.Clear();
+        }
+        public bool TryUndo()
+        {
+            if (!CanUndo()) return false;
+            string currentSnapshot = ConversationJsonSettings.Serialize(conversationData);
+            string targetSnapshot = undoHistory[undoHistory.Count - 1];
+            undoHistory.RemoveAt(undoHistory.Count - 1);
+            redoHistory.Add(currentSnapshot);
+            if (redoHistory.Count > maxHistoryEntries) redoHistory.RemoveAt(0);
+            var restoredData = ConversationJsonSettings.Deserialize<ConversationData>(targetSnapshot);
+            if (restoredData == null) return false;
+            conversationData = restoredData;
+            isDirty = true;
+            return true;
+        }
+        public bool TryRedo()
+        {
+            if (!CanRedo()) return false;
+            string currentSnapshot = ConversationJsonSettings.Serialize(conversationData);
+            string targetSnapshot = redoHistory[redoHistory.Count - 1];
+            redoHistory.RemoveAt(redoHistory.Count - 1);
+            undoHistory.Add(currentSnapshot);
+            if (undoHistory.Count > maxHistoryEntries) undoHistory.RemoveAt(0);
+            var restoredData = ConversationJsonSettings.Deserialize<ConversationData>(targetSnapshot);
+            if (restoredData == null) return false;
+            conversationData = restoredData;
+            isDirty = true;
+            return true;
         }
         #endregion
     }

@@ -139,6 +139,11 @@ namespace ConversationEditor.Graph
             menu.AddItem(new GUIContent("Vertical"), false, () => AutoLayoutNodes(false));
             menu.ShowAsContext();
         }
+        public void AutoLayoutNodesFromToolbar(bool horizontal)
+        {
+            if (isReadOnly) return;
+            AutoLayoutNodes(horizontal);
+        }
         public void FrameAllNodes(Rect graphRect)
         {
             if (conversationData?.ConversationManager?.Nodes == null || conversationData.ConversationManager.Nodes.Count == 0) return;
@@ -415,7 +420,6 @@ namespace ConversationEditor.Graph
             if (e.type == EventType.MouseDrag && e.button == 0)
             {
                 Vector2 mouseWorldPosition = WindowToWorld(e.mousePosition);
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Resize Node");
                 nodeResizer.ApplyResize(mouseWorldPosition, (node, size) => MarkDirty(),  (option, size) => MarkDirty());
                 e.Use();
                 RequestRepaint();
@@ -491,8 +495,11 @@ namespace ConversationEditor.Graph
             if (isReadOnly) return;
             if (e.type == EventType.MouseDrag && selectedNode == node && !isConnecting && e.button == 0 && isMouseOverNode && !nodeResizer.IsResizing)
             {
-                if (!isNodeBeingDragged) isNodeBeingDragged = true;
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Move Node");
+                if (!isNodeBeingDragged)
+                {
+                    isNodeBeingDragged = true;
+                    RegisterUndoState("Move Node");
+                }
                 node.EditorPosition += e.delta / zoom;
                 node.EditorPosition.x = Mathf.Max(0, Mathf.Min(10000, node.EditorPosition.x));
                 node.EditorPosition.y = Mathf.Max(0, Mathf.Min(10000, node.EditorPosition.y));
@@ -586,8 +593,11 @@ namespace ConversationEditor.Graph
             if (isReadOnly) return;
             if (e.type == EventType.MouseDrag && selectedNode == node && selectedOption == option && !isConnecting && e.button == 0 && isMouseOverOption && optionDragParentNode == node && optionBeingDragged == option && !nodeResizer.IsResizing)
             {
-                if (!isOptionBeingDragged) isOptionBeingDragged = true;
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Move Option Node");
+                if (!isOptionBeingDragged)
+                {
+                    isOptionBeingDragged = true;
+                    RegisterUndoState("Move Option Node");
+                }
                 option.EditorPosition += e.delta / zoom;
                 option.EditorPosition.x = Mathf.Clamp(option.EditorPosition.x, -10000f, 10000f);
                 option.EditorPosition.y = Mathf.Clamp(option.EditorPosition.y, -10000f, 10000f);
@@ -752,7 +762,7 @@ namespace ConversationEditor.Graph
         private void CompleteConnection(ConversationNode targetNode)
         {
             if (!isConnecting || connectingFromNode == null || isReadOnly) return;
-            if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Connection");
+            RegisterUndoState("Create Connection");
             if (connectingFromOption != null) connectingFromOption.NextNodeId = targetNode.Id;
             else if (connectingFromBranch != null)
             {
@@ -818,7 +828,7 @@ namespace ConversationEditor.Graph
                 case ConversationNodeType.Dialogue:
                     menu.AddItem(new GUIContent("Add Option"), false, () =>
                     {
-                        if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Add Option");
+                        RegisterUndoState("Add Option");
                         if (node.Options == null) node.Options = new List<ConversationOption>();
                         node.Options.Add(CreateOption(node, "", node.Options.Count));
                         MarkDirty();
@@ -861,13 +871,15 @@ namespace ConversationEditor.Graph
             GenericMenu menu = new GenericMenu();
             menu.AddItem(new GUIContent("Duplicate Option"), false, () =>
             {
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Duplicate Option");
+                RegisterUndoState("Duplicate Option");
                 var newOption = new ConversationOption
                 {
                     Text = option.Text,
                     NextNodeId = 0,
                     Conditions = new List<ConditionRule>(option.Conditions ?? new List<ConditionRule>()),
-                    EditorPosition = option.EditorPosition + new Vector2(25f, 20f),
+                    HideOption = option.HideOption,
+                    BlockText = option.BlockText,
+                    EditorPosition = option.EditorPosition,
                     EditorSize = option.EditorSize
                 };
                 node.Options.Insert(index + 1, newOption);
@@ -877,7 +889,7 @@ namespace ConversationEditor.Graph
             });
             menu.AddItem(new GUIContent("Create New Option"), false, () =>
             {
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Option");
+                RegisterUndoState("Create Option");
                 if (node.Options == null) node.Options = new List<ConversationOption>();
                 var newOption = CreateOption(node, "-", node.Options.Count);
                 node.Options.Insert(index + 1, newOption);
@@ -887,7 +899,7 @@ namespace ConversationEditor.Graph
             });
             menu.AddItem(new GUIContent("Delete Option"), false, () =>
             {
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Delete Option");
+                RegisterUndoState("Delete Option");
                 node.Options.RemoveAt(index);
                 if (selectedOption == option) SetSelection(node, null, null);
                 MarkDirty();
@@ -924,7 +936,7 @@ namespace ConversationEditor.Graph
         private void CreateNode(ConversationNodeType nodeType)
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
-            if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node");
+            RegisterUndoState("Create Node");
             bool shouldAutoLink = HasOnlyStartAndEndNodes();
             Vector2 editorSize;
             switch (nodeType)
@@ -957,7 +969,7 @@ namespace ConversationEditor.Graph
         private void CreateNodeWithOptions()
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null) return;
-            if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Create Node with Options");
+            RegisterUndoState("Create Node with Options");
             bool shouldAutoLink = HasOnlyStartAndEndNodes();
             Vector2 editorSize = new Vector2(200, 100);
             var newNode = new ConversationNode
@@ -980,7 +992,7 @@ namespace ConversationEditor.Graph
         private void DuplicateNode(ConversationNode node)
         {
             if (isReadOnly || node == null || conversationData?.ConversationManager?.Nodes == null) return;
-            if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Duplicate Node");
+            RegisterUndoState("Duplicate Node");
             Vector2 duplicatedSize = RequiresSquareNodeSize(node.NodeType) ? ToSquareSize(node.EditorSize) : node.EditorSize;
             var newNode = new ConversationNode
             {
@@ -996,6 +1008,8 @@ namespace ConversationEditor.Graph
                     Text = o.Text,
                     NextNodeId = 0,
                     Conditions = new List<ConditionRule>(o.Conditions ?? new List<ConditionRule>()),
+                    HideOption = o.HideOption,
+                    BlockText = o.BlockText,
                     EditorPosition = o.EditorPosition,
                     EditorSize = o.EditorSize
                 }).ToList(),
@@ -1028,7 +1042,7 @@ namespace ConversationEditor.Graph
             }
             if (EditorUtility.DisplayDialog("Delete Node", $"Are you sure you want to delete node {node.Id}?", "Delete", "Cancel"))
             {
-                if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Delete Node");
+                RegisterUndoState("Delete Node");
                 ConversationNodeUtility.RemoveNodeReferences(node.Id, conversationData.ConversationManager.Nodes);
                 conversationData.ConversationManager.Nodes.Remove(node);
                 if (selectedNode == node) ClearSelection();
@@ -1088,7 +1102,7 @@ namespace ConversationEditor.Graph
         private void AutoLayoutNodes(bool horizontal)
         {
             if (isReadOnly || conversationData?.ConversationManager?.Nodes == null || conversationData.ConversationManager.Nodes.Count == 0) return;
-            if (ownerWindow != null) Undo.RecordObject(ownerWindow, "Auto-Layout Nodes");
+            RegisterUndoState("Auto-Layout Nodes");
             var startNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
             if (startNode == null) return;
             var visited = new HashSet<int>();
@@ -1297,10 +1311,13 @@ namespace ConversationEditor.Graph
                 Text = text,
                 NextNodeId = 0,
                 Conditions = new List<ConditionRule>(),
+                HideOption = false,
+                BlockText = "",
                 EditorSize = new Vector2(optionDefaultWidth, optionDefaultHeight),
                 EditorPosition = GenerateOptionPosition(node, optionIndex)
             };
         }
+
         private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
         {
             if (conversationData?.ConversationManager?.Nodes == null) return false;
@@ -1404,9 +1421,6 @@ namespace ConversationEditor.Graph
             Vector2 clampedSize = ClampEditorSize(size);
             return new Vector2(clampedSize.x, clampedSize.x);
         }
-        #endregion
-
-        #region Formula Helpers
         private int GetScaledNodeFontSize(int baseFontSize)
         {
             return conversationEditorCore.GetScaledNodeFontSize(baseFontSize, zoom);
@@ -1453,6 +1467,11 @@ namespace ConversationEditor.Graph
         {
             return drawPosition + size * 0.5f;
         }
-        #endregion
+
+        private void RegisterUndoState(string actionName)
+        {
+            if (ownerWindow is ConversationEditorWindow editorWindow) editorWindow.RegisterUndoState(actionName);
+        }
+#endregion
     }
 }

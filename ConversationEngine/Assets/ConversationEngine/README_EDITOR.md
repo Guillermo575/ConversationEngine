@@ -417,11 +417,12 @@ The editor includes a comprehensive library of common functions organized by cat
 ## User Interface
 
 ### Top Toolbar
-- **New**: Create new conversation file
-- **Open**: Open existing conversation file
-- **Save**: Save current conversation (Ctrl+S)
-- **Save As**: Save with new filename
-- **Current File**: Displays active filename
+- **File** menu: `New (Ctrl+N)`, `Open`, `Save (Ctrl+S)`, `Save As`
+- **Adjust** menu: `Horizontal`, `Vertical` auto-layout
+- **View** menu: show/hide `ResourceManager`, reset editor config
+- **Undo / Redo** buttons: quick history actions (`Ctrl+Z` / `Ctrl+Y`)
+- **Lock / Unlock**: toggles read-only mode and persists the state
+- **Current File**: displays active filename
 
 ### Tab System
 - **Resources Tab**: Manage backgrounds, audio, and actors
