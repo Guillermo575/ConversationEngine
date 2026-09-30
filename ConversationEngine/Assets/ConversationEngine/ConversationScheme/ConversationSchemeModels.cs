@@ -88,6 +88,7 @@ namespace ConversationScheme
     public class ConversationManager
     {
         public List<ConversationNode> Nodes = new List<ConversationNode>();
+        public List<ObservationNode> Observations = new List<ObservationNode>();
     }
 
     [Serializable]
@@ -179,5 +180,13 @@ namespace ConversationScheme
         public bool IsResourcePanelHidden = false;
         public bool IsReadOnly = false;
         public Vector2 CameraPosition = Vector2.zero;
+    }
+
+    [Serializable]
+    public class ObservationNode
+    {
+        public string Text;
+        public Vector2 EditorPosition;
+        public Vector2 EditorSize = new Vector2(200, 100);
     }
 }
