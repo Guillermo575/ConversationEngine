@@ -37,6 +37,26 @@ namespace ConversationEditor
             }
         }
 
+        public void DrawHorizontal(Rect area, ref float zoom, ref Vector2 panOffset, bool isReadOnly, Action saveEditorViewSettings, Action requestRepaint)
+        {
+            EditorGUI.DrawRect(area, new Color(0f, 0f, 0f, 0.4f));
+            float labelWidth = 36f * zoomControlScale;
+            Rect labelRect = new Rect(area.x + (8f * zoomControlScale), area.y, labelWidth, area.height);
+            GUI.Label(labelRect, new GUIContent($"{zoom:F1}x", "Current graph zoom level."), EditorStyles.centeredGreyMiniLabel);
+            float sliderPadding = 10f * zoomControlScale;
+            float sliderX = labelRect.xMax + sliderPadding;
+            float sliderWidth = Mathf.Max(1f, area.width - (sliderX - area.x) - sliderPadding);
+            float sliderHeight = 16f * zoomControlScale;
+            Rect zoomSliderRect = new Rect(sliderX, area.center.y - (sliderHeight * 0.5f), sliderWidth, sliderHeight);
+            float newZoom = GUI.HorizontalSlider(zoomSliderRect, zoom, minZoom, maxZoom);
+            if (!Mathf.Approximately(newZoom, zoom))
+            {
+                zoom = Mathf.Clamp(newZoom, minZoom, maxZoom);
+                if (!isReadOnly) saveEditorViewSettings?.Invoke();
+                requestRepaint?.Invoke();
+            }
+        }
+
         public Rect GetZoomControlsRect(Rect area)
         {
             float width = 34f * zoomControlScale;

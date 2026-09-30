@@ -12,6 +12,7 @@ namespace ConversationEditor.Setup
     {
         #region Constants
         private const float graphPreviewHeight = 420f;
+        private const float horizontalZoomControlHeight = 44f;
         #endregion
 
         #region State
@@ -55,6 +56,7 @@ namespace ConversationEditor.Setup
             if (graphView != null) return;
             graphView = new ConversationGraphView(null, true, false);
             graphView.SetReadOnlyMode(true);
+            graphView.SetEmbeddedZoomControlsVisible(false);
         }
         private void LoadConversationData()
         {
@@ -112,6 +114,9 @@ namespace ConversationEditor.Setup
         private void DrawGraphPreview()
         {
             DrawConversationMetadataHeader();
+            Rect zoomControlsRect = GUILayoutUtility.GetRect(10f, horizontalZoomControlHeight, GUILayout.ExpandWidth(true));
+            graphView.DrawHorizontalZoomControls(zoomControlsRect);
+            EditorGUILayout.Space(4f);
             Rect graphRect = GUILayoutUtility.GetRect(10f, graphPreviewHeight, GUILayout.ExpandWidth(true));
             if (shouldFrameGraph && Event.current.type != EventType.Layout)
             {

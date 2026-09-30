@@ -1,9 +1,10 @@
-using ConversationEditor.Helper;
 using ConversationScheme;
+using ConversationEditor.Helper;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+
 namespace ConversationEditor.Graph
 {
     public class ConversationGraphView
@@ -22,6 +23,7 @@ namespace ConversationEditor.Graph
         #region Controllers
         private readonly EditorWindow ownerWindow;
         private ZoomController zoomController;
+        private bool showEmbeddedZoomControls = true;
         public bool isReadOnly { get; private set; }
         #endregion
 
@@ -110,6 +112,14 @@ namespace ConversationEditor.Graph
             EnsureOptionEditorDataInConversation();
             ClearSelection();
         }
+        public void SetEmbeddedZoomControlsVisible(bool isVisible)
+        {
+            showEmbeddedZoomControls = isVisible;
+        }
+        public void DrawHorizontalZoomControls(Rect controlsRect)
+        {
+            zoomController.DrawHorizontal(controlsRect, ref zoom, ref panOffset, isReadOnly, SaveEditorViewSettings, RequestRepaint);
+        }
         public void Draw()
         {
             Rect graphRect = CalculateGraphRect();
@@ -128,7 +138,7 @@ namespace ConversationEditor.Graph
             DrawConnections();
             DrawNodes();
             if (isConnecting && !isReadOnly) DrawConnectionLine();
-            zoomController.Draw(localRect, ref zoom, ref panOffset, isReadOnly, SaveEditorViewSettings, RequestRepaint);
+            if (showEmbeddedZoomControls) zoomController.Draw(localRect, ref zoom, ref panOffset, isReadOnly, SaveEditorViewSettings, RequestRepaint);
             GUI.EndGroup();
         }
         public void ShowAutoLayoutMenu()
@@ -350,9 +360,12 @@ namespace ConversationEditor.Graph
         {
             Event e = Event.current;
             if (!graphRect.Contains(e.mousePosition) && e.type != EventType.MouseUp) return;
-            Rect zoomControlsRect = zoomController.GetZoomControlsRect(graphRect);
-            bool isPointerOverZoomControls = zoomControlsRect.Contains(e.mousePosition);
-            if (isPointerOverZoomControls && !isDraggingView) return;
+            if (showEmbeddedZoomControls)
+            {
+                Rect zoomControlsRect = zoomController.GetZoomControlsRect(graphRect);
+                bool isPointerOverZoomControls = zoomControlsRect.Contains(e.mousePosition);
+                if (isPointerOverZoomControls && !isDraggingView) return;
+            }
             if (!isReadOnly && HandleActiveResizeInteraction(e)) return;
             if (zoomController.HandleScrollWheel(e, graphRect, ref zoom, ref panOffset, isReadOnly, SaveEditorViewSettings))
             {
