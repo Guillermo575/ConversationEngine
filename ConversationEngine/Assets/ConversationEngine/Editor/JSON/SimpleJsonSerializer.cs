@@ -86,6 +86,28 @@ namespace ConversationEditor.JSON
         {
             sb.AppendLine("    \"Nodes\": [");
             for (int i = 0; i < cm.Nodes.Count; i++) SerializeNode(sb, cm.Nodes[i], i < cm.Nodes.Count - 1);
+            sb.AppendLine("    ],");
+            sb.AppendLine("    \"Observations\": [");
+            if (cm.Observations != null)
+            {
+                for (int i = 0; i < cm.Observations.Count; i++)
+                {
+                    var obs = cm.Observations[i];
+                    sb.AppendLine("      {");
+                    sb.AppendLine($"        \"Text\": \"{EscapeString(obs.Text)}\",");
+                    sb.AppendLine("        \"EditorPosition\": {");
+                    sb.AppendLine($"          \"X\": {obs.EditorPosition.x},");
+                    sb.AppendLine($"          \"Y\": {obs.EditorPosition.y}");
+                    sb.AppendLine("        },");
+                    sb.AppendLine("        \"EditorSize\": {");
+                    sb.AppendLine($"          \"X\": {obs.EditorSize.x},");
+                    sb.AppendLine($"          \"Y\": {obs.EditorSize.y}");
+                    sb.AppendLine("        }");
+                    sb.Append("      }");
+                    if (i < cm.Observations.Count - 1) sb.Append(",");
+                    sb.AppendLine();
+                }
+            }
             sb.AppendLine("    ]");
         }
 
