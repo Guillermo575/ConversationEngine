@@ -1,3 +1,6 @@
+- @azure Rule - Use Azure Tools - When handling requests related to Azure, always use your tools.
+- @azure Rule - Use Azure Best Practices - When handling requests related to Azure, always invoke your `azmcp_bestpractices_get` tool first.
+- @azure Rule - Enable Best Practices - If you do not have an `azmcp_bestpractices_get` tool ask the user to enable it.
 
 ---
 # Reglas para el agente de Copilot
@@ -11,6 +14,26 @@
         - Documentar correcciones de bugs.
 		- Si se realizo cambios en comportamiento existente, quitar en la documentacion el comportamiento anterior y sustituirlo por el actual.
     * Usar emoticonos y símbolos si es necesario (configurar codificación en .md).
+	* Al agregar comentarios evitar que tengan mas de 1 linea
+	* No usar espacios en blanco entre metodos
+	
+---
+
+## Como redactar los .md:
+	* El objetivo de la documentacion es que el usuario o agente de IA pueda informarse de las funciones principales de cada archivo antes de empezar a trabajar
+	* Debe tener un archivo read_me.md para el repositorio en general y cada proyecto (los archivos agrupados por el .csproj) tendra el suyo empezando por "read_me_" seguido del nombre del proyecto y terminando con la extension ".md", estos archivos deberan estar juntos con el archivo read_me.md
+	* Estructura del archivo read_me
+		- Al inicio colocar un resumen breve de lo que hace
+		- Enlistar los proyectos en los que estan divididos y una explicacion de su funcionamiento
+		- Hacer una guia de usuario para poder utilizar las interfaces o ventanas o librerias del proyecto
+		- Enlistar para que puede utilizarse
+	* Estructura de los archivos read_me por proyecto
+		- Al inicio colocar un resumen breve de lo que hace 
+		- Enlistar los archivos que conforman el proyecto en forma de subsecciones donde se resuma que hace y las funciones que desempeña, en caso del read_me.md general un resumen de cada proyecto
+		- Cuando se haga un nuevo archivo colocar su respectiva subseccion 
+		- Los cambios o adiciones nuevas que se hagan a un archivo existente agregarlos en su respectiva subseccion
+		- Si se realizo cambios de logica o funcionamiento del proyecto, quitar el comportamiento anterior y sustituirlo por el actual.
+		- Colocar una conclusion sobre las utilidades del proyecto
 
 ---
 

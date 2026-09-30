@@ -1,128 +1,54 @@
-# ConversationEngine - ConversationScheme
+# ConversationEngine
 
-## Purpose
-`ConversationScheme` defines the external data format used by the `ConversationEngine` with support for visual node-based editing.
+ConversationEngine is a Unity-based toolkit for building, editing, and maintaining branching conversations using a visual node editor and a reusable runtime data schema.
 
-## Main Structure
-- `ConversationData`
-  - `Title`: conversation title shown in editor/inspector previews.
-  - `Description`: conversation description shown in editor/inspector previews.
-  - `ResourceManager`: references to scenery, audio and actors.
-  - `ConversationManager`: conversation nodes and branching flow.
-  - `EditorSettings`: editor-only persisted configuration (`Zoom`, `IsResourcePanelHidden`, `CameraPosition`).
+## Project Structure
 
-## Resource System
-- `Resource` (base class)
-  - `Id`: unique identifier.
-  - `Path`: asset path or external file path.
-  - `gameObject`: runtime instance reference. Marked to be ignored by XML serialization.
-- Child classes:
-  - `SceneBackground`
-  - `AudioBackground` (`BackgroundMusic`, `SoundEffect`, `Voice`)
-  - `Actor`
+### `ConversationEngine` (Runtime/Data Schema)
+This project defines the conversation data model used at runtime and by editor tools.
+- Stores resources, actors, nodes, options, conditional branches, and function calls.
+- Supports serialization workflows for external conversation files.
+- Keeps editor-related layout settings persisted in conversation assets.
 
-## Actor Composition
-`Actor` supports simple and complex character composition:
-- `IconPath`: path to the icon image used in the node editor.
-- `SoundEffectPaths`: actor-specific sound references.
-- `BodyParts`: modular visual composition.
+### `ConversationEngine.Editor` (Editor Tooling)
+This project provides Unity Editor interfaces for authoring conversations visually.
+- Includes graph-based node editing.
+- Includes resource and inspector panels.
+- Handles conversation asset creation, opening, editing, and saving workflows.
 
-`BodyPart` includes:
-- `Id`: part identifier (`body`, `head`, `eyes`, `mouth`, `main`, etc.).
-- `AttachToPivotId`: pivot of parent part where this part is attached.
-- `NestedResources`: list of possible resources/assets for that part.
-- `CurrentResourceId`: active resource for this part.
-- `PivotPoints`: local anchors where other parts can be attached.
+## User Guide
 
-`BodyPartResource` includes:
-- `Id`: unique identifier for the resource.
-- `Path`: asset path.
-- `PivotPoints`: optional pivot point overrides for this specific resource. If a pivot with the same Id exists, it will override the parent BodyPart's pivot position for precise positioning across different poses/resources.
+### 1) Create or open a conversation file
+1. In Unity, create a new conversation asset from the ConversationEngine menu.
+2. Open it to launch the conversation editor window.
+3. If opening an existing file, verify resource references first.
 
-`PivotPoint` stores local coordinates (`X`, `Y`) where `(0,0)` is parent center.
+### 2) Build conversation flow
+1. Add nodes in the graph panel (Start, Dialogue, Function, Conditional, End).
+2. Connect nodes to define progression.
+3. Add options in dialogue nodes for branching.
+4. Add conditional rules where dynamic flow is needed.
 
-## Node Types
-`ConversationNode` supports five different node types:
-- **Start**: Entry point of the conversation. Only one Start node is allowed per conversation. If missing when opening the editor, it will be auto-created at position (0,0) with the first available node as its NextNodeId.
-- **Dialogue**: Standard dialogue node with speaker, text, and options.
-- **Conditional**: Branching node that evaluates conditions and routes to different paths.
-- **Function**: Invisible node that executes functions without displaying text. The ConversationEngine will skip text rendering and only execute the associated functions.
-- **End**: Terminal node indicating the end of a conversation branch.
+### 3) Configure resources and metadata
+1. Add actors, backgrounds, and audio resources.
+2. Set conversation title and description.
+3. Validate references before saving.
 
-## Conversation Flow
-- `ConversationManager` contains ordered `Nodes`.
-- `ConversationNode` includes:
-  - `Id` (int): auto-generated unique numeric identifier starting from 1.
-  - `NodeType`: Start, Dialogue, Conditional, Function, or End.
-  - `SpeakerActorId`: actor identifier (empty for narrator).
-  - `Text`: dialogue text.
-  - `NextNodeId` (int): ID of the next node.
-  - `Options`: list of player choices.
-  - `Functions`: timed function calls.
-  - `conditionalBranch`: conditional routing for `Conditional` nodes.
-  - `DefaultBranchNodeId` (int): fallback node for Conditional type.
-  - `EditorPosition` (Vector2): node position in the visual editor.
-  - `EditorSize` (Vector2): node size in the visual editor (default: 200x100).
+### 4) Save and integrate
+1. Save the conversation asset.
+2. Consume the generated data from your gameplay/runtime systems.
+3. Use function nodes and timed function calls to trigger game logic.
 
-## Editor Settings
-- `ConversationEditorSettings` includes:
-  - `Zoom` (float): saved graph zoom level used by the editor.
-  - `IsResourcePanelHidden` (bool): indicates whether the left resource panel was hidden.
-  - `CameraPosition` (Vector2): saved graph pan/camera position.
-  - Valid zoom range: `0.1` to `5.0` (clamped by editor UI and mouse wheel zoom).
+## Use Cases
 
-## Node ID Management
-- Node IDs are integers auto-generated by the editor starting from 1.
-- When creating a new node, the editor finds the next available ID by incrementing from the highest existing ID.
-- If an ID already exists, the editor searches for the next available number.
-- When reaching integer maximum value, the search restarts from 1.
-- When deleting a node, all references to that ID in other nodes are automatically removed.
+- Visual novels and dialogue-heavy games.
+- RPG NPC interactions with branching choices.
+- Quest and mission dialogue trees.
+- Tutorial flows with conditional progression.
+- Event-driven narrative sequences linked to gameplay systems.
 
-## Player Options
-`ConversationOption` includes:
-- `Text`: option text displayed to the player.
-- `NextNodeId` (int): target node when this option is selected.
-- `Conditions`: list of condition rules that must be satisfied for this option to appear.
-- `EditorPosition` (Vector2): local option node position in the editor, where `(0,0)` is the parent node position.
-- `EditorSize` (Vector2): option node size in the editor (default: `150x60`).
+## Compatibility
 
-## Conditional Branching
-`ConditionalBranch` includes:
-- `Conditions`: list of condition rules to evaluate.
-- `NextNodeIdTrue` (int): node to navigate to if conditions are true.
-- `NextNodeIdFalse` (int): node to navigate to if conditions are false.
-
-## Condition Rules
-`ConditionRule` supports flexible value comparison:
-- `VariableName`: name of the variable to check.
-- `Operator`: comparison operator (Equal, NotEqual, GreaterThan, GreaterOrEqual, LessThan, LessOrEqual).
-- `ValueDataType`: type of value being compared (String, Integer, Decimal, Boolean).
-- `Value`: the comparison value.
-- `IsValueVariable`: if true, `Value` is treated as a variable name to lookup; if false (default), it's treated as a literal value.
-
-## Function Calls
-`ConversationFunction` is metadata for runtime execution:
-- `MethodName`: name of the function to call.
-- `Parameters`: dictionary of parameter key-value pairs.
-- `Timestamp`: character index in dialogue text where function should execute (default: 0).
-
-## Example Files Included
-- `Examples/conversation_intro.json`
-- `Examples/conversation_intro.xml`
-- `Examples/Actors/actor_knight.json`
-- `Examples/Actors/royal_messenger.json`
-
-These examples include:
-- Resources (background, audio, actors)
-- Different node types (Start, Dialogue, End)
-- Branched story with player options
-- Actor definitions with modular body parts
-
-## Expected Benefits
-- Visual node-based editing similar to Unity's Animator.
-- Flexible actor representation from static portraits to modular animated assets.
-- Automatic ID management for simplified node creation.
-- Type-safe condition evaluation with variable or literal values.
-- Editable external files (`JSON` / `XML`) with standard text tools.
-- Separation between data schema and runtime behavior.
+- Unity project with `.NET Framework 4.7.1` target profile.
+- Uses `Unity.Newtonsoft.Json` in both runtime and editor assemblies.
 - Reusable structure for visual novels, RPG scenes, and other narrative systems.
