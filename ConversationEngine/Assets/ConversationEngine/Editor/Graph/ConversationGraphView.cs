@@ -324,33 +324,13 @@ namespace ConversationEditor.Graph
             conversationNodeStyle.nodeHeaderStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
             conversationNodeStyle.nodeBodyTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
             conversationNodeStyle.nodeActorTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-            switch (node.NodeType)
+            GUILayout.Label($"ID: {node.Id}", conversationNodeStyle.nodeHeaderStyle);
+            if (!string.IsNullOrEmpty(node.SpeakerActorId)) GUILayout.Label($"Actor: {node.SpeakerActorId}", conversationNodeStyle.nodeActorTextStyle);
+            if (!string.IsNullOrEmpty(node.Text))
             {
-                case ConversationNodeType.Start:
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("START", conversationNodeStyle.nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    break;
-                case ConversationNodeType.End:
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("END", conversationNodeStyle.nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    break;
-                case ConversationNodeType.Function:
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("FUNCTION", conversationNodeStyle.nodeHeaderStyle);
-                    GUILayout.FlexibleSpace();
-                    break;
-                default:
-                    GUILayout.Label($"ID: {node.Id}", conversationNodeStyle.nodeHeaderStyle);
-                    if (!string.IsNullOrEmpty(node.SpeakerActorId)) GUILayout.Label($"Actor: {node.SpeakerActorId}", conversationNodeStyle.nodeActorTextStyle);
-                    if (!string.IsNullOrEmpty(node.Text))
-                    {
-                        int previewLength = GetNodePreviewTextLength(node, !string.IsNullOrEmpty(node.SpeakerActorId));
-                        string preview = ConversationEditorHelpers.BuildPreviewText(node.Text, previewLength);
-                        GUILayout.Label(preview, conversationNodeStyle.nodeBodyTextStyle);
-                    }
-                    break;
+                int previewLength = GetNodePreviewTextLength(node, !string.IsNullOrEmpty(node.SpeakerActorId));
+                string preview = ConversationEditorHelpers.BuildPreviewText(node.Text, previewLength);
+                GUILayout.Label(preview, conversationNodeStyle.nodeBodyTextStyle);
             }
         }
         #endregion
@@ -728,13 +708,13 @@ namespace ConversationEditor.Graph
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdTrue);
                         if (targetNode != null)
-                            ConversationEditorHelpers.DrawConnectionLine(new Rect(trueAnchor, Vector2.zero), new Rect(targetNode.EditorPosition, targetNode.EditorSize), 5f, Color.green, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
+                            ConversationEditorHelpers.DrawConnectionLine(trueAnchor, Vector2.zero, targetNode.EditorPosition, Vector2.zero, 5f, Color.green, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
                     }
                     if (branch.NextNodeIdFalse > 0)
                     {
                         var targetNode = conversationData.ConversationManager.Nodes.FirstOrDefault(n => n.Id == branch.NextNodeIdFalse);
                         if (targetNode != null)
-                            ConversationEditorHelpers.DrawConnectionLine(new Rect(falseAnchor, Vector2.zero), new Rect(targetNode.EditorPosition, targetNode.EditorSize), 5f, Color.red, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
+                            ConversationEditorHelpers.DrawConnectionLine(falseAnchor, Vector2.zero, targetNode.EditorPosition, Vector2.zero, 5f, Color.red, WorldToGraph, ConversationNodeType.Conditional, targetNode.NodeType);
                     }
                 }
             }
@@ -1485,6 +1465,6 @@ namespace ConversationEditor.Graph
         {
             if (ownerWindow is ConversationEditorWindow editorWindow) editorWindow.RegisterUndoState(actionName);
         }
-#endregion
+        #endregion
     }
 }
