@@ -92,20 +92,40 @@ namespace ConversationScheme
     }
 
     [Serializable]
-    public class ConversationNode
+    public class Node
     {
         public int Id;
         public ConversationNodeType NodeType = ConversationNodeType.Dialogue;
-        public string SpeakerActorId;
         public string Text;
+        public Vector2 EditorPosition;
+        public Vector2 EditorSize = new Vector2(200, 100);
+    }
+
+    [Serializable]
+    public class ConversationNode: Node
+    {
+        public string SpeakerActorId;
         public int NextNodeId;
         public List<ConversationOption> Options = new List<ConversationOption>();
         public List<ConversationFunction> Functions = new List<ConversationFunction>();
-        // Renamed to singular conditionalBranch - only Conditional nodes use this
         public ConditionalBranch conditionalBranch = null;
         public int DefaultBranchNodeId;
-        public Vector2 EditorPosition;
-        public Vector2 EditorSize = new Vector2(200, 100);
+    }
+
+    [Serializable]
+    public class ConversationOption : Node
+    {
+        public new ConversationNodeType NodeType { get { return ConversationNodeType.Option; } set { } }
+        public int NextNodeId;
+        public List<ConditionRule> Conditions = new List<ConditionRule>();
+        public bool HideOption = false;
+        public string BlockText;
+    }
+
+    [Serializable]
+    public class ObservationNode : Node
+    {
+        public new ConversationNodeType NodeType { get { return ConversationNodeType.Observation; } set { } }
     }
 
     public enum ConversationNodeType
@@ -114,19 +134,9 @@ namespace ConversationScheme
         Dialogue,
         Conditional,
         Function,
-        End
-    }
-
-    [Serializable]
-    public class ConversationOption
-    {
-        public string Text;
-        public int NextNodeId;
-        public List<ConditionRule> Conditions = new List<ConditionRule>();
-        public bool HideOption = false;
-        public string BlockText;
-        public Vector2 EditorPosition;
-        public Vector2 EditorSize = new Vector2(150, 60);
+        End,
+        Option,
+        Observation
     }
 
     [Serializable]
@@ -180,13 +190,5 @@ namespace ConversationScheme
         public bool IsResourcePanelHidden = false;
         public bool IsReadOnly = false;
         public Vector2 CameraPosition = Vector2.zero;
-    }
-
-    [Serializable]
-    public class ObservationNode
-    {
-        public string Text;
-        public Vector2 EditorPosition;
-        public Vector2 EditorSize = new Vector2(200, 100);
     }
 }
