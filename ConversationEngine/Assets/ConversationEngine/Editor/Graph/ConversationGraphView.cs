@@ -525,7 +525,7 @@ namespace ConversationEditor.Graph
                 Rect optionContentRect = new Rect(optionRect.x + 8f, optionRect.y + 6f, optionRect.width - 16f, optionRect.height - 12f);
                 GUILayout.BeginArea(optionContentRect);
                 GUILayout.Label(new GUIContent($"Option {i + 1}", "Option node index inside the parent dialogue node."), EditorStyles.boldLabel);
-                int maxPreviewLength = GetOptionPreviewTextLength(option);
+                int maxPreviewLength = GetNodePreviewTextLength(option);
                 string optionPreview = ConversationEditorHelpers.BuildPreviewText(option.Text, maxPreviewLength, "(empty)");
                 GUILayout.Label(new GUIContent(optionPreview, "Option text preview sized to the current option node dimensions."));
                 GUILayout.EndArea();
@@ -946,7 +946,7 @@ namespace ConversationEditor.Graph
             }
             var newNode = new ConversationNode
             {
-                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
+                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes.Cast<Node>().ToList()),
                 NodeType = nodeType,
                 EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
                 EditorSize = editorSize,
@@ -967,7 +967,7 @@ namespace ConversationEditor.Graph
             Vector2 editorSize = new Vector2(200, 100);
             var newNode = new ConversationNode
             {
-                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
+                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes.Cast<Node>().ToList()),
                 NodeType = ConversationNodeType.Dialogue,
                 EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
                 EditorSize = editorSize,
@@ -989,7 +989,7 @@ namespace ConversationEditor.Graph
             Vector2 duplicatedSize = RequiresSquareNodeSize(node.NodeType) ? ToSquareSize(node.EditorSize) : node.EditorSize;
             var newNode = new ConversationNode
             {
-                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes),
+                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes.Cast<Node>().ToList()),
                 NodeType = node.NodeType,
                 SpeakerActorId = node.SpeakerActorId,
                 Text = node.Text,
@@ -1422,13 +1422,9 @@ namespace ConversationEditor.Graph
         {
             return conversationEditorCore.ClampEditorSize(size);
         }
-        private int GetNodePreviewTextLength(ConversationNode node, bool hasActorLine)
+        private int GetNodePreviewTextLength(Node node, bool hasActorLine = false)
         {
-            return conversationEditorCore.GetNodePreviewTextLength(node, hasActorLine, zoom);
-        }
-        private int GetOptionPreviewTextLength(ConversationOption option)
-        {
-            return conversationEditorCore.GetOptionPreviewTextLength(option, zoom);
+            return conversationEditorCore.GetNodePreviewTextLength(node, zoom, hasActorLine);
         }
         private Vector2 WorldToGraph(Vector2 worldPos)
         {
