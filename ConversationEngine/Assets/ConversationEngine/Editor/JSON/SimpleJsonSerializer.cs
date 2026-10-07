@@ -119,6 +119,7 @@ namespace ConversationEditor.JSON
             sb.AppendLine($"        \"NodeType\": \"{node.NodeType}\",");
             sb.AppendLine($"        \"SpeakerActorId\": \"{EscapeString(node.SpeakerActorId)}\",");
             sb.AppendLine($"        \"Text\": \"{EscapeString(node.Text)}\",");
+            if (!String.IsNullOrEmpty(node.Comment)) sb.AppendLine($"        \"Comment\": \"{EscapeString(node.Comment)}\",");
             sb.AppendLine($"        \"NextNodeId\": {node.NextNodeId},");
             sb.AppendLine("        \"Options\": [");
             if (node.Options != null)
@@ -128,6 +129,7 @@ namespace ConversationEditor.JSON
                     var opt = node.Options[i];
                     sb.AppendLine("          {");
                     sb.AppendLine($"            \"Text\": \"{EscapeString(opt.Text)}\",");
+                    if (!String.IsNullOrEmpty(node.Comment)) sb.AppendLine($"        \"Comment\": \"{EscapeString(opt.Comment)}\",");
                     sb.AppendLine($"            \"NextNodeId\": {opt.NextNodeId},");
                     sb.AppendLine($"            \"HideOption\": {(opt.HideOption ? "true" : "false")},");
                     sb.AppendLine($"            \"BlockText\": \"{EscapeString(opt.BlockText)}\",");

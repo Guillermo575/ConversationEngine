@@ -97,6 +97,7 @@ namespace ConversationScheme
         public int Id;
         public ConversationNodeType NodeType = ConversationNodeType.Dialogue;
         public string Text;
+        public string Comment;
         public Vector2 EditorPosition;
         public Vector2 EditorSize = new Vector2(200, 100);
     }

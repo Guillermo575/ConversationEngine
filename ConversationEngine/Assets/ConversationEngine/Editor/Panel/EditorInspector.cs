@@ -144,6 +144,9 @@ namespace ConversationEditor.Panel
                     break;
             }
             DrawSectionSeparator();
+            EditorGUILayout.LabelField(new GUIContent("Comment", "Comment for this node."));
+            node.Comment = EditorGUILayout.TextArea(node.Comment, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+            DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
             node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph center position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
             if (RequiresSquareNodeSize(node.NodeType))
