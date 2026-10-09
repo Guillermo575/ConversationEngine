@@ -95,7 +95,7 @@ namespace ConversationScheme
     public class Node
     {
         public int Id;
-        public ConversationNodeType NodeType = ConversationNodeType.Dialogue;
+        public virtual ConversationNodeType NodeType { get; set; } = ConversationNodeType.Dialogue;
         public string Text;
         public string Comment;
         public Vector2 EditorPosition;
@@ -116,7 +116,7 @@ namespace ConversationScheme
     [Serializable]
     public class ConversationOption : Node
     {
-        public new ConversationNodeType NodeType { get { return ConversationNodeType.Option; } set { } }
+        public override ConversationNodeType NodeType { get { return ConversationNodeType.Option; } set { } }
         public int NextNodeId;
         public List<ConditionRule> Conditions = new List<ConditionRule>();
         public bool HideOption = false;
@@ -126,7 +126,7 @@ namespace ConversationScheme
     [Serializable]
     public class ObservationNode : Node
     {
-        public new ConversationNodeType NodeType { get { return ConversationNodeType.Observation; } set { } }
+        public override ConversationNodeType NodeType { get { return ConversationNodeType.Observation; } set { } }
     }
 
     public enum ConversationNodeType

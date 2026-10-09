@@ -60,6 +60,7 @@ namespace ConversationEditor.Graph
         public GUIStyle observationNodeStyle;
         public GUIStyle observationNodeSelectedStyle;
         public GUIStyle observationNodeDraggingStyle;
+        public GUIStyle observationNodeBodyTextStyle;
         #endregion
 
         #region Variables
@@ -133,6 +134,8 @@ namespace ConversationEditor.Graph
             observationNodeStyle.fontSize = nodeHeaderBaseFontSize;
             observationNodeStyle.normal.textColor = Color.black;
             observationNodeStyle.fontStyle = FontStyle.Bold;
+            observationNodeBodyTextStyle = new GUIStyle(observationNodeStyle);
+            observationNodeBodyTextStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(1f, 1f, 1f, 0f), new Color(1f, 1f, 1f, 0f), borderWidth);
             observationNodeSelectedStyle = new GUIStyle(observationNodeStyle);
             observationNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(1f, 1f, 1f, 1f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
             observationNodeDraggingStyle = new GUIStyle(observationNodeStyle);

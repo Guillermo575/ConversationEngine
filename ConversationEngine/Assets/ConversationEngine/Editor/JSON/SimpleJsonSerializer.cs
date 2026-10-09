@@ -95,6 +95,7 @@ namespace ConversationEditor.JSON
                     var obs = cm.Observations[i];
                     sb.AppendLine("      {");
                     sb.AppendLine($"        \"Id\": \"{obs.Id.ToString()}\",");
+                    sb.AppendLine($"        \"NodeType\": \"{obs.NodeType}\",");
                     sb.AppendLine($"        \"Text\": \"{EscapeString(obs.Text)}\",");
                     sb.AppendLine("        \"EditorPosition\": {");
                     sb.AppendLine($"          \"X\": {obs.EditorPosition.x},");

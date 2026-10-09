@@ -257,15 +257,13 @@ namespace ConversationEditor.Graph
                 GUIStyle style = GetNodeStyle(node);
                 GUI.Box(nodeRect, "", style);
                 GUILayout.BeginArea(nodeRect);
-                conversationNodeStyle.observationNodeStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
-                conversationNodeStyle.observationNodeStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-                conversationNodeStyle.observationNodeStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
-                //GUILayout.Label($"ID: {node.Id}", conversationNodeStyle.nodeHeaderStyle);
+                conversationNodeStyle.observationNodeBodyTextStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+                //GUILayout.Label($"ID: {node.Id}", conversationNodeStyle.observationNodeBodyTextStyle);
                 if (!string.IsNullOrEmpty(node.Text))
                 {
                     int previewLength = GetNodePreviewTextLength(node);
                     string preview = ConversationEditorHelpers.BuildPreviewText(node.Text, previewLength);
-                    GUILayout.Label(preview, conversationNodeStyle.observationNodeStyle);
+                    GUILayout.Label(preview, conversationNodeStyle.observationNodeBodyTextStyle);
                 }
                 GUILayout.EndArea();
                 if (!isReadOnly && IsNodeResizeEnabled(node.NodeType)) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
