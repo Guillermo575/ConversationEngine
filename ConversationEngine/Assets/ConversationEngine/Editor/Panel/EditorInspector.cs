@@ -143,9 +143,12 @@ namespace ConversationEditor.Panel
                     DrawDialogueOrFunctionInspector(node);
                     break;
             }
-            DrawSectionSeparator();
-            EditorGUILayout.LabelField(new GUIContent("Comment", "Comment for this node."));
-            node.Comment = EditorGUILayout.TextArea(node.Comment, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+            if (node.NodeType != ConversationNodeType.Observation)
+            {
+                DrawSectionSeparator();
+                EditorGUILayout.LabelField(new GUIContent("Comment", "Comment for this node."));
+                node.Comment = EditorGUILayout.TextArea(node.Comment, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+            }
             DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
             node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph center position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
@@ -190,6 +193,10 @@ namespace ConversationEditor.Panel
                     EditorGUILayout.LabelField(new GUIContent("Functions", "Timed functions executed while this node is active."), EditorStyles.boldLabel);
                     if (node.Functions == null) node.Functions = new List<ConversationFunction>();
                     DrawFunctionList(node.Functions);
+                    return;
+                case ConversationNodeType.Observation:
+                    EditorGUILayout.LabelField(new GUIContent("Text", "Observation text shown to the user."));
+                    node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
                     return;
                 default:
                     node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");

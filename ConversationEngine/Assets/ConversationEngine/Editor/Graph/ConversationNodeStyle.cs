@@ -57,6 +57,9 @@ namespace ConversationEditor.Graph
         public GUIStyle nodeActorTextStyle;
         public GUIStyle conversationTitleStyle;
         public GUIStyle conversationDescriptionStyle;
+        public GUIStyle observationNodeStyle;
+        public GUIStyle observationNodeSelectedStyle;
+        public GUIStyle observationNodeDraggingStyle;
         #endregion
 
         #region Variables
@@ -125,6 +128,15 @@ namespace ConversationEditor.Graph
             conditionalNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
             conditionalNodeDraggingStyle = new GUIStyle(conditionalNodeStyle);
             conditionalNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(0.9f, 0.8f, 0.2f, 0.9f), Color.white, borderWidth);
+            observationNodeStyle = new GUIStyle(nodeStyle);
+            observationNodeStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(1f, 1f, 1f, 1f), Color.black, borderWidth);
+            observationNodeStyle.fontSize = nodeHeaderBaseFontSize;
+            observationNodeStyle.normal.textColor = Color.black;
+            observationNodeStyle.fontStyle = FontStyle.Bold;
+            observationNodeSelectedStyle = new GUIStyle(observationNodeStyle);
+            observationNodeSelectedStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(1f, 1f, 1f, 1f), new Color(1f, 0.84f, 0f, 1f), borderWidth);
+            observationNodeDraggingStyle = new GUIStyle(observationNodeStyle);
+            observationNodeDraggingStyle.normal.background = MakeTextureWithBorder(2, 2, new Color(1f, 1f, 1f, 1f), Color.white, borderWidth);
             nodeHeaderStyle = new GUIStyle(EditorStyles.boldLabel);
             nodeHeaderStyle.padding = new RectOffset(borderWidth + 4, borderWidth + 4, borderWidth + 4, borderWidth + 4);
             nodeHeaderStyle.fontSize = nodeHeaderBaseFontSize;
@@ -203,7 +215,7 @@ namespace ConversationEditor.Graph
             return texture;
         }
 
-        public GUIStyle GetNodeStyle(ConversationNode node, bool isSelected, bool isDragging)
+        public GUIStyle GetNodeStyle(Node node, bool isSelected, bool isDragging)
         {
             switch (node.NodeType)
             {
@@ -223,18 +235,19 @@ namespace ConversationEditor.Graph
                     if (isDragging) return conditionalNodeDraggingStyle;
                     if (isSelected) return conditionalNodeSelectedStyle;
                     return conditionalNodeStyle;
+                case ConversationNodeType.Observation:
+                    if (isDragging) return observationNodeDraggingStyle;
+                    if (isSelected) return observationNodeSelectedStyle;
+                    return observationNodeStyle;
+                case ConversationNodeType.Option:
+                    if (isDragging) return optionNodeDraggingStyle;
+                    if (isSelected) return optionNodeSelectedStyle;
+                    return optionNodeStyle;
                 default:
                     if (isDragging) return nodeDraggingStyle;
                     if (isSelected) return nodeSelectedStyle;
                     return nodeStyle;
             }
-        }
-
-        public GUIStyle GetOptionStyle(ConversationOption option, bool isSelected, bool isDragging)
-        {
-            if (isDragging) return optionNodeDraggingStyle;
-            if (isSelected) return optionNodeSelectedStyle;
-            return optionNodeStyle;
         }
         #endregion
     }

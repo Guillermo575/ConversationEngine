@@ -1,5 +1,6 @@
-using ConversationScheme;
+using Codice.CM.Common.Tree;
 using ConversationEditor.Helper;
+using ConversationScheme;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -248,6 +249,26 @@ namespace ConversationEditor.Graph
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
                 DrawNode(node);
+            }
+            foreach (var node in conversationData.ConversationManager.Observations)
+            {
+                Rect nodeWorldRect = GetNodeWorldRect(node);
+                Rect nodeRect = WorldToGraphRect(nodeWorldRect);
+                GUIStyle style = GetNodeStyle(node);
+                GUI.Box(nodeRect, "", style);
+                GUILayout.BeginArea(nodeRect);
+                conversationNodeStyle.observationNodeStyle.fontSize = GetScaledNodeFontSize(nodeHeaderBaseFontSize);
+                conversationNodeStyle.observationNodeStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+                conversationNodeStyle.observationNodeStyle.fontSize = GetScaledNodeFontSize(nodeBodyBaseFontSize);
+                //GUILayout.Label($"ID: {node.Id}", conversationNodeStyle.nodeHeaderStyle);
+                if (!string.IsNullOrEmpty(node.Text))
+                {
+                    int previewLength = GetNodePreviewTextLength(node);
+                    string preview = ConversationEditorHelpers.BuildPreviewText(node.Text, previewLength);
+                    GUILayout.Label(preview, conversationNodeStyle.observationNodeStyle);
+                }
+                GUILayout.EndArea();
+                if (!isReadOnly && IsNodeResizeEnabled(node.NodeType)) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
             }
         }
         private void DrawNode(ConversationNode node)
@@ -520,7 +541,7 @@ namespace ConversationEditor.Graph
                 var option = node.Options[i];
                 Rect optionWorldRect = GetOptionWorldRect(node, option, i);
                 Rect optionRect = WorldToGraphRect(optionWorldRect);
-                GUIStyle optionStyle = GetOptionStyle(option);
+                GUIStyle optionStyle = GetNodeStyle(option);
                 GUI.Box(optionRect, GUIContent.none, optionStyle);
                 Rect optionContentRect = new Rect(optionRect.x + 8f, optionRect.y + 6f, optionRect.width - 16f, optionRect.height - 12f);
                 GUILayout.BeginArea(optionContentRect);
@@ -781,9 +802,10 @@ namespace ConversationEditor.Graph
             menu.AddItem(new GUIContent("Create Node/Function"), false, () => CreateNode(ConversationNodeType.Function));
             menu.AddItem(new GUIContent("Create Node/Dialogue with Options"), false, CreateNodeWithOptions);
             menu.AddItem(new GUIContent("Create Node/Conditional"), false, () => CreateNode(ConversationNodeType.Conditional));
-            menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Auto-Layout/Horizontal"), false, () => AutoLayoutNodes(true));
-            menu.AddItem(new GUIContent("Auto-Layout/Vertical"), false, () => AutoLayoutNodes(false));
+            menu.AddItem(new GUIContent("Create Node/Observation"), false, () => CreateNode(ConversationNodeType.Observation));
+            menu.AddSeparator("Auto-Layout");
+            menu.AddItem(new GUIContent("Horizontal"), false, () => AutoLayoutNodes(true));
+            menu.AddItem(new GUIContent("Vertical"), false, () => AutoLayoutNodes(false));
             isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
@@ -944,17 +966,32 @@ namespace ConversationEditor.Graph
                     editorSize = new Vector2(200f, 100f);
                     break;
             }
-            var newNode = new ConversationNode
+            switch (nodeType)
             {
-                Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes.Cast<Node>().ToList()),
-                NodeType = nodeType,
-                EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
-                EditorSize = editorSize,
-                conditionalBranch = nodeType == ConversationNodeType.Conditional ? new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 } : null
-            };
-            conversationData.ConversationManager.Nodes.Add(newNode);
-            if (shouldAutoLink) TryAutoLinkStartNode(newNode);
-            SetSelection(newNode, null, null);
+                case ConversationNodeType.Observation:
+                    var newObservationNode = new ObservationNode
+                    {
+                        Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Observations.Cast<Node>().ToList()),
+                        NodeType = nodeType,
+                        EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
+                        EditorSize = editorSize,
+                    };
+                    conversationData.ConversationManager.Observations.Add(newObservationNode);
+                    break;
+                default:
+                    var newNode = new ConversationNode
+                    {
+                        Id = ConversationNodeUtility.GetNextAvailableId(conversationData.ConversationManager.Nodes.Cast<Node>().ToList()),
+                        NodeType = nodeType,
+                        EditorPosition = ToNodeCenterPosition(contextMenuPosition, editorSize),
+                        EditorSize = editorSize,
+                        conditionalBranch = nodeType == ConversationNodeType.Conditional ? new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 } : null
+                    };
+                    conversationData.ConversationManager.Nodes.Add(newNode);
+                    if (shouldAutoLink) TryAutoLinkStartNode(newNode);
+                    SetSelection(newNode, null, null);
+                    break;
+            }
             isRightClickMenuActive = false;
             MarkDirty();
             RequestRepaint();
@@ -1231,17 +1268,11 @@ namespace ConversationEditor.Graph
         #endregion
 
         #region Styles
-        private GUIStyle GetNodeStyle(ConversationNode node)
+        private GUIStyle GetNodeStyle(Node node)
         {
             bool isSelected = selectedNode == node;
             bool isDragging = isNodeBeingDragged && isSelected;
             return conversationNodeStyle.GetNodeStyle(node, isSelected, isDragging);
-        }
-        private GUIStyle GetOptionStyle(ConversationOption option)
-        {
-            bool isSelected = selectedOption == option;
-            bool isDragging = isOptionBeingDragged && isSelected;
-            return conversationNodeStyle.GetOptionStyle(option, isSelected, isDragging);
         }
         #endregion
 
@@ -1310,7 +1341,6 @@ namespace ConversationEditor.Graph
                 EditorPosition = GenerateOptionPosition(node, optionIndex)
             };
         }
-
         private bool IsPointerOverInteractiveElement(Vector2 mouseWorldPos)
         {
             if (conversationData?.ConversationManager?.Nodes == null) return false;
@@ -1391,6 +1421,7 @@ namespace ConversationEditor.Graph
                 case ConversationNodeType.End:
                 case ConversationNodeType.Function:
                 case ConversationNodeType.Conditional:
+                case ConversationNodeType.Observation:
                     return true;
                 default:
                     return false;
@@ -1443,7 +1474,7 @@ namespace ConversationEditor.Graph
         {
             return windowPos - currentGraphRect.position;
         }
-        private Rect GetNodeWorldRect(ConversationNode node)
+        private Rect GetNodeWorldRect(Node node)
         {
             return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
         }
@@ -1456,7 +1487,6 @@ namespace ConversationEditor.Graph
         {
             return drawPosition + size * 0.5f;
         }
-
         private void RegisterUndoState(string actionName)
         {
             if (ownerWindow is ConversationEditorWindow editorWindow) editorWindow.RegisterUndoState(actionName);
