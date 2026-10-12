@@ -33,8 +33,8 @@ namespace ConversationEditor.Graph
         #region State
         private bool isResizingNode = false;
         private bool isResizingOption = false;
-        private ConversationNode resizingNode;
-        private ConversationNode resizingOptionParentNode;
+        private Node resizingNode;
+        private Node resizingOptionParentNode;
         private ConversationOption resizingOption;
         private ResizeHandleType activeResizeHandle = ResizeHandleType.None;
         private Vector2 resizeStartMouseWorldPosition;
@@ -46,7 +46,7 @@ namespace ConversationEditor.Graph
         public bool IsResizingOption => isResizingOption;
         public bool IsResizing => isResizingNode || isResizingOption;
         public ResizeHandleType ActiveResizeHandle => activeResizeHandle;
-        public ConversationNode ResizingNode => resizingNode;
+        public Node ResizingNode => resizingNode;
         public ConversationOption ResizingOption => resizingOption;
         #endregion
 
@@ -55,7 +55,7 @@ namespace ConversationEditor.Graph
         /// <summary>
         /// Attempts to start resizing a node from the given mouse position.
         /// </summary>
-        public bool TryStartNodeResize(ConversationNode node, Rect nodeRect, Vector2 mouseGraphPos, Vector2 mouseWorldPos)
+        public bool TryStartNodeResize(Node node, Rect nodeRect, Vector2 mouseGraphPos, Vector2 mouseWorldPos)
         {
             if (node == null) return false;
 
@@ -71,7 +71,7 @@ namespace ConversationEditor.Graph
         /// <summary>
         /// Attempts to start resizing an option from the given mouse position.
         /// </summary>
-        public bool TryStartOptionResize(ConversationNode parentNode, ConversationOption option, Rect optionRect, Vector2 mouseGraphPos, Vector2 mouseWorldPos)
+        public bool TryStartOptionResize(Node parentNode, ConversationOption option, Rect optionRect, Vector2 mouseGraphPos, Vector2 mouseWorldPos)
         {
             if (parentNode == null || option == null) return false;
 
@@ -87,7 +87,7 @@ namespace ConversationEditor.Graph
         /// <summary>
         /// Applies the current resize operation based on mouse movement.
         /// </summary>
-        public bool ApplyResize(Vector2 newMouseWorldPos, System.Action<ConversationNode, Vector2> onNodeResized, System.Action<ConversationOption, Vector2> onOptionResized)
+        public bool ApplyResize(Vector2 newMouseWorldPos, System.Action<Node, Vector2> onNodeResized, System.Action<ConversationOption, Vector2> onOptionResized)
         {
             if (!IsResizing) return false;
 
@@ -203,7 +203,7 @@ namespace ConversationEditor.Graph
 
         #region Private Methods
 
-        private void StartResize(ConversationNode node, ConversationNode optionParentNode, ConversationOption option, ResizeHandleType handleType, Vector2 mouseWorldPos, Rect targetWorldRect)
+        private void StartResize(Node node, Node optionParentNode, ConversationOption option, ResizeHandleType handleType, Vector2 mouseWorldPos, Rect targetWorldRect)
         {
             if (node != null)
             {
@@ -331,12 +331,12 @@ namespace ConversationEditor.Graph
             return new Vector2(Mathf.Max(minEditorNodeSize, size.x), Mathf.Max(minEditorNodeSize, size.y));
         }
 
-        private Rect GetNodeWorldRect(ConversationNode node)
+        private Rect GetNodeWorldRect(Node node)
         {
             return ConversationEditorHelpers.GetNodeWorldRect(node.EditorPosition, node.EditorSize);
         }
 
-        private bool UsesUniformNodeSize(ConversationNode node)
+        private bool UsesUniformNodeSize(Node node)
         {
             if (node == null) return false;
             switch (node.NodeType)

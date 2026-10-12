@@ -37,7 +37,7 @@ namespace ConversationEditor.Graph
         #endregion
 
         #region Selection State
-        private ConversationNode selectedNode;
+        private Node selectedNode;
         private ConversationOption selectedOption;
         private ConditionalBranch selectedBranch;
         #endregion
@@ -90,7 +90,7 @@ namespace ConversationEditor.Graph
         #endregion
 
         #region Public Props
-        public ConversationNode SelectedNode => selectedNode;
+        public Node SelectedNode => selectedNode;
         public ConversationOption SelectedOption => selectedOption;
         public ConditionalBranch SelectedBranch => selectedBranch;
         public bool HasSelection => selectedNode != null || selectedOption != null || selectedBranch != null;
@@ -186,12 +186,12 @@ namespace ConversationEditor.Graph
         public void DeleteSelectedNode()
         {
             if (isReadOnly || selectedNode == null) return;
-            DeleteNode(selectedNode);
+            DeleteNode(selectedNode as ConversationNode);
         }
         public void FrameSelectedNode()
         {
             if (selectedNode == null) return;
-            FrameNode(selectedNode);
+            FrameNode(selectedNode as ConversationNode);
         }
         public void HandleEscapeAction()
         {
@@ -266,7 +266,8 @@ namespace ConversationEditor.Graph
                     GUILayout.Label(preview, conversationNodeStyle.observationNodeBodyTextStyle);
                 }
                 GUILayout.EndArea();
-                if (!isReadOnly && IsNodeResizeEnabled(node.NodeType)) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
+                HandleNodeInteraction(node, nodeRect);
+                if (!isReadOnly) nodeResizer.DrawResizeHandles(nodeRect, ToWindowRect);
             }
         }
         private void DrawNode(ConversationNode node)
@@ -446,7 +447,7 @@ namespace ConversationEditor.Graph
             }
             return false;
         }
-        private void HandleNodeInteraction(ConversationNode node, Rect nodeRect)
+        private void HandleNodeInteraction(Node node, Rect nodeRect)
         {
             Event e = Event.current;
             Vector2 mouseGraphPos = WindowToGraphLocal(e.mousePosition);
@@ -771,7 +772,7 @@ namespace ConversationEditor.Graph
             Handles.EndGUI();
             RequestRepaint();
         }
-        private void CompleteConnection(ConversationNode targetNode)
+        private void CompleteConnection(Node targetNode)
         {
             if (!isConnecting || connectingFromNode == null || isReadOnly) return;
             RegisterUndoState("Create Connection");
@@ -807,20 +808,21 @@ namespace ConversationEditor.Graph
             isRightClickMenuActive = true;
             menu.ShowAsContext();
         }
-        private void ShowNodeContextMenu(ConversationNode node)
+        private void ShowNodeContextMenu(Node node)
         {
             if (isReadOnly) return;
             GenericMenu menu = new GenericMenu();
+            ConversationNode conversationNode = node as ConversationNode;
             switch (node.NodeType)
             {
                 case ConversationNodeType.Conditional:
                     menu.AddItem(new GUIContent("Connect to Node (true)"), false, () =>
                     {
                         isConnecting = true;
-                        connectingFromNode = node;
+                        connectingFromNode = conversationNode;
                         connectingFromOption = null;
-                        if (node.conditionalBranch == null) node.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
-                        connectingFromBranch = node.conditionalBranch;
+                        if (conversationNode.conditionalBranch == null) conversationNode.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
+                        connectingFromBranch = conversationNode.conditionalBranch;
                         connectingBranchIndex = 0;
                         isRightClickMenuActive = false;
                         RequestRepaint();
@@ -828,10 +830,10 @@ namespace ConversationEditor.Graph
                     menu.AddItem(new GUIContent("Connect to Node (false)"), false, () =>
                     {
                         isConnecting = true;
-                        connectingFromNode = node;
+                        connectingFromNode = conversationNode;
                         connectingFromOption = null;
-                        if (node.conditionalBranch == null) node.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
-                        connectingFromBranch = node.conditionalBranch;
+                        if (conversationNode.conditionalBranch == null) conversationNode.conditionalBranch = new ConditionalBranch { Conditions = new List<ConditionRule>(), NextNodeIdTrue = 0, NextNodeIdFalse = 0 };
+                        connectingFromBranch = conversationNode.conditionalBranch;
                         connectingBranchIndex = 1;
                         isRightClickMenuActive = false;
                         RequestRepaint();
@@ -842,8 +844,8 @@ namespace ConversationEditor.Graph
                     menu.AddItem(new GUIContent("Add Option"), false, () =>
                     {
                         RegisterUndoState("Add Option");
-                        if (node.Options == null) node.Options = new List<ConversationOption>();
-                        node.Options.Add(CreateOption(node, "", node.Options.Count));
+                        if (conversationNode.Options == null) conversationNode.Options = new List<ConversationOption>();
+                        conversationNode.Options.Add(CreateOption(conversationNode, "", conversationNode.Options.Count));
                         MarkDirty();
                         isRightClickMenuActive = false;
                     });
@@ -856,7 +858,7 @@ namespace ConversationEditor.Graph
                 menu.AddItem(new GUIContent("Connect to Node"), false, () =>
                 {
                     isConnecting = true;
-                    connectingFromNode = node;
+                    connectingFromNode = node as ConversationNode;
                     connectingFromOption = null;
                     connectingFromBranch = null;
                     isRightClickMenuActive = false;
@@ -866,13 +868,13 @@ namespace ConversationEditor.Graph
             }
             menu.AddItem(new GUIContent("Duplicate Node"), false, () =>
             {
-                DuplicateNode(node);
+                DuplicateNode(node as ConversationNode);
                 isRightClickMenuActive = false;
             });
             menu.AddSeparator("");
             menu.AddItem(new GUIContent("Delete Node"), false, () =>
             {
-                DeleteNode(node);
+                DeleteNode(node as ConversationNode);
                 isRightClickMenuActive = false;
             });
             isRightClickMenuActive = true;
@@ -1275,7 +1277,7 @@ namespace ConversationEditor.Graph
         #endregion
 
         #region Internal Helpers
-        private void SetSelection(ConversationNode node, ConversationOption option, ConditionalBranch branch)
+        private void SetSelection(Node node, ConversationOption option, ConditionalBranch branch)
         {
             selectedNode = node;
             selectedOption = option;
@@ -1358,6 +1360,17 @@ namespace ConversationEditor.Graph
                     }
                 }
                 if (node.NodeType != ConversationNodeType.Conditional || node.conditionalBranch == null) continue;
+                float indicatorSize = 16f;
+                Vector2 center = node.EditorPosition;
+                Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                Rect falseRect = new Rect(center.x + node.EditorSize.x * 0.5f + 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);
+                if (trueRect.Contains(mouseWorldPos) || falseRect.Contains(mouseWorldPos)) return true;
+            }
+            foreach (var node in conversationData.ConversationManager.Observations)
+            {
+                Rect nodeRect = WorldToGraphRect(GetNodeWorldRect(node));
+                if (nodeRect.Contains(mouseGraphPosition)) return true;
+                if (!isReadOnly && IsNodeResizeEnabled(node.NodeType) && nodeResizer.TryGetResizeHandle(nodeRect, mouseGraphPosition, out _)) return true;
                 float indicatorSize = 16f;
                 Vector2 center = node.EditorPosition;
                 Rect trueRect = new Rect(center.x - node.EditorSize.x * 0.5f - indicatorSize - 6f, center.y - indicatorSize * 0.5f, indicatorSize, indicatorSize);

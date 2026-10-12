@@ -112,8 +112,9 @@ namespace ConversationEditor.Panel
             EditorGUILayout.EndScrollView();
         }
 
-        private void DrawNodeInspector(ConversationNode node)
+        private void DrawNodeInspector(Node node)
         {
+            var conversationNode = node as ConversationNode;
             EditorGUILayout.LabelField("Node Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
@@ -130,17 +131,21 @@ namespace ConversationEditor.Panel
                 case ConversationNodeType.Start:
                     DrawSectionSeparator();
                     EditorGUILayout.LabelField(new GUIContent("Connection", "Outgoing connection settings for start node."), EditorStyles.boldLabel);
-                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Target node for flow continuation.");
+                    conversationNode.NextNodeId = DrawNodeIdDropdown("Next Node", conversationNode.NextNodeId, conversationNode, "Target node for flow continuation.");
                     break;
                 case ConversationNodeType.Conditional:
                     DrawSectionSeparator();
                     EditorGUILayout.LabelField(new GUIContent("Conditional Branches", "Condition-based outgoing branch settings."), EditorStyles.boldLabel);
-                    DrawConditionalBranchSection(node);
+                    DrawConditionalBranchSection(conversationNode);
                     break;
                 case ConversationNodeType.End:
                     break;
+                case ConversationNodeType.Observation:
+                    EditorGUILayout.LabelField(new GUIContent("Text", "Observation text shown to the user."));
+                    node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+                    break;
                 default:
-                    DrawDialogueOrFunctionInspector(node);
+                    DrawDialogueOrFunctionInspector(conversationNode);
                     break;
             }
             if (node.NodeType != ConversationNodeType.Observation)
@@ -194,10 +199,6 @@ namespace ConversationEditor.Panel
                     if (node.Functions == null) node.Functions = new List<ConversationFunction>();
                     DrawFunctionList(node.Functions);
                     return;
-                case ConversationNodeType.Observation:
-                    EditorGUILayout.LabelField(new GUIContent("Text", "Observation text shown to the user."));
-                    node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
-                    return;
                 default:
                     node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
                     return;
@@ -230,13 +231,16 @@ namespace ConversationEditor.Panel
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
             EditorGUI.BeginChangeCheck();
-            int selectedOptionIndex = graphView?.SelectedNode?.Options?.IndexOf(option) ?? 0;
-            EnsureOptionEditorData(graphView?.SelectedNode, option, Mathf.Max(0, selectedOptionIndex));
+            int selectedOptionIndex = (graphView?.SelectedNode as ConversationNode)?.Options?.IndexOf(option) ?? 0;
+            EnsureOptionEditorData(graphView?.SelectedNode as ConversationNode, option, Mathf.Max(0, selectedOptionIndex));
             option.Text = EditorGUILayout.TextField(new GUIContent("Text", "Option text shown to the player."), option.Text, GUILayout.ExpandWidth(true));
-            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode, "Target node for this option.");
+            option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode as ConversationNode, "Target node for this option.");
             option.HideOption = EditorGUILayout.Toggle(new GUIContent("Hide Option", "If enabled, this option will stay hidden."), option.HideOption, GUILayout.ExpandWidth(true));
             EditorGUILayout.LabelField(new GUIContent("Block Text", "Text shown when this option is blocked."));
             option.BlockText = EditorGUILayout.TextArea(option.BlockText ?? "", GUILayout.MinHeight(48f), GUILayout.ExpandWidth(true));
+            DrawSectionSeparator();
+            EditorGUILayout.LabelField(new GUIContent("Comment", "Comment for this node."));
+            option.Comment = EditorGUILayout.TextArea(option.Comment, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
             option.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Local graph position relative to the parent node."), option.EditorPosition, GUILayout.ExpandWidth(true));
             option.EditorSize = ClampEditorSize(EditorGUILayout.Vector2Field(new GUIContent("Size", "Graph size for this option node. Minimum X/Y is 20."), option.EditorSize, GUILayout.ExpandWidth(true)));
             EditorGUILayout.Space();
@@ -251,8 +255,8 @@ namespace ConversationEditor.Panel
             float oldLabelWidth = EditorGUIUtility.labelWidth;
             EditorGUIUtility.labelWidth = 100f;
             EditorGUI.BeginChangeCheck();
-            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, graphView?.SelectedNode, "Target node when branch evaluates true.");
-            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, graphView?.SelectedNode, "Target node when branch evaluates false.");
+            branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, graphView?.SelectedNode as ConversationNode, "Target node when branch evaluates true.");
+            branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, graphView?.SelectedNode as ConversationNode, "Target node when branch evaluates false.");
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Conditions", EditorStyles.boldLabel);
             DrawConditionList(branch.Conditions);
