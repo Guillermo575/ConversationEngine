@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using Unity.Plastic.Newtonsoft.Json;
 using UnityEngine;
 
 namespace ConversationScheme
@@ -107,6 +108,7 @@ namespace ConversationScheme
     {
         public string SpeakerActorId;
         public int NextNodeId;
+        [JsonIgnore][XmlIgnore]public ConversationNode NextNode;
         public List<ConversationOption> Options = new List<ConversationOption>();
         public List<ConversationFunction> Functions = new List<ConversationFunction>();
         public ConditionalBranch conditionalBranch = null;
@@ -118,6 +120,7 @@ namespace ConversationScheme
     {
         public ConversationOption() { NodeType = ConversationNodeType.Option; }
         public int NextNodeId;
+        [JsonIgnore][XmlIgnore] public ConversationNode NextNode;
         public List<ConditionRule> Conditions = new List<ConditionRule>();
         public bool HideOption = false;
         public string BlockText;
@@ -145,7 +148,9 @@ namespace ConversationScheme
     {
         public List<ConditionRule> Conditions = new List<ConditionRule>();
         public int NextNodeIdTrue;
+        [JsonIgnore][XmlIgnore] public ConversationNode NextNodeTrue;
         public int NextNodeIdFalse;
+        [JsonIgnore][XmlIgnore] public ConversationNode NextNodeFalse;
     }
 
     [Serializable]

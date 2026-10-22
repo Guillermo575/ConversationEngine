@@ -1,8 +1,9 @@
 {
-    "name": "GameBox",
-    "rootNamespace": "GameBox",
+    "name": "ConversationEngine.Box",
+    "rootNamespace": "ConversationBox",
     "references": [
         "ConversationEngine",
+        "ConversationEngine.System",
         "Unity.TextMeshPro"
     ],
     "includePlatforms": [],

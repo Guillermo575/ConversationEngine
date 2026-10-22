@@ -2,7 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
-namespace GameBox
+namespace ConversationBox
 {
     public class DialogueBox : MonoBehaviour
     {
