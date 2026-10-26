@@ -387,9 +387,8 @@ GameObject:
   - component: {fileID: 263984819}
   - component: {fileID: 263984821}
   - component: {fileID: 263984820}
-  - component: {fileID: 263984822}
   m_Layer: 5
-  m_Name: Content
+  m_Name: OptionContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -454,19 +453,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &263984822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 263984818}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 433e43f4416e2e64c9f6b87e1f615868, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  btnOption: {fileID: 48856304}
 --- !u!1 &282784222
 GameObject:
   m_ObjectHideFlags: 0
@@ -478,8 +464,9 @@ GameObject:
   - component: {fileID: 282784223}
   - component: {fileID: 282784225}
   - component: {fileID: 282784224}
+  - component: {fileID: 282784226}
   m_Layer: 5
-  m_Name: Content
+  m_Name: TextContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -546,6 +533,22 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &282784226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 282784222}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e746991f884ffad4f8407ec4a3b7b506, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textMeshPro: {fileID: 87529087}
+  rectTransform: {fileID: 282784223}
+  typingSpeed: 0.03
+  fullText: 
 --- !u!1 &331652894
 GameObject:
   m_ObjectHideFlags: 0
@@ -593,9 +596,9 @@ GameObject:
   - component: {fileID: 610212019}
   - component: {fileID: 610212021}
   - component: {fileID: 610212020}
-  - component: {fileID: 610212022}
+  - component: {fileID: 610212023}
   m_Layer: 5
-  m_Name: Panel
+  m_Name: DialogueBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -660,7 +663,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 610212018}
   m_CullTransparentMesh: 1
---- !u!114 &610212022
+--- !u!114 &610212023
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -672,8 +675,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 250b606f8b3bf5645add7bc290eb58f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogueBox: {fileID: 926861252}
-  optionContainer: {fileID: 263984822}
+  dialogueBox: {fileID: 282784226}
+  optionContainer: {fileID: 263984819}
+  btnOption: {fileID: 48856304}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -922,9 +926,8 @@ GameObject:
   - component: {fileID: 926861251}
   - component: {fileID: 926861250}
   - component: {fileID: 926861249}
-  - component: {fileID: 926861252}
   m_Layer: 5
-  m_Name: Scroll View
+  m_Name: MainContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1020,22 +1023,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 926861247}
   m_CullTransparentMesh: 1
---- !u!114 &926861252
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 926861247}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e746991f884ffad4f8407ec4a3b7b506, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  textMeshPro: {fileID: 87529087}
-  rectTransform: {fileID: 282784223}
-  typingSpeed: 0.01
-  fullText: 
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,20 +3,27 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 namespace ConversationBox
 {
-    public class GameBoxManager : MonoBehaviour
+    public class ContainerManager : MonoBehaviour
     {
-        public DialogueBox dialogueBox;
-        public OptionContainer optionContainer;
+        #region Public Variables
+        public ContainerMain dialogueBox;
+        public Transform optionContainer;
+        public GameObject btnOption;
+        #endregion
 
+        #region Private Variables
         private bool TypingOptions = false;
         private List<ConversationNode> lstNodes = new List<ConversationNode>();
         private ConversationNode CursorNode;
         private bool Finalizado = false;
         private GameManager gameManager;
+        #endregion
 
+        #region Unity Methods
         private void Start()
         {
             dialogueBox.StartTyping("adasdada adadadsasda aqeqw131 131231313123 123123131231 dasdadsdad qeqeqweqeqe 12312312312 123123123123123 asdad");
@@ -25,7 +32,7 @@ namespace ConversationBox
         {
             if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished && !TypingOptions)
             {
-                optionContainer.LoadOptions(new List<ConversationScheme.ConversationOption>
+                LoadOptions(new List<ConversationScheme.ConversationOption>
                 {
                     new ConversationScheme.ConversationOption { Text = "Option 1" },
                     new ConversationScheme.ConversationOption { Text = "Option 2" },
@@ -34,6 +41,7 @@ namespace ConversationBox
                 TypingOptions = true;
             }
         }
+        #endregion
 
         #region General Methods
         public void LoadConversation(ConversationManager conversationManager)
@@ -80,6 +88,7 @@ namespace ConversationBox
         }
         #endregion
 
+        #region Conversation Processing Methods
         public void ProcessNode(ConversationNode CursorNode)
         {
             if (CursorNode == null) return;
@@ -95,7 +104,6 @@ namespace ConversationBox
                 case ConversationNodeType.Observation: break;
             }
         }
-
         public void ProcessConditionalBranch(ConditionalBranch conditionalBranch)
         {
             if (conditionalBranch == null) return;
@@ -108,5 +116,31 @@ namespace ConversationBox
                 ProcessNode(conditionalBranch.NextNodeFalse);
             }
         }
+        #endregion
+
+        #region Options Processing Methods
+        public void LoadOptions(List<ConversationOption> lstOptions)
+        {
+            for (int i = optionContainer.childCount - 1; i >= 0; i--)
+            {
+                Transform child = optionContainer.GetChild(i);
+                if (child.gameObject == btnOption)
+                {
+                    child.gameObject.SetActive(false);
+                    continue;
+                }
+                Destroy(child.gameObject);
+            }
+            if (lstOptions == null) return;
+            foreach (var obj in lstOptions)
+            {
+                GameObject optionObject = Instantiate(btnOption, optionContainer);
+                optionObject.SetActive(true);
+                TMP_Text textComponent = optionObject.GetComponentInChildren<TMP_Text>(true);
+                if (textComponent == null) continue;
+                textComponent.text = obj.Text;
+            }
+        }
+        #endregion
     }
 }

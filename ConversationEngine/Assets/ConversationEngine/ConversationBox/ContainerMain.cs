@@ -4,7 +4,7 @@ using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
 namespace ConversationBox
 {
-    public class DialogueBox : MonoBehaviour
+    public class ContainerMain : MonoBehaviour
     {
         #region Variables
         [SerializeField] private TextMeshProUGUI textMeshPro;
