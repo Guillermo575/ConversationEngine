@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 namespace ConversationBox
 {
     public class ContainerManager : MonoBehaviour
@@ -139,6 +140,11 @@ namespace ConversationBox
                 TMP_Text textComponent = optionObject.GetComponentInChildren<TMP_Text>(true);
                 if (textComponent == null) continue;
                 textComponent.text = obj.Text;
+                Button buttonComponent = optionObject.GetComponent<Button>();
+                if (buttonComponent != null)
+                {
+                    buttonComponent.onClick.AddListener(() => ProcessNode(obj.NextNode));
+                }
             }
         }
         #endregion

@@ -10,6 +10,7 @@ namespace ConversationBox
         public static bool ParseBool(string input) => bool.TryParse(input, out var result) ? result : false;
         #endregion
 
+        #region Process 
         public static bool ProcessConditions(ConditionalBranch conditionalBranch)
         {
             if (conditionalBranch.Conditions == null || conditionalBranch.Conditions.Count == 0) return false;
@@ -19,7 +20,6 @@ namespace ConversationBox
             }
             return true;
         }
-
         public static bool ProcessRule(ConditionRule conditionRule)
         {
             if (conditionRule == null) return false;
@@ -32,6 +32,7 @@ namespace ConversationBox
             }
             return false;
         }
+        #endregion
 
         #region Comparations
         public static string getDict(string input)
