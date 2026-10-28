@@ -108,3 +108,123 @@
             - Cuando modifiques un método existente.
 
 ---
+
+# Instrucciones operativas para Copilot (ConversationEngine)
+
+## 1) Alcance estricto (NO salir de aqui)
+Trabaja SOLO dentro de estas carpetas de `ConversationEngine/Assets/ConversationEngine/`:
+- `ConversationBox/`
+- `ConversationScheme/`
+- `Editor/`
+- `System/`
+- `Icons/` (solo imagenes para iconos)
+
+Cualquier carpeta/archivo fuera de esta lista queda fuera de alcance, salvo solicitud explicita del usuario.
+
+---
+
+## 2) Rol de cada modulo
+- `ConversationScheme/`  
+  Modelo de datos canonico de conversaciones y utilidades de nodos.  
+  Cualquier cambio aqui impacta Editor y Runtime.
+
+- `Editor/`  
+  Herramientas de autoria visual (window, graph, inspector, properties, helpers, json).
+
+- `ConversationBox/`  
+  Runtime/UI de dialogos en juego (actualmente en evolucion).
+
+- `System/`  
+  Estado global y variables de juego usadas por el runtime.
+
+- `Icons/`  
+  Solo recursos visuales de iconos. Sin logica.
+
+---
+
+## 3) Regla anti-duplicado (obligatoria)
+Antes de crear codigo nuevo, SIEMPRE busca y reutiliza primero en:
+- `ConversationScheme/ConversationNodeUtility.cs`
+- `Editor/ConversationEditorCore.cs`
+- `Editor/Helper/ConversationEditorHelpers.cs`
+- `Editor/Helper/ConversationFunctionLibrary.cs`
+- Clases existentes de `Editor/Graph`, `Editor/Panel`, `ConversationBox`, `System`
+
+Si existe logica similar:
+- Extiendela o reutilizala.
+- NO la dupliques en una clase/metodo nuevo.
+
+---
+
+## 4) Reglas de ubicacion de codigo
+- Contratos de datos, validaciones, integridad de grafo -> `ConversationScheme/`
+- UI del editor y flujos de autoria -> `Editor/`
+- Ejecucion runtime de conversacion/UI -> `ConversationBox/`
+- Estado/variables globales de juego -> `System/`
+- Imagenes de iconos -> `Icons/`
+
+---
+
+## 5) Reglas de cambios en Editor (obligatorias)
+Para cualquier mutacion de datos en el editor:
+1. Registrar undo ANTES del cambio.
+2. Aplicar la mutacion.
+3. Marcar dirty DESPUES del cambio.
+4. Respetar modo read-only: si esta activo, bloquear escrituras.
+
+Mantener coherencia entre:
+- `ConversationEditorWindow`
+- `ConversationGraphView`
+- `EditorInspector`
+- `EditorProperties`
+
+---
+
+## 6) Reglas de impacto por cambios de esquema
+Si modificas `ConversationScheme/`, debes revisar y ajustar (si aplica):
+- `Editor/` (inspector, graph, serializacion/deserializacion, dropdowns)
+- `ConversationBox/` (consumo runtime de datos)
+- `System/` (si depende de condiciones/variables del esquema)
+
+No dar por terminado un cambio de esquema sin validar impacto en esos modulos.
+
+---
+
+## 7) Estado de madurez (guia de criterio)
+- `ConversationScheme`: estable (base del contrato)
+- `Editor`: estable en uso, en evolucion
+- `ConversationBox`: en construccion
+- `System`: en construccion
+- `Icons`: estable (visual)
+
+Notas:
+- `ConversationBox` puede contener flujos incompletos.
+- `SimpleJsonSerializer` puede estar en evolucion; validar persistencia de campos complejos antes de asumir completitud.
+
+---
+
+## 8) Regla de documento vivo (obligatoria)
+Estas instrucciones deben mantenerse actualizadas al estado vigente del proyecto:
+- Eliminar informacion obsoleta.
+- No registrar historial de cambios aqui.
+- Si se agrega un nuevo proyecto/carpeta mediante un archivo `.asmdef`, actualizar estas instrucciones para:
+  1) incluir el nuevo proyecto/carpeta en el alcance,
+  2) describir su rol,
+  3) definir sus reglas de ubicacion/uso e impacto.
+
+---
+
+## 9) Regla de estilo (aplica solo a codigo tocado)
+Aplicar reglas de estilo y documentacion solo al codigo creado/modificado en la tarea actual.  
+No refactorizar codigo no tocado solo por estilo, salvo solicitud explicita.
+
+---
+
+## 10) Checklist minimo antes de finalizar
+- [ ] Trabaje solo en carpetas permitidas.
+- [ ] Reutilice logica existente antes de crear nueva.
+- [ ] Evite duplicacion de funciones/utilidades.
+- [ ] Si cambie esquema, revise impacto en Editor/Runtime/System.
+- [ ] Si el cambio fue significativo, actualice estas instrucciones (documento vivo).
+
+---
