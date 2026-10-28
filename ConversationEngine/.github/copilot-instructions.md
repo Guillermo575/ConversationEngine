@@ -116,6 +116,7 @@ Trabaja SOLO dentro de estas carpetas de `ConversationEngine/Assets/Conversation
 - `ConversationBox/`
 - `ConversationScheme/`
 - `Editor/`
+- `EditorActor/`
 - `System/`
 - `Icons/` (solo imagenes para iconos)
 
@@ -130,6 +131,9 @@ Cualquier carpeta/archivo fuera de esta lista queda fuera de alcance, salvo soli
 
 - `Editor/`  
   Herramientas de autoria visual (window, graph, inspector, properties, helpers, json).
+
+- `EditorActor/`  
+  Herramientas de autoria visual para archivos `.actor` (window, panel, graph, importador y helpers propios).
 
 - `ConversationBox/`  
   Runtime/UI de dialogos en juego (actualmente en evolucion).
@@ -159,6 +163,7 @@ Si existe logica similar:
 ## 4) Reglas de ubicacion de codigo
 - Contratos de datos, validaciones, integridad de grafo -> `ConversationScheme/`
 - UI del editor y flujos de autoria -> `Editor/`
+- UI del editor de actores y flujos de autoria `.actor` -> `EditorActor/`
 - Ejecucion runtime de conversacion/UI -> `ConversationBox/`
 - Estado/variables globales de juego -> `System/`
 - Imagenes de iconos -> `Icons/`
@@ -224,6 +229,7 @@ No refactorizar codigo no tocado solo por estilo, salvo solicitud explicita.
 - [ ] Trabaje solo en carpetas permitidas.
 - [ ] Reutilice logica existente antes de crear nueva.
 - [ ] Evite duplicacion de funciones/utilidades.
+- [ ] Si cambie `.actor`, revise impacto en `EditorActor/` y su importador/helpers.
 - [ ] Si cambie esquema, revise impacto en Editor/Runtime/System.
 - [ ] Si el cambio fue significativo, actualice estas instrucciones (documento vivo).
 

@@ -2,7 +2,6 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 using ConversationScheme;
-using BodyPartType = ConversationScheme.BodyPart;
 using ConversationEditor.JSON;
 namespace ConversationEditor.Setup
 {
@@ -62,54 +61,6 @@ namespace ConversationEditor.Setup
             Debug.Log($"Created conversation file at: {relativePath}");
         }
 
-        [MenuItem("Assets/Create/ConversationEngine/Actor File", false, 81)]
-        public static void CreateActorFile()
-        {
-            // Get the selected folder path
-            string path = GetSelectedPathOrFallback();
-            // Create a new actor
-            Actor actor = new Actor
-            {
-                Id = "new_actor",
-                Path = "",
-                IconPath = "",
-                SoundEffectPaths = new System.Collections.Generic.List<string>(),
-                BodyParts = new System.Collections.Generic.List<BodyPartType>()
-            };
-            // Add default body parts
-            actor.BodyParts.Add(new BodyPartType
-            {
-                Id = 1,
-                Name = "main",
-                AttachToPivotId = 0,
-                CurrentResourceId = "",
-                NestedResources = new System.Collections.Generic.List<BodyPartResource>(),
-                PivotPoints = new System.Collections.Generic.List<PivotPoint>()
-            });
-            // Serialize to JSON
-            string json = ConversationJsonSettings.Serialize(actor);
-            // Find unique filename
-            string fileName = "NewActor.actor";
-            string fullPath = Path.Combine(path, fileName);
-            int counter = 1;
-            while (File.Exists(fullPath))
-            {
-                fileName = $"NewActor{counter}.actor";
-                fullPath = Path.Combine(path, fileName);
-                counter++;
-            }
-            // Write file
-            File.WriteAllText(fullPath, json);
-            // Refresh and select the asset
-            AssetDatabase.Refresh();
-            // Convert to relative path for Unity
-            string relativePath = "Assets" + fullPath.Substring(Application.dataPath.Length);
-            // Select the newly created asset
-            Object asset = AssetDatabase.LoadAssetAtPath<Object>(relativePath);
-            Selection.activeObject = asset;
-            EditorGUIUtility.PingObject(asset);
-            Debug.Log($"Created actor file at: {relativePath}");
-        }
         /// <summary>
         /// Gets the selected folder path in the Project window, or falls back to Assets folder
         /// </summary>

@@ -21,7 +21,7 @@ Resource panel visibility can be toggled from the editor UI:
 
 ### Supported File Types
 - **.conversation**: New standardfile extension for conversation files
-- **.actor**: Actor definition file extension
+- **.actor**: Actor definition file extension handled by the dedicated Actor Editor window
 - **.json**: Legacy format, still fully supported
 
 ### File Operations
@@ -38,6 +38,14 @@ Resource panel visibility can be toggled from the editor UI:
 - `Description` uses a multi-line word-wrapped text area that expands to panel width.
 - In both the editor center panel and the Unity Inspector preview, metadata is shown above the node graph.
 - Title text uses a bold, slightly larger style than description text (styles provided by `ConversationNodeStyle`)
+
+### Actor Editor
+- Open from `Window/ConversationEngine/Actor Editor`
+- Double-clicking a `.actor` file opens the actor editor
+- Toolbar actions: `New`, `Open`, `Save`, `Save As`
+- Left panel manages actor data, body parts, nested resources, and pivot points
+- Right graph previews actor composition, body part bounds, and draggable pivot points
+- Pivot drag updates `BodyPart.PivotPoints` in real time
 
 ## Features
 

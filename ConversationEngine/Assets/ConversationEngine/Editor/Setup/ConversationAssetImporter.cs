@@ -73,9 +73,7 @@ namespace ConversationEditor.Setup
     public static class ConversationProjectIconHandler
     {
         private const string ConversationIconPath = "Assets/ConversationEngine/Icons/conversation.png";
-        private const string ActorIconPath = "Assets/ConversationEngine/Icons/actor.png";
         private static Texture2D conversationIcon;
-        private static Texture2D actorIcon;
         static ConversationProjectIconHandler()
         {
             EditorApplication.projectWindowItemOnGUI += OnProjectWindowItemGUI;
@@ -84,7 +82,6 @@ namespace ConversationEditor.Setup
         private static void LoadIcons()
         {
             if (conversationIcon == null) conversationIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(ConversationIconPath);
-            if (actorIcon == null) actorIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(ActorIconPath);
         }
         private static void OnProjectWindowItemGUI(string guid, Rect selectionRect)
         {
@@ -100,7 +97,6 @@ namespace ConversationEditor.Setup
         private static Texture2D GetIconForAssetPath(string assetPath)
         {
             if (assetPath.EndsWith(".conversation", StringComparison.OrdinalIgnoreCase)) return conversationIcon;
-            if (assetPath.EndsWith(".actor", StringComparison.OrdinalIgnoreCase)) return actorIcon;
             return null;
         }
         private static Rect GetProjectIconRect(Rect selectionRect)
