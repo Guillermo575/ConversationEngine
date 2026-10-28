@@ -1,0 +1,85 @@
+{
+  "Id": "actor1",
+  "Path": "actor1.actor",
+  "IconPath": "actor1.png",
+  "Size": {
+    "x": 300.0,
+    "y": 400.0
+  }, 
+  "SoundEffectPaths": [],
+  "BodyParts": [
+    {
+	  "Id": 1,
+      "Name": "main",
+      "AttachToPivotId": 0,
+      "CurrentResourceId": "",
+      "NestedResources": [],
+      "PivotPoints": [
+        { "Id": 1, "Name": "main", "X": 0, "Y": -80 }
+      ]
+    },
+    {
+	  "Id": 2,
+      "Name": "torso",
+      "AttachToPivotId": 1,
+      "CurrentResourceId": "torso_default",
+      "NestedResources": [
+        {
+          "Id": "torso_default",
+          "Path": "BodyPart_Torso.png",
+		  "PivotPoints": [
+			{ "Id": 2, "Name": "neck_socket", "X": 0, "Y": 180 }
+		  ]
+        }
+      ],
+      "PivotPoints": [
+        { "Id": 2, "Name": "neck_socket", "X": 0, "Y": 180 }
+      ]
+    },
+    {
+	  "Id": 3,
+      "Name": "head",
+      "AttachToPivotId": 2,
+      "CurrentResourceId": "head_default",
+      "NestedResources": [
+        {
+          "Id": "head_default",
+          "Path": "BodyPart_Head.png",
+		  "PivotPoints": []
+        }
+      ],
+      "PivotPoints": [
+        { "Id": 3, "Name": "eyes_socket", "X": 0, "Y": 20 },
+        { "Id": 4, "Name": "mouth_socket", "X": 0, "Y": -60 }
+      ]
+    },
+    {
+	  "Id": 4,
+      "Name": "eyes",
+      "AttachToPivotId": 3,
+      "CurrentResourceId": "eyes_default",
+      "NestedResources": [
+        {
+          "Id": "eyes_default",
+          "Path": "BodyPart_Eyes.png",
+		  "PivotPoints": []
+        }
+      ],
+      "PivotPoints": []
+    },
+    {
+	  "Id": 5,
+      "Name": "mouth",
+      "AttachToPivotId": 4,
+      "CurrentResourceId": "mouth_default",
+      "NestedResources": [
+        {
+          "Id": "mouth_default",
+          "Path": "BodyPart_Mouth.png",
+		  "PivotPoints": []
+        }
+      ],
+      "PivotPoints": []
+    }
+  ]
+}
