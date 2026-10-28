@@ -79,8 +79,9 @@ namespace ConversationEditor.Setup
             // Add default body parts
             actor.BodyParts.Add(new BodyPartType
             {
-                Id = "body",
-                AttachToPivotId = "",
+                Id = 1,
+                Name = "main",
+                AttachToPivotId = 0,
                 CurrentResourceId = "",
                 NestedResources = new System.Collections.Generic.List<BodyPartResource>(),
                 PivotPoints = new System.Collections.Generic.List<PivotPoint>()

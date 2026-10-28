@@ -59,13 +59,15 @@ namespace ConversationScheme
         public string IconPath;
         public List<string> SoundEffectPaths = new List<string>();
         public List<BodyPart> BodyParts = new List<BodyPart>();
+        public Vector2 Size;
     }
 
     [Serializable]
     public class BodyPart
     {
-        public string Id;
-        public string AttachToPivotId;
+        public int Id;
+        public string Name;
+        public int AttachToPivotId;
         public List<BodyPartResource> NestedResources = new List<BodyPartResource>();
         public string CurrentResourceId;
         public List<PivotPoint> PivotPoints = new List<PivotPoint>();
@@ -80,7 +82,8 @@ namespace ConversationScheme
     [Serializable]
     public class PivotPoint
     {
-        public string Id;
+        public int Id;
+        public string Name;
         public float X;
         public float Y;
     }
