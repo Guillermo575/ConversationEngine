@@ -59,33 +59,33 @@ namespace ConversationScheme
         public string IconPath;
         public List<string> SoundEffectPaths = new List<string>();
         public List<BodyPart> BodyParts = new List<BodyPart>();
-        public Vector2 Size;
+        public Vector2 Size; // Actor canvas size; the center is the main actor pivot point (for example, feet for full body characters or neck for bust characters)
     }
 
     [Serializable]
     public class BodyPart
     {
-        public int Id;
-        public string Name;
-        public int AttachToPivotId;
-        public List<BodyPartResource> NestedResources = new List<BodyPartResource>();
-        public string CurrentResourceId;
-        public List<PivotPoint> PivotPoints = new List<PivotPoint>();
+        public int Id; // Unique BodyPart id inside the Actor (used by the editor)
+        public string Name; // Descriptive BodyPart name
+        public int AttachToPivotId; // PivotPoint id where this BodyPart will be attached
+        public List<BodyPartResource> NestedResources = new List<BodyPartResource>(); // Resource variants for this BodyPart (for example, different facial expressions)
+        public string CurrentResourceId; // Active resource id for this BodyPart (if missing or not found, the first resource is used)
+        public List<PivotPoint> PivotPoints = new List<PivotPoint>(); // Pivot points used to attach other BodyParts; PivotPoint (0,0) is relative to the active BodyPartResource center, not the Actor
     }
 
     [Serializable]
     public class BodyPartResource : Resource
     {
-        public List<PivotPoint> PivotPoints = new List<PivotPoint>();
+        public List<PivotPoint> PivotPoints = new List<PivotPoint>(); // Pivot points that can override parent BodyPart pivots when this resource is active (for example, hat offset adjustments)
     }
 
     [Serializable]
     public class PivotPoint
     {
-        public int Id;
-        public string Name;
-        public float X;
-        public float Y;
+        public int Id; // Unique PivotPoint id inside the BodyPart (used by the editor)
+        public string Name; // Descriptive PivotPoint name
+        public float X; // PivotPoint X position relative to the BodyPart
+        public float Y; // PivotPoint Y position relative to the BodyPart
     }
 
     [Serializable]
