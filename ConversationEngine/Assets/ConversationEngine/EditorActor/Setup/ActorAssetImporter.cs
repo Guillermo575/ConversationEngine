@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using ConversationEditorActor.Graph;
 using ConversationEditorActor.Helper;
+using ConversationScheme;
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEditor.Callbacks;
@@ -52,6 +54,103 @@ namespace ConversationEditorActor.Setup
                 return false;
             }
         }
+    }
+    [CustomEditor(typeof(ActorAssetImporter))]
+    public class ActorAssetImporterEditor : ScriptedImporterEditor
+    {
+        #region Constants
+        private const float previewHeight = 560f;
+        #endregion
+
+        #region State
+        private Actor actorData;
+        private ActorEditorGraph actorPreviewGraph;
+        private bool isValidActor;
+        #endregion
+
+        #region Unity
+        public override bool showImportedObject => false;
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            if (actorPreviewGraph == null) actorPreviewGraph = new ActorEditorGraph();
+            LoadActorData();
+        }
+        public override void OnInspectorGUI()
+        {
+            DrawHeader();
+            if (!isValidActor)
+            {
+                EditorGUILayout.HelpBox("The selected file could not be loaded as a valid actor asset.", MessageType.Warning);
+                ApplyRevertGUI();
+                return;
+            }
+            DrawActorReadOnlyInfo();
+            DrawPreview();
+            DrawActions();
+            ApplyRevertGUI();
+        }
+        #endregion
+
+        #region Draw
+        private void DrawHeader()
+        {
+            var importer = target as ActorAssetImporter;
+            EditorGUILayout.LabelField(new GUIContent("Actor Preview", "Read-only preview for the selected actor file."), EditorStyles.boldLabel);
+            if (importer == null) return;
+            EditorGUILayout.LabelField(new GUIContent(Path.GetFileName(importer.assetPath), "Selected actor file."));
+            EditorGUILayout.Space(4f);
+        }
+        private void DrawActorReadOnlyInfo()
+        {
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField(new GUIContent("Actor", "Actor data read-only summary."), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(new GUIContent("Id", "Actor id."), new GUIContent(actorData.Id ?? ""));
+            EditorGUILayout.LabelField(new GUIContent("Path", "Actor file path field."), new GUIContent(actorData.Path ?? ""));
+            EditorGUILayout.LabelField(new GUIContent("Icon Path", "Actor icon resource path."), new GUIContent(actorData.IconPath ?? ""));
+            EditorGUILayout.LabelField(new GUIContent("Canvas Size", "Actor canvas size."), new GUIContent($"X: {actorData.Size.x:0.##}  Y: {actorData.Size.y:0.##}"));
+            int bodyPartCount = actorData.BodyParts == null ? 0 : actorData.BodyParts.Count;
+            EditorGUILayout.LabelField(new GUIContent("BodyParts", "Total body parts in actor."), new GUIContent(bodyPartCount.ToString()));
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(6f);
+        }
+        private void DrawPreview()
+        {
+            var importer = target as ActorAssetImporter;
+            if (importer == null) return;
+            EditorGUILayout.LabelField(new GUIContent("Preview", "Rendered actor composition from body part resources."), EditorStyles.boldLabel);
+            Rect previewRect = GUILayoutUtility.GetRect(10f, previewHeight, GUILayout.ExpandWidth(true));
+            actorPreviewGraph.DrawReadOnlyPreview(previewRect, actorData, importer.assetPath);
+        }
+        private void DrawActions()
+        {
+            var importer = target as ActorAssetImporter;
+            if (importer == null) return;
+            EditorGUILayout.Space(6f);
+            if (GUILayout.Button(new GUIContent("Open Actor Editor", "Open this actor file in the full editor."), GUILayout.Height(24f))) ActorEditorWindow.OpenActorFile(importer.assetPath);
+        }
+        #endregion
+
+        #region Data
+        private void LoadActorData()
+        {
+            isValidActor = false;
+            actorData = null;
+            var importer = target as ActorAssetImporter;
+            if (importer == null) return;
+            try
+            {
+                string json = File.ReadAllText(importer.assetPath);
+                actorData = ActorEditorHelpers.DeserializeActor(json);
+                isValidActor = actorData != null;
+            }
+            catch
+            {
+                actorData = null;
+                isValidActor = false;
+            }
+        }
+        #endregion
     }
     [InitializeOnLoad]
     public static class ActorProjectIconHandler

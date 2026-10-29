@@ -46,6 +46,7 @@ Resource panel visibility can be toggled from the editor UI:
 - Left panel manages actor data, body parts, nested resources, and pivot points
 - Right graph previews actor composition, body part bounds, and draggable pivot points
 - Pivot drag updates `BodyPart.PivotPoints` in real time
+- Selecting a `.actor` file in the Project window shows a read-only Inspector preview with actor labels and rendered composition without edit overlays
 
 ## Features
 

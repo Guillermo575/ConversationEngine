@@ -89,7 +89,7 @@ namespace ConversationEditorActor
             EditorGUI.DrawRect(splitterRect, new Color(0.2f, 0.2f, 0.2f, 1f));
             HandleSplitter(splitterRect, layoutRect);
             GUILayout.BeginArea(rightRect);
-            bool graphChanged = actorEditorGraph.Draw(new Rect(0f, 0f, rightRect.width, rightRect.height), actorData, selectedBodyPartId, currentAssetPath, hiddenBodyPartIds);
+            bool graphChanged = actorEditorGraph.Draw(new Rect(0f, 0f, rightRect.width, rightRect.height), actorData, ref selectedBodyPartId, currentAssetPath, hiddenBodyPartIds);
             GUILayout.EndArea();
             if (panelChanged || graphChanged) MarkDirty();
         }

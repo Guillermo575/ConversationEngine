@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.Generic;
 using System.Linq;
 using ConversationEditorActor.Helper;
 using ConversationScheme;
@@ -10,6 +9,11 @@ namespace ConversationEditorActor.Graph
 {
     public class ActorEditorGraph
     {
+        #region Constants
+        private const float bodyPartSelectTriangleSize = 30f;
+        private const float pivotHitSize = 28f;
+        #endregion
+
         #region Inner Types
         private class BodyPartRenderInfo
         {
@@ -35,7 +39,16 @@ namespace ConversationEditorActor.Graph
         #endregion
 
         #region Draw
-        public bool Draw(Rect contentRect, Actor actor, int selectedBodyPartId, string actorAssetPath, HashSet<int> hiddenBodyPartIds)
+        public bool Draw(Rect contentRect, Actor actor, ref int selectedBodyPartId, string actorAssetPath, HashSet<int> hiddenBodyPartIds)
+        {
+            return DrawInternal(contentRect, actor, ref selectedBodyPartId, actorAssetPath, hiddenBodyPartIds, false, true);
+        }
+        public void DrawReadOnlyPreview(Rect contentRect, Actor actor, string actorAssetPath)
+        {
+            int previewSelection = 0;
+            DrawInternal(contentRect, actor, ref previewSelection, actorAssetPath, new HashSet<int>(), true, false);
+        }
+        private bool DrawInternal(Rect contentRect, Actor actor, ref int selectedBodyPartId, string actorAssetPath, HashSet<int> hiddenBodyPartIds, bool isReadOnly, bool showSupportVisuals)
         {
             if (actor == null) return false;
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
@@ -61,27 +74,32 @@ namespace ConversationEditorActor.Graph
             {
                 if (hiddenBodyPartIds.Contains(renderInfo.BodyPart.Id)) continue;
                 visibleRenderInfos.Add(renderInfo);
-                DrawBodyPart(renderInfo, selectedBodyPartId == renderInfo.BodyPart.Id);
+                DrawBodyPart(renderInfo, selectedBodyPartId == renderInfo.BodyPart.Id, showSupportVisuals);
             }
+            if (showSupportVisuals) foreach (var renderInfo in visibleRenderInfos) DrawBodyPartSelectionTriangle(renderInfo, ref selectedBodyPartId, isReadOnly);
             List<PivotHandleInfo> pivotHandles = new List<PivotHandleInfo>();
-            foreach (var renderInfo in visibleRenderInfos)
+            if (showSupportVisuals)
             {
-                var effectivePivots = ActorEditorHelpers.GetEffectivePivotPoints(renderInfo.BodyPart, renderInfo.ActiveResource);
-                foreach (var pivot in effectivePivots)
+                foreach (var renderInfo in visibleRenderInfos)
                 {
-                    Vector2 pivotPosition = new Vector2(renderInfo.Center.x + pivot.X * zoom, renderInfo.Center.y - pivot.Y * zoom);
-                    Rect pivotRect = new Rect(pivotPosition.x - 14f, pivotPosition.y - 14f, 28f, 28f);
-                    pivotHandles.Add(new PivotHandleInfo
+                    var effectivePivots = ActorEditorHelpers.GetEffectivePivotPoints(renderInfo.BodyPart, renderInfo.ActiveResource);
+                    foreach (var pivot in effectivePivots)
                     {
-                        PivotPoint = FindEditablePivot(renderInfo.BodyPart, pivot.Id),
-                        BodyPartId = renderInfo.BodyPart.Id,
-                        Position = pivotPosition,
-                        HitRect = pivotRect
-                    });
-                    DrawPivotDiamond(pivotPosition, selectedBodyPartId == renderInfo.BodyPart.Id);
+                        Vector2 pivotPosition = new Vector2(renderInfo.Center.x + pivot.X * zoom, renderInfo.Center.y - pivot.Y * zoom);
+                        float halfHitSize = pivotHitSize * 0.5f;
+                        Rect pivotRect = new Rect(pivotPosition.x - halfHitSize, pivotPosition.y - halfHitSize, pivotHitSize, pivotHitSize);
+                        pivotHandles.Add(new PivotHandleInfo
+                        {
+                            PivotPoint = FindEditablePivot(renderInfo.BodyPart, pivot.Id),
+                            BodyPartId = renderInfo.BodyPart.Id,
+                            Position = pivotPosition,
+                            HitRect = pivotRect
+                        });
+                        DrawPivotDiamond(pivotPosition, selectedBodyPartId == renderInfo.BodyPart.Id);
+                    }
                 }
             }
-            changed |= HandlePivotDrag(graphRect, pivotHandles);
+            if (!isReadOnly && showSupportVisuals) changed |= HandlePivotDrag(graphRect, pivotHandles);
             return changed;
         }
         private void DrawControls(Rect controlsRect)
@@ -101,15 +119,35 @@ namespace ConversationEditorActor.Graph
             Handles.DrawAAPolyLine(2f, new Vector3(position.x - 30f, position.y), new Vector3(position.x + 30f, position.y));
             Handles.DrawAAPolyLine(2f, new Vector3(position.x, position.y - 30f), new Vector3(position.x, position.y + 30f));
         }
-        private void DrawBodyPart(BodyPartRenderInfo renderInfo, bool selected)
+        private void DrawBodyPart(BodyPartRenderInfo renderInfo, bool selected, bool showSupportVisuals)
         {
             if (renderInfo.Texture != null) GUI.DrawTexture(renderInfo.Rect, renderInfo.Texture, ScaleMode.StretchToFill, true);
+            if (!showSupportVisuals) return;
             Color borderColor = selected ? new Color(0.1f, 1f, 0.1f, 1f) : new Color(0.1f, 1f, 0.1f, 0.5f);
             Handles.color = borderColor;
             Handles.DrawAAPolyLine(2f, new Vector3(renderInfo.Rect.xMin, renderInfo.Rect.yMin), new Vector3(renderInfo.Rect.xMax, renderInfo.Rect.yMin), new Vector3(renderInfo.Rect.xMax, renderInfo.Rect.yMax), new Vector3(renderInfo.Rect.xMin, renderInfo.Rect.yMax), new Vector3(renderInfo.Rect.xMin, renderInfo.Rect.yMin));
             GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
             labelStyle.normal.textColor = borderColor;
             GUI.Label(new Rect(renderInfo.Rect.xMin + 4f, renderInfo.Rect.yMin + 2f, renderInfo.Rect.width - 8f, 16f), renderInfo.BodyPart.Name + " [" + renderInfo.BodyPart.Id + "]", labelStyle);
+        }
+        private void DrawBodyPartSelectionTriangle(BodyPartRenderInfo renderInfo, ref int selectedBodyPartId, bool isReadOnly)
+        {
+            float triangleSize = Mathf.Min(bodyPartSelectTriangleSize, Mathf.Min(renderInfo.Rect.width, renderInfo.Rect.height));
+            Vector3 corner = new Vector3(renderInfo.Rect.xMax, renderInfo.Rect.yMax);
+            Vector3 left = new Vector3(renderInfo.Rect.xMax - triangleSize, renderInfo.Rect.yMax);
+            Vector3 top = new Vector3(renderInfo.Rect.xMax, renderInfo.Rect.yMax - triangleSize);
+            bool isSelected = selectedBodyPartId == renderInfo.BodyPart.Id;
+            Color triangleColor = isSelected ? new Color(0.1f, 1f, 0.1f, 1f) : new Color(0.1f, 1f, 0.1f, 0.7f);
+            Handles.color = triangleColor;
+            Handles.DrawAAConvexPolygon(corner, left, top);
+            Rect hitRect = new Rect(renderInfo.Rect.xMax - triangleSize, renderInfo.Rect.yMax - triangleSize, triangleSize, triangleSize);
+            Event currentEvent = Event.current;
+            if (currentEvent == null) return;
+            if (isReadOnly) return;
+            if (currentEvent.type != EventType.MouseDown || currentEvent.button != 0) return;
+            if (!hitRect.Contains(currentEvent.mousePosition)) return;
+            selectedBodyPartId = renderInfo.BodyPart.Id;
+            currentEvent.Use();
         }
         private void DrawPivotDiamond(Vector2 position, bool selected)
         {
