@@ -204,6 +204,7 @@ namespace ConversationEditorActor.Panel
                 EditorGUILayout.BeginVertical("box");
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(new GUIContent("Pivot " + i, "Editable pivot point."), EditorStyles.miniBoldLabel);
+                EditorGUILayout.LabelField(new GUIContent("Id: " + pivotPoint.Id, "Pivot id used for attachments and overrides."), EditorStyles.miniLabel, GUILayout.Width(56f));
                 if (GUILayout.Button(new GUIContent("X", "Delete this pivot point."), GUILayout.Width(24f)))
                 {
                     pivotPoints.RemoveAt(i);
@@ -215,10 +216,13 @@ namespace ConversationEditorActor.Panel
                 }
                 EditorGUILayout.EndHorizontal();
                 EditorGUI.BeginChangeCheck();
-                pivotPoint.Id = EditorGUILayout.IntField(new GUIContent("Id", "Pivot id. Resource pivots can override by same id."), pivotPoint.Id);
                 pivotPoint.Name = EditorGUILayout.TextField(new GUIContent("Name", "Pivot descriptive name."), pivotPoint.Name);
-                pivotPoint.X = EditorGUILayout.FloatField(new GUIContent("X", "Horizontal local pivot position."), pivotPoint.X);
-                pivotPoint.Y = EditorGUILayout.FloatField(new GUIContent("Y", "Vertical local pivot position."), pivotPoint.Y);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(new GUIContent("X", "Horizontal local pivot position."), GUILayout.Width(14f));
+                pivotPoint.X = EditorGUILayout.FloatField(pivotPoint.X);
+                EditorGUILayout.LabelField(new GUIContent("Y", "Vertical local pivot position."), GUILayout.Width(14f));
+                pivotPoint.Y = EditorGUILayout.FloatField(pivotPoint.Y);
+                EditorGUILayout.EndHorizontal();
                 if (EditorGUI.EndChangeCheck()) changed = true;
                 EditorGUILayout.EndVertical();
             }
