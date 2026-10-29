@@ -56,11 +56,16 @@ namespace ConversationEditorActor.Graph
             Vector2 actorMainPivot = actorRect.center;
             DrawMainPivot(actorMainPivot);
             Dictionary<int, BodyPartRenderInfo> renderMap = BuildRenderMap(actor, actorMainPivot, actorAssetPath);
-            List<PivotHandleInfo> pivotHandles = new List<PivotHandleInfo>();
+            List<BodyPartRenderInfo> visibleRenderInfos = new List<BodyPartRenderInfo>();
             foreach (var renderInfo in renderMap.Values)
             {
                 if (hiddenBodyPartIds.Contains(renderInfo.BodyPart.Id)) continue;
+                visibleRenderInfos.Add(renderInfo);
                 DrawBodyPart(renderInfo, selectedBodyPartId == renderInfo.BodyPart.Id);
+            }
+            List<PivotHandleInfo> pivotHandles = new List<PivotHandleInfo>();
+            foreach (var renderInfo in visibleRenderInfos)
+            {
                 var effectivePivots = ActorEditorHelpers.GetEffectivePivotPoints(renderInfo.BodyPart, renderInfo.ActiveResource);
                 foreach (var pivot in effectivePivots)
                 {
