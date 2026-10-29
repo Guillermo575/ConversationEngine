@@ -54,7 +54,7 @@ namespace ConversationEditorActor.Graph
             Handles.color = Color.black;
             Handles.DrawAAPolyLine(2f, new Vector3(actorRect.xMin, actorRect.yMin), new Vector3(actorRect.xMax, actorRect.yMin), new Vector3(actorRect.xMax, actorRect.yMax), new Vector3(actorRect.xMin, actorRect.yMax), new Vector3(actorRect.xMin, actorRect.yMin));
             Vector2 actorMainPivot = actorRect.center;
-            DrawMainPivot(actorMainPivot);
+            //DrawMainPivot(actorMainPivot);
             Dictionary<int, BodyPartRenderInfo> renderMap = BuildRenderMap(actor, actorMainPivot, actorAssetPath);
             List<BodyPartRenderInfo> visibleRenderInfos = new List<BodyPartRenderInfo>();
             foreach (var renderInfo in renderMap.Values)
