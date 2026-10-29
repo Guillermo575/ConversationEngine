@@ -35,9 +35,10 @@ namespace ConversationEditorActor.Graph
         #endregion
 
         #region Draw
-        public bool Draw(Rect contentRect, Actor actor, int selectedBodyPartId, string actorAssetPath)
+        public bool Draw(Rect contentRect, Actor actor, int selectedBodyPartId, string actorAssetPath, HashSet<int> hiddenBodyPartIds)
         {
             if (actor == null) return false;
+            if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
             bool changed = false;
             Rect controlsRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 26f);
             Rect graphRect = new Rect(contentRect.x, contentRect.y + 28f, contentRect.width, contentRect.height - 28f);
@@ -58,12 +59,13 @@ namespace ConversationEditorActor.Graph
             List<PivotHandleInfo> pivotHandles = new List<PivotHandleInfo>();
             foreach (var renderInfo in renderMap.Values)
             {
+                if (hiddenBodyPartIds.Contains(renderInfo.BodyPart.Id)) continue;
                 DrawBodyPart(renderInfo, selectedBodyPartId == renderInfo.BodyPart.Id);
                 var effectivePivots = ActorEditorHelpers.GetEffectivePivotPoints(renderInfo.BodyPart, renderInfo.ActiveResource);
                 foreach (var pivot in effectivePivots)
                 {
                     Vector2 pivotPosition = new Vector2(renderInfo.Center.x + pivot.X * zoom, renderInfo.Center.y - pivot.Y * zoom);
-                    Rect pivotRect = new Rect(pivotPosition.x - 8f, pivotPosition.y - 8f, 16f, 16f);
+                    Rect pivotRect = new Rect(pivotPosition.x - 14f, pivotPosition.y - 14f, 28f, 28f);
                     pivotHandles.Add(new PivotHandleInfo
                     {
                         PivotPoint = FindEditablePivot(renderInfo.BodyPart, pivot.Id),
@@ -74,7 +76,7 @@ namespace ConversationEditorActor.Graph
                     DrawPivotDiamond(pivotPosition, selectedBodyPartId == renderInfo.BodyPart.Id);
                 }
             }
-            changed |= HandlePivotDrag(graphRect, pivotHandles, selectedBodyPartId);
+            changed |= HandlePivotDrag(graphRect, pivotHandles);
             return changed;
         }
         private void DrawControls(Rect controlsRect)
@@ -106,7 +108,7 @@ namespace ConversationEditorActor.Graph
         }
         private void DrawPivotDiamond(Vector2 position, bool selected)
         {
-            float size = selected ? 9f : 7f;
+            float size = selected ? 13f : 11f;
             Vector3 top = new Vector3(position.x, position.y - size);
             Vector3 right = new Vector3(position.x + size, position.y);
             Vector3 bottom = new Vector3(position.x, position.y + size);
@@ -188,7 +190,7 @@ namespace ConversationEditorActor.Graph
         #endregion
 
         #region Interaction
-        private bool HandlePivotDrag(Rect graphRect, List<PivotHandleInfo> pivotHandles, int selectedBodyPartId)
+        private bool HandlePivotDrag(Rect graphRect, List<PivotHandleInfo> pivotHandles)
         {
             Event currentEvent = Event.current;
             if (currentEvent == null) return false;
@@ -200,7 +202,6 @@ namespace ConversationEditorActor.Graph
                 {
                     if (!pivotHandles[i].HitRect.Contains(currentEvent.mousePosition)) continue;
                     if (pivotHandles[i].PivotPoint == null) continue;
-                    if (selectedBodyPartId != 0 && pivotHandles[i].BodyPartId != selectedBodyPartId) continue;
                     target = pivotHandles[i];
                     break;
                 }

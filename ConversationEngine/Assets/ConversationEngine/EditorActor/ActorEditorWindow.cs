@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.Generic;
 using ConversationEditorActor.Graph;
 using ConversationEditorActor.Helper;
 using ConversationEditorActor.Panel;
@@ -16,6 +17,7 @@ namespace ConversationEditorActor
         private float leftPanelWidth = 360f;
         private bool resizingSplitter;
         private int selectedBodyPartId = 1;
+        private HashSet<int> hiddenBodyPartIds = new HashSet<int>();
         private ActorEditorPanel actorEditorPanel;
         private ActorEditorGraph actorEditorGraph;
         #endregion
@@ -45,7 +47,9 @@ namespace ConversationEditorActor
             if (actorEditorPanel == null) actorEditorPanel = new ActorEditorPanel();
             if (actorEditorGraph == null) actorEditorGraph = new ActorEditorGraph();
             if (actorData == null) actorData = ActorEditorHelpers.CreateDefaultActor();
+            if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
             if (selectedBodyPartId == 0 && actorData.BodyParts != null && actorData.BodyParts.Count > 0) selectedBodyPartId = actorData.BodyParts[0].Id;
+            SyncHiddenBodyPartIds();
             saveChangesMessage = "Do you want to save changes to the current actor file?";
             UpdateWindowDirtyState();
         }
@@ -79,13 +83,13 @@ namespace ConversationEditorActor
             Rect splitterRect = new Rect(leftRect.xMax, layoutRect.y, 4f, layoutRect.height);
             Rect rightRect = new Rect(splitterRect.xMax, layoutRect.y, layoutRect.width - leftPanelWidth - splitterRect.width, layoutRect.height);
             GUILayout.BeginArea(leftRect);
-            bool panelChanged = actorEditorPanel.Draw(actorData, ref selectedBodyPartId);
+            bool panelChanged = actorEditorPanel.Draw(actorData, ref selectedBodyPartId, hiddenBodyPartIds);
             GUILayout.EndArea();
             EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeHorizontal);
             EditorGUI.DrawRect(splitterRect, new Color(0.2f, 0.2f, 0.2f, 1f));
             HandleSplitter(splitterRect, layoutRect);
             GUILayout.BeginArea(rightRect);
-            bool graphChanged = actorEditorGraph.Draw(new Rect(0f, 0f, rightRect.width, rightRect.height), actorData, selectedBodyPartId, currentAssetPath);
+            bool graphChanged = actorEditorGraph.Draw(new Rect(0f, 0f, rightRect.width, rightRect.height), actorData, selectedBodyPartId, currentAssetPath, hiddenBodyPartIds);
             GUILayout.EndArea();
             if (panelChanged || graphChanged) MarkDirty();
         }
@@ -113,6 +117,7 @@ namespace ConversationEditorActor
             if (!ConfirmProceedWithUnsavedChanges()) return;
             actorData = ActorEditorHelpers.CreateDefaultActor();
             currentAssetPath = "";
+            hiddenBodyPartIds.Clear();
             isDirty = false;
             UpdateWindowDirtyState();
             selectedBodyPartId = actorData.BodyParts.Count > 0 ? actorData.BodyParts[0].Id : 0;
@@ -141,6 +146,8 @@ namespace ConversationEditorActor
             string json = File.ReadAllText(absolutePath);
             actorData = ActorEditorHelpers.DeserializeActor(json);
             currentAssetPath = ActorEditorHelpers.ToAssetPath(absolutePath);
+            hiddenBodyPartIds.Clear();
+            SyncHiddenBodyPartIds();
             isDirty = false;
             UpdateWindowDirtyState();
             selectedBodyPartId = actorData.BodyParts.Count > 0 ? actorData.BodyParts[0].Id : 0;
@@ -195,6 +202,27 @@ namespace ConversationEditorActor
             if (isDirty) return;
             isDirty = true;
             UpdateWindowDirtyState();
+        }
+        private void SyncHiddenBodyPartIds()
+        {
+            if (actorData?.BodyParts == null)
+            {
+                hiddenBodyPartIds.Clear();
+                return;
+            }
+            HashSet<int> existingIds = new HashSet<int>();
+            foreach (var bodyPart in actorData.BodyParts)
+            {
+                if (bodyPart == null) continue;
+                existingIds.Add(bodyPart.Id);
+            }
+            List<int> idsToRemove = new List<int>();
+            foreach (var hiddenId in hiddenBodyPartIds)
+            {
+                if (existingIds.Contains(hiddenId)) continue;
+                idsToRemove.Add(hiddenId);
+            }
+            foreach (var hiddenId in idsToRemove) hiddenBodyPartIds.Remove(hiddenId);
         }
         public override void SaveChanges()
         {

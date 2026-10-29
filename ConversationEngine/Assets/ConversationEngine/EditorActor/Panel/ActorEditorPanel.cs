@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.Generic;
 using System.Linq;
 using ConversationScheme;
 using UnityEditor;
@@ -14,16 +13,17 @@ namespace ConversationEditorActor.Panel
         #endregion
 
         #region Draw
-        public bool Draw(Actor actor, ref int selectedBodyPartId)
+        public bool Draw(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
         {
             if (actor == null) return false;
+            if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
             bool changed = false;
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             changed |= DrawActorFields(actor);
             EditorGUILayout.Space(6f);
-            changed |= DrawBodyPartList(actor, ref selectedBodyPartId);
+            changed |= DrawBodyPartList(actor, ref selectedBodyPartId, hiddenBodyPartIds);
             EditorGUILayout.Space(6f);
-            changed |= DrawSelectedBodyPart(actor, selectedBodyPartId);
+            changed |= DrawSelectedBodyPart(actor, ref selectedBodyPartId, hiddenBodyPartIds);
             EditorGUILayout.EndScrollView();
             return changed;
         }
@@ -63,7 +63,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.EndVertical();
             return changed;
         }
-        private bool DrawBodyPartList(Actor actor, ref int selectedBodyPartId)
+        private bool DrawBodyPartList(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
         {
             bool changed = false;
             if (actor.BodyParts == null) actor.BodyParts = new List<BodyPartData>();
@@ -73,9 +73,21 @@ namespace ConversationEditorActor.Panel
             {
                 if (bodyPart == null) continue;
                 bool isSelected = bodyPart.Id == selectedBodyPartId;
+                bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUI.BeginChangeCheck();
+                bool newVisible = EditorGUILayout.ToggleLeft(new GUIContent("", "Show or hide this body part in graph preview."), isVisible, GUILayout.Width(20f));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    if (newVisible) hiddenBodyPartIds.Remove(bodyPart.Id);
+                    else hiddenBodyPartIds.Add(bodyPart.Id);
+                    changed = true;
+                }
                 GUIStyle buttonStyle = isSelected ? EditorStyles.miniButtonMid : EditorStyles.miniButton;
                 string title = string.IsNullOrEmpty(bodyPart.Name) ? "bodypart" : bodyPart.Name;
-                if (GUILayout.Button(new GUIContent(title + " [" + bodyPart.Id + "]", "Select this body part."), buttonStyle)) selectedBodyPartId = bodyPart.Id;
+                string hiddenSuffix = isVisible ? "" : " (Hidden)";
+                if (GUILayout.Button(new GUIContent(title + " [" + bodyPart.Id + "]" + hiddenSuffix, "Select this body part."), buttonStyle)) selectedBodyPartId = bodyPart.Id;
+                EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button(new GUIContent("Add BodyPart", "Create a new body part.")))
@@ -115,6 +127,7 @@ namespace ConversationEditorActor.Panel
                 if (GUILayout.Button(new GUIContent("Delete Selected", "Delete selected body part except main.")))
                 {
                     actor.BodyParts.Remove(selectedBodyPart);
+                    hiddenBodyPartIds.Remove(selectedBodyPart.Id);
                     selectedBodyPartId = actor.BodyParts.Count > 0 ? actor.BodyParts[0].Id : 0;
                     changed = true;
                 }
@@ -123,9 +136,17 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.EndVertical();
             return changed;
         }
-        private bool DrawSelectedBodyPart(Actor actor, int selectedBodyPartId)
+        private bool DrawSelectedBodyPart(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
         {
-            BodyPartData bodyPart = actor.BodyParts.FirstOrDefault(x => x != null && x.Id == selectedBodyPartId);
+            int selectedId = selectedBodyPartId;
+            BodyPartData bodyPart = null;
+            foreach (var existingBodyPart in actor.BodyParts)
+            {
+                if (existingBodyPart == null) continue;
+                if (existingBodyPart.Id != selectedId) continue;
+                bodyPart = existingBodyPart;
+                break;
+            }
             if (bodyPart == null)
             {
                 EditorGUILayout.HelpBox("Select a BodyPart to edit its properties.", MessageType.Info);
@@ -134,6 +155,7 @@ namespace ConversationEditorActor.Panel
             bool changed = false;
             if (bodyPart.PivotPoints == null) bodyPart.PivotPoints = new List<PivotPoint>();
             if (bodyPart.NestedResources == null) bodyPart.NestedResources = new List<BodyPartResource>();
+            int previousBodyPartId = bodyPart.Id;
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField(new GUIContent("BodyPart: " + bodyPart.Name, "Selected body part settings."), EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
@@ -142,6 +164,24 @@ namespace ConversationEditorActor.Panel
             bodyPart.AttachToPivotId = EditorGUILayout.IntField(new GUIContent("Attach To Pivot Id", "Pivot id used as attach point. 0 means actor main pivot."), bodyPart.AttachToPivotId);
             bodyPart.CurrentResourceId = EditorGUILayout.TextField(new GUIContent("Current Resource Id", "Active resource id for preview and runtime."), bodyPart.CurrentResourceId);
             if (EditorGUI.EndChangeCheck()) changed = true;
+            if (bodyPart.Id != previousBodyPartId)
+            {
+                if (hiddenBodyPartIds.Contains(previousBodyPartId))
+                {
+                    hiddenBodyPartIds.Remove(previousBodyPartId);
+                    hiddenBodyPartIds.Add(bodyPart.Id);
+                }
+                selectedBodyPartId = bodyPart.Id;
+            }
+            bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
+            EditorGUI.BeginChangeCheck();
+            bool newVisible = EditorGUILayout.Toggle(new GUIContent("Visible In Graph", "Show or hide this body part and its pivots in graph preview."), isVisible);
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (newVisible) hiddenBodyPartIds.Remove(bodyPart.Id);
+                else hiddenBodyPartIds.Add(bodyPart.Id);
+                changed = true;
+            }
             EditorGUILayout.Space(4f);
             changed |= DrawPivotPointList(bodyPart.PivotPoints, "BodyPart PivotPoints", "Add Pivot", "Base pivots for this body part.");
             EditorGUILayout.Space(4f);
