@@ -12,6 +12,9 @@ namespace ConversationEditorActor.Graph
         #region Constants
         private const float bodyPartSelectTriangleSize = 30f;
         private const float pivotHitSize = 28f;
+        private const float minZoom = 0.25f;
+        private const float maxZoom = 2.5f;
+        private const float zoomStep = 0.1f;
         #endregion
 
         #region Inner Types
@@ -53,11 +56,14 @@ namespace ConversationEditorActor.Graph
             if (actor == null) return false;
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
             bool changed = false;
-            Rect controlsRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 26f);
-            Rect graphRect = new Rect(contentRect.x, contentRect.y + 28f, contentRect.width, contentRect.height - 28f);
+            Rect controlsRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 28f);
+            Rect graphRect = new Rect(contentRect.x, contentRect.y + 30f, contentRect.width, contentRect.height - 30f);
             DrawControls(controlsRect);
+            HandleZoomKeyboardInput();
             GUI.Box(graphRect, GUIContent.none);
             if (graphRect.width <= 10f || graphRect.height <= 10f) return false;
+            HandleZoomScrollWheel(graphRect);
+            DrawVerticalZoomBar(graphRect);
             Vector2 actorSize = actor.Size;
             if (actorSize.x <= 0f) actorSize.x = 300f;
             if (actorSize.y <= 0f) actorSize.y = 400f;
@@ -106,11 +112,58 @@ namespace ConversationEditorActor.Graph
         {
             GUILayout.BeginArea(controlsRect);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(new GUIContent("Zoom", "Preview zoom."), GUILayout.Width(40f));
-            zoom = GUILayout.HorizontalSlider(zoom, 0.25f, 2.5f, GUILayout.Width(180f));
+            if (GUILayout.Button(new GUIContent("-", "Zoom out."), GUILayout.Width(22f))) zoom = Mathf.Clamp(zoom - zoomStep, minZoom, maxZoom);
+            EditorGUILayout.LabelField(new GUIContent("Zoom", "Scale each graph component individually."), GUILayout.Width(36f));
+            zoom = GUILayout.HorizontalSlider(zoom, minZoom, maxZoom, GUILayout.Width(220f));
+            if (GUILayout.Button(new GUIContent("+", "Zoom in."), GUILayout.Width(22f))) zoom = Mathf.Clamp(zoom + zoomStep, minZoom, maxZoom);
+            if (GUILayout.Button(new GUIContent("1x", "Reset zoom to 1.0."), GUILayout.Width(30f))) zoom = 1f;
             EditorGUILayout.LabelField(new GUIContent(zoom.ToString("0.00") + "x", "Current zoom."), GUILayout.Width(60f));
             EditorGUILayout.EndHorizontal();
             GUILayout.EndArea();
+        }
+        private void DrawVerticalZoomBar(Rect graphRect)
+        {
+            Rect barBackgroundRect = new Rect(graphRect.xMax - 30f, graphRect.y + 8f, 22f, 160f);
+            EditorGUI.DrawRect(barBackgroundRect, new Color(0f, 0f, 0f, 0.25f));
+            Rect sliderRect = new Rect(barBackgroundRect.x + 4f, barBackgroundRect.y + 22f, 14f, barBackgroundRect.height - 28f);
+            float newZoom = GUI.VerticalSlider(sliderRect, zoom, maxZoom, minZoom);
+            if (!Mathf.Approximately(newZoom, zoom)) zoom = Mathf.Clamp(newZoom, minZoom, maxZoom);
+            GUI.Label(new Rect(barBackgroundRect.x - 2f, barBackgroundRect.y + 2f, barBackgroundRect.width + 4f, 18f), new GUIContent(zoom.ToString("0.0") + "x", "Current zoom."), EditorStyles.centeredGreyMiniLabel);
+        }
+        private void HandleZoomKeyboardInput()
+        {
+            Event currentEvent = Event.current;
+            if (currentEvent == null) return;
+            if (currentEvent.type != EventType.KeyDown) return;
+            if (currentEvent.keyCode == KeyCode.Equals || currentEvent.keyCode == KeyCode.Plus || currentEvent.keyCode == KeyCode.KeypadPlus)
+            {
+                zoom = Mathf.Clamp(zoom + zoomStep, minZoom, maxZoom);
+                currentEvent.Use();
+                return;
+            }
+            if (currentEvent.keyCode == KeyCode.Minus || currentEvent.keyCode == KeyCode.KeypadMinus)
+            {
+                zoom = Mathf.Clamp(zoom - zoomStep, minZoom, maxZoom);
+                currentEvent.Use();
+                return;
+            }
+            if (currentEvent.keyCode == KeyCode.Alpha1 || currentEvent.keyCode == KeyCode.Keypad1)
+            {
+                zoom = 1f;
+                currentEvent.Use();
+            }
+        }
+        private void HandleZoomScrollWheel(Rect graphRect)
+        {
+            Event currentEvent = Event.current;
+            if (currentEvent == null) return;
+            if (currentEvent.type != EventType.ScrollWheel) return;
+            if (!graphRect.Contains(currentEvent.mousePosition)) return;
+            float zoomDelta = -currentEvent.delta.y * 0.05f;
+            float newZoom = Mathf.Clamp(zoom + zoomDelta, minZoom, maxZoom);
+            if (Mathf.Approximately(newZoom, zoom)) return;
+            zoom = newZoom;
+            currentEvent.Use();
         }
         private void DrawMainPivot(Vector2 position)
         {
