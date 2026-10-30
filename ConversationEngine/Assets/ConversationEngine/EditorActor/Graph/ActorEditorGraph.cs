@@ -39,6 +39,21 @@ namespace ConversationEditorActor.Graph
         private float zoom = 1f;
         private PivotPoint draggingPivot;
         private Vector2 lastMousePosition;
+        private bool hasPivotDragMoved;
+        private bool undoSnapshotRequested;
+        #endregion
+
+        #region Undo Helpers
+        public bool IsPivotDragging()
+        {
+            return draggingPivot != null;
+        }
+        public bool ConsumeUndoSnapshotRequest()
+        {
+            if (!undoSnapshotRequested) return false;
+            undoSnapshotRequested = false;
+            return true;
+        }
         #endregion
 
         #region Draw
@@ -305,11 +320,17 @@ namespace ConversationEditorActor.Graph
                 {
                     draggingPivot = target.PivotPoint;
                     lastMousePosition = currentEvent.mousePosition;
+                    hasPivotDragMoved = false;
                     currentEvent.Use();
                 }
             }
             if (currentEvent.type == EventType.MouseDrag && currentEvent.button == 0 && draggingPivot != null)
             {
+                if (!hasPivotDragMoved)
+                {
+                    hasPivotDragMoved = true;
+                    undoSnapshotRequested = true;
+                }
                 Vector2 delta = currentEvent.mousePosition - lastMousePosition;
                 draggingPivot.X += delta.x / zoom;
                 draggingPivot.Y -= delta.y / zoom;
@@ -320,6 +341,7 @@ namespace ConversationEditorActor.Graph
             if (currentEvent.type == EventType.MouseUp && currentEvent.button == 0 && draggingPivot != null)
             {
                 draggingPivot = null;
+                hasPivotDragMoved = false;
                 currentEvent.Use();
             }
             return changed;

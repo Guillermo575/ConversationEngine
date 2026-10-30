@@ -11,6 +11,7 @@ namespace ConversationEditorActor
     public class ActorEditorWindow : EditorWindow
     {
         #region State
+        private const int maxHistoryEntries = 200;
         private Actor actorData;
         private string currentAssetPath = "";
         private bool isDirty;
@@ -18,6 +19,8 @@ namespace ConversationEditorActor
         private bool resizingSplitter;
         private int selectedBodyPartId = 1;
         private HashSet<int> hiddenBodyPartIds = new HashSet<int>();
+        private readonly List<string> undoHistory = new List<string>();
+        private readonly List<string> redoHistory = new List<string>();
         private ActorEditorPanel actorEditorPanel;
         private ActorEditorGraph actorEditorGraph;
         #endregion
@@ -55,6 +58,7 @@ namespace ConversationEditorActor
         }
         private void OnGUI()
         {
+            HandleKeyboardShortcuts();
             DrawToolbar();
             DrawLayout();
         }
@@ -68,6 +72,11 @@ namespace ConversationEditorActor
             if (GUILayout.Button(new GUIContent("Open", "Open an existing .actor file."), EditorStyles.toolbarButton, GUILayout.Width(56f))) OpenActorFromDialog();
             if (GUILayout.Button(new GUIContent("Save", "Save current actor file."), EditorStyles.toolbarButton, GUILayout.Width(56f))) SaveActor(false);
             if (GUILayout.Button(new GUIContent("Save As", "Save actor file using a new file path."), EditorStyles.toolbarButton, GUILayout.Width(62f))) SaveActor(true);
+            GUI.enabled = CanUndo();
+            if (GUILayout.Button(new GUIContent("Undo", "Undo last actor edit (Ctrl+Z)."), EditorStyles.toolbarButton, GUILayout.Width(52f))) PerformUndo();
+            GUI.enabled = CanRedo();
+            if (GUILayout.Button(new GUIContent("Redo", "Redo last undone edit (Ctrl+Y)."), EditorStyles.toolbarButton, GUILayout.Width(52f))) PerformRedo();
+            GUI.enabled = true;
             GUILayout.Space(12f);
             string fileLabel = string.IsNullOrEmpty(currentAssetPath) ? "(unsaved)" : currentAssetPath;
             EditorGUILayout.LabelField(new GUIContent(fileLabel, "Current actor file path."), EditorStyles.miniLabel);
@@ -78,6 +87,7 @@ namespace ConversationEditorActor
         }
         private void DrawLayout()
         {
+            string snapshotBefore = SerializeSnapshot();
             Rect layoutRect = new Rect(0f, 20f, position.width, position.height - 20f);
             Rect leftRect = new Rect(layoutRect.x, layoutRect.y, leftPanelWidth, layoutRect.height);
             Rect splitterRect = new Rect(leftRect.xMax, layoutRect.y, 4f, layoutRect.height);
@@ -91,7 +101,19 @@ namespace ConversationEditorActor
             GUILayout.BeginArea(rightRect);
             bool graphChanged = actorEditorGraph.Draw(new Rect(0f, 0f, rightRect.width, rightRect.height), actorData, ref selectedBodyPartId, currentAssetPath, hiddenBodyPartIds);
             GUILayout.EndArea();
-            if (panelChanged || graphChanged) MarkDirty();
+            if (panelChanged || graphChanged)
+            {
+                if (panelChanged)
+                {
+                    RegisterUndoSnapshot(snapshotBefore);
+                }
+                else if (graphChanged)
+                {
+                    if (actorEditorGraph.ConsumeUndoSnapshotRequest()) RegisterUndoSnapshot(snapshotBefore);
+                    else if (!actorEditorGraph.IsPivotDragging()) RegisterUndoSnapshot(snapshotBefore);
+                }
+                MarkDirty();
+            }
         }
         private void HandleSplitter(Rect splitterRect, Rect layoutRect)
         {
@@ -118,6 +140,7 @@ namespace ConversationEditorActor
             actorData = ActorEditorHelpers.CreateDefaultActor();
             currentAssetPath = "";
             hiddenBodyPartIds.Clear();
+            ClearHistory();
             isDirty = false;
             UpdateWindowDirtyState();
             selectedBodyPartId = actorData.BodyParts.Count > 0 ? actorData.BodyParts[0].Id : 0;
@@ -148,6 +171,7 @@ namespace ConversationEditorActor
             currentAssetPath = ActorEditorHelpers.ToAssetPath(absolutePath);
             hiddenBodyPartIds.Clear();
             SyncHiddenBodyPartIds();
+            ClearHistory();
             isDirty = false;
             UpdateWindowDirtyState();
             selectedBodyPartId = actorData.BodyParts.Count > 0 ? actorData.BodyParts[0].Id : 0;
@@ -196,6 +220,86 @@ namespace ConversationEditorActor
                 default:
                     return false;
             }
+        }
+        private void HandleKeyboardShortcuts()
+        {
+            Event currentEvent = Event.current;
+            if (currentEvent == null) return;
+            if (currentEvent.type != EventType.KeyDown) return;
+            if (currentEvent.control && currentEvent.keyCode == KeyCode.Z)
+            {
+                PerformUndo();
+                currentEvent.Use();
+                return;
+            }
+            if ((currentEvent.control && currentEvent.keyCode == KeyCode.Y) || (currentEvent.control && currentEvent.shift && currentEvent.keyCode == KeyCode.Z))
+            {
+                PerformRedo();
+                currentEvent.Use();
+            }
+        }
+        private void RegisterUndoSnapshot(string snapshot)
+        {
+            if (string.IsNullOrEmpty(snapshot)) return;
+            if (undoHistory.Count > 0 && undoHistory[undoHistory.Count - 1] == snapshot) return;
+            undoHistory.Add(snapshot);
+            if (undoHistory.Count > maxHistoryEntries) undoHistory.RemoveAt(0);
+            redoHistory.Clear();
+        }
+        private string SerializeSnapshot()
+        {
+            if (actorData == null) return "";
+            return ActorEditorHelpers.SerializeActor(actorData);
+        }
+        private void ClearHistory()
+        {
+            undoHistory.Clear();
+            redoHistory.Clear();
+        }
+        private bool CanUndo()
+        {
+            return actorData != null && undoHistory.Count > 0;
+        }
+        private bool CanRedo()
+        {
+            return actorData != null && redoHistory.Count > 0;
+        }
+        private void PerformUndo()
+        {
+            if (!CanUndo()) return;
+            string currentSnapshot = SerializeSnapshot();
+            string targetSnapshot = undoHistory[undoHistory.Count - 1];
+            undoHistory.RemoveAt(undoHistory.Count - 1);
+            redoHistory.Add(currentSnapshot);
+            if (redoHistory.Count > maxHistoryEntries) redoHistory.RemoveAt(0);
+            actorData = ActorEditorHelpers.DeserializeActor(targetSnapshot);
+            EnsureSelectionAfterRestore();
+            MarkDirty();
+            Repaint();
+        }
+        private void PerformRedo()
+        {
+            if (!CanRedo()) return;
+            string currentSnapshot = SerializeSnapshot();
+            string targetSnapshot = redoHistory[redoHistory.Count - 1];
+            redoHistory.RemoveAt(redoHistory.Count - 1);
+            undoHistory.Add(currentSnapshot);
+            if (undoHistory.Count > maxHistoryEntries) undoHistory.RemoveAt(0);
+            actorData = ActorEditorHelpers.DeserializeActor(targetSnapshot);
+            EnsureSelectionAfterRestore();
+            MarkDirty();
+            Repaint();
+        }
+        private void EnsureSelectionAfterRestore()
+        {
+            if (actorData?.BodyParts == null || actorData.BodyParts.Count == 0)
+            {
+                selectedBodyPartId = 0;
+                return;
+            }
+            bool selectedIdExists = actorData.BodyParts.Exists(x => x != null && x.Id == selectedBodyPartId);
+            if (!selectedIdExists) selectedBodyPartId = actorData.BodyParts[0].Id;
+            SyncHiddenBodyPartIds();
         }
         private void MarkDirty()
         {
