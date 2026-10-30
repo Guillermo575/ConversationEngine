@@ -47,6 +47,11 @@ Resource panel visibility can be toggled from the editor UI:
 - Right graph previews actor composition, body part bounds, and draggable pivot points
 - Pivot drag updates `BodyPart.PivotPoints` in real time
 - Selecting a `.actor` file in the Project window shows a read-only Inspector preview with actor labels and rendered composition without edit overlays
+- BodyPart identifiers are displayed as read-only labels to avoid accidental id edits
+- `Attach To Pivot` and `Current Resource` are selector fields instead of free text for safer references
+- `Current Resource` selector is disabled until nested resources exist and displays a contextual helper message
+- Destructive actions (delete body part, pivot, nested resource, and sound effect path) require confirmation dialogs
+- Pivot coordinate fields (`X` and `Y`) are grouped in one row for faster editing
 
 ## Features
 

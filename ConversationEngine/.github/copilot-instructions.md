@@ -109,6 +109,22 @@
 
 ---
 
+## Experiencia de usuario (UX) en campos de interfaz
+	* En proyectos con interaccion constante del usuario, define primero el ROL de cada campo (identificador, referencia, dato editable, calculado) y elige el control segun como el usuario interactuara con el.
+	* Identificadores (ej. IDs numericos): mostrarlos como solo lectura, no como captura manual.
+	* Campos que referencian a un identificador: usar dropdown/selector con las opciones validas, no texto libre.
+	* Campos calculados o derivados: solo lectura, con tooltip que explique su origen.
+	* Rangos numéricos acotados: slider o campo con límites min/max.
+	* Colores, archivos o rutas: selector dedicado (color picker, explorador), no texto.
+	* Vector2 o Vector3: los campos de coordenadas estar siempre en una misma linea
+    * Acciones destructivas (borrar, reiniciar): pedir confirmación.
+    * Validar en el momento de la captura y mostrar el error junto al campo.	
+	* Propon al usuario otros casos de UX que identifiques para agregarlos a estas instrucciones.
+    * Valores de un conjunto fijo (enums, estados, tipos): dropdown, no texto libre.
+    * Campos que dependen de otros: deshabilitarlos o filtrar sus opciones hasta que el campo del que dependen tenga valor.
+
+---
+
 # Instrucciones operativas para Copilot (ConversationEngine)
 
 ## 1) Alcance estricto (NO salir de aqui)

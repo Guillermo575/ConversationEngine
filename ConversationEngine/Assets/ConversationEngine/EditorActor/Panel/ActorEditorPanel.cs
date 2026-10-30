@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ConversationEditorActor.Helper;
 using ConversationScheme;
 using UnityEditor;
 using UnityEngine;
@@ -49,6 +50,11 @@ namespace ConversationEditorActor.Panel
                 if (EditorGUI.EndChangeCheck()) changed = true;
                 if (GUILayout.Button(new GUIContent("X", "Remove sound effect path."), GUILayout.Width(24f)))
                 {
+                    if (!EditorUtility.DisplayDialog("Remove Sound Effect", "Remove this sound effect path?", "Remove", "Cancel"))
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        continue;
+                    }
                     actor.SoundEffectPaths.RemoveAt(i);
                     changed = true;
                     i--;
@@ -126,6 +132,12 @@ namespace ConversationEditorActor.Panel
             {
                 if (GUILayout.Button(new GUIContent("Delete Selected", "Delete selected body part except main.")))
                 {
+                    if (!EditorUtility.DisplayDialog("Delete BodyPart", "Delete selected BodyPart?", "Delete", "Cancel"))
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.EndVertical();
+                        return changed;
+                    }
                     actor.BodyParts.Remove(selectedBodyPart);
                     hiddenBodyPartIds.Remove(selectedBodyPart.Id);
                     selectedBodyPartId = actor.BodyParts.Count > 0 ? actor.BodyParts[0].Id : 0;
@@ -155,24 +167,35 @@ namespace ConversationEditorActor.Panel
             bool changed = false;
             if (bodyPart.PivotPoints == null) bodyPart.PivotPoints = new List<PivotPoint>();
             if (bodyPart.NestedResources == null) bodyPart.NestedResources = new List<BodyPartResource>();
-            int previousBodyPartId = bodyPart.Id;
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField(new GUIContent("BodyPart: " + bodyPart.Name, "Selected body part settings."), EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(new GUIContent("Id: " + bodyPart.Id, "Unique body part id inside actor."), EditorStyles.miniLabel);
             EditorGUI.BeginChangeCheck();
-            bodyPart.Id = EditorGUILayout.IntField(new GUIContent("Id", "Unique body part id inside actor."), bodyPart.Id);
             bodyPart.Name = EditorGUILayout.TextField(new GUIContent("Name", "Display name for this body part."), bodyPart.Name);
-            bodyPart.AttachToPivotId = EditorGUILayout.IntField(new GUIContent("Attach To Pivot Id", "Pivot id used as attach point. 0 means actor main pivot."), bodyPart.AttachToPivotId);
-            bodyPart.CurrentResourceId = EditorGUILayout.TextField(new GUIContent("Current Resource Id", "Active resource id for preview and runtime."), bodyPart.CurrentResourceId);
-            if (EditorGUI.EndChangeCheck()) changed = true;
-            if (bodyPart.Id != previousBodyPartId)
+            List<int> attachPivotIds = new List<int>();
+            List<string> attachPivotLabels = new List<string>();
+            BuildAttachPivotOptions(actor, attachPivotIds, attachPivotLabels);
+            int attachPivotIndex = Mathf.Max(0, attachPivotIds.IndexOf(bodyPart.AttachToPivotId));
+            int newAttachPivotIndex = EditorGUILayout.Popup(new GUIContent("Attach To Pivot", "Pivot id used as attach point. 0 means actor main pivot."), attachPivotIndex, attachPivotLabels.ToArray());
+            bodyPart.AttachToPivotId = attachPivotIds[newAttachPivotIndex];
+            List<string> resourceIds = new List<string> { "" };
+            List<string> resourceLabels = new List<string> { "Auto (First Resource)" };
+            for (int resourceIndex = 0; resourceIndex < bodyPart.NestedResources.Count; resourceIndex++)
             {
-                if (hiddenBodyPartIds.Contains(previousBodyPartId))
-                {
-                    hiddenBodyPartIds.Remove(previousBodyPartId);
-                    hiddenBodyPartIds.Add(bodyPart.Id);
-                }
-                selectedBodyPartId = bodyPart.Id;
+                BodyPartResource nestedResource = bodyPart.NestedResources[resourceIndex];
+                if (nestedResource == null) continue;
+                string nestedResourceId = string.IsNullOrEmpty(nestedResource.Id) ? "resource_" + resourceIndex : nestedResource.Id;
+                resourceIds.Add(nestedResourceId);
+                resourceLabels.Add(nestedResourceId);
             }
+            int currentResourceIndex = Mathf.Max(0, resourceIds.IndexOf(bodyPart.CurrentResourceId ?? ""));
+            using (new EditorGUI.DisabledScope(resourceLabels.Count <= 1))
+            {
+                int newResourceIndex = EditorGUILayout.Popup(new GUIContent("Current Resource", "Active resource used for preview and runtime."), currentResourceIndex, resourceLabels.ToArray());
+                bodyPart.CurrentResourceId = resourceIds[newResourceIndex];
+            }
+            if (EditorGUI.EndChangeCheck()) changed = true;
+            if (resourceLabels.Count <= 1) EditorGUILayout.HelpBox("Add Nested Resources to enable Current Resource selection.", MessageType.None);
             bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
             EditorGUI.BeginChangeCheck();
             bool newVisible = EditorGUILayout.Toggle(new GUIContent("Visible In Graph", "Show or hide this body part and its pivots in graph preview."), isVisible);
@@ -207,6 +230,12 @@ namespace ConversationEditorActor.Panel
                 EditorGUILayout.LabelField(new GUIContent("Id: " + pivotPoint.Id, "Pivot id used for attachments and overrides."), EditorStyles.miniLabel, GUILayout.Width(56f));
                 if (GUILayout.Button(new GUIContent("X", "Delete this pivot point."), GUILayout.Width(24f)))
                 {
+                    if (!EditorUtility.DisplayDialog("Delete Pivot", "Delete this pivot point?", "Delete", "Cancel"))
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.EndVertical();
+                        continue;
+                    }
                     pivotPoints.RemoveAt(i);
                     changed = true;
                     i--;
@@ -252,6 +281,12 @@ namespace ConversationEditorActor.Panel
                 EditorGUILayout.LabelField(new GUIContent("Resource " + i, "Body part resource definition."), EditorStyles.miniBoldLabel);
                 if (GUILayout.Button(new GUIContent("X", "Delete this resource."), GUILayout.Width(24f)))
                 {
+                    if (!EditorUtility.DisplayDialog("Delete Resource", "Delete this nested resource?", "Delete", "Cancel"))
+                    {
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.EndVertical();
+                        continue;
+                    }
                     bodyPart.NestedResources.RemoveAt(i);
                     changed = true;
                     i--;
@@ -278,6 +313,45 @@ namespace ConversationEditorActor.Panel
                 changed = true;
             }
             return changed;
+        }
+        private void BuildAttachPivotOptions(Actor actor, List<int> pivotIds, List<string> pivotLabels)
+        {
+            pivotIds.Clear();
+            pivotLabels.Clear();
+            pivotIds.Add(0);
+            pivotLabels.Add("Actor Main Pivot [0]");
+            if (actor?.BodyParts == null) return;
+            HashSet<int> usedIds = new HashSet<int> { 0 };
+            foreach (var bodyPart in actor.BodyParts)
+            {
+                if (bodyPart == null) continue;
+                if (bodyPart.PivotPoints != null)
+                {
+                    foreach (var pivotPoint in bodyPart.PivotPoints)
+                    {
+                        if (pivotPoint == null) continue;
+                        if (usedIds.Contains(pivotPoint.Id)) continue;
+                        usedIds.Add(pivotPoint.Id);
+                        string pivotName = string.IsNullOrEmpty(pivotPoint.Name) ? "pivot" : pivotPoint.Name;
+                        pivotIds.Add(pivotPoint.Id);
+                        pivotLabels.Add(pivotName + " [" + pivotPoint.Id + "]");
+                    }
+                }
+                if (bodyPart.NestedResources == null) continue;
+                foreach (var nestedResource in bodyPart.NestedResources)
+                {
+                    if (nestedResource?.PivotPoints == null) continue;
+                    foreach (var pivotPoint in nestedResource.PivotPoints)
+                    {
+                        if (pivotPoint == null) continue;
+                        if (usedIds.Contains(pivotPoint.Id)) continue;
+                        usedIds.Add(pivotPoint.Id);
+                        string pivotName = string.IsNullOrEmpty(pivotPoint.Name) ? "pivot" : pivotPoint.Name;
+                        pivotIds.Add(pivotPoint.Id);
+                        pivotLabels.Add(pivotName + " [" + pivotPoint.Id + "]");
+                    }
+                }
+            }
         }
         #endregion
     }
