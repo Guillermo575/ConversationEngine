@@ -93,7 +93,7 @@ namespace ConversationEditorActor
             Rect splitterRect = new Rect(leftRect.xMax, layoutRect.y, 4f, layoutRect.height);
             Rect rightRect = new Rect(splitterRect.xMax, layoutRect.y, layoutRect.width - leftPanelWidth - splitterRect.width, layoutRect.height);
             GUILayout.BeginArea(leftRect);
-            bool panelChanged = actorEditorPanel.Draw(actorData, ref selectedBodyPartId, hiddenBodyPartIds);
+            bool panelChanged = actorEditorPanel.Draw(actorData, ref selectedBodyPartId, hiddenBodyPartIds, currentAssetPath);
             GUILayout.EndArea();
             EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeHorizontal);
             EditorGUI.DrawRect(splitterRect, new Color(0.2f, 0.2f, 0.2f, 1f));

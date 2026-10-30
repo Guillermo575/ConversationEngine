@@ -52,6 +52,10 @@ Resource panel visibility can be toggled from the editor UI:
 - `Current Resource` selector is disabled until nested resources exist and displays a contextual helper message
 - Destructive actions (delete body part, pivot, nested resource, and sound effect path) require confirmation dialogs
 - Pivot coordinate fields (`X` and `Y`) are grouped in one row for faster editing
+- Nested resource `Path` is read-only and assigned through a file picker
+- Adding resources opens a validated file selector and can append multiple files in sequence
+- New resource `Id` values are auto-generated from selected relative paths using alphanumeric and `_` characters
+- Resource file changes update only `Path` and keep existing `Id`
 
 ## Features
 

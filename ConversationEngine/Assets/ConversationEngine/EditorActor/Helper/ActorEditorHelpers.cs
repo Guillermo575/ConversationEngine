@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ConversationScheme;
@@ -162,6 +161,75 @@ namespace ConversationEditorActor.Helper
             if (string.IsNullOrWhiteSpace(actorFolderPath)) return normalizedResourcePath;
             string combinedPath = Path.Combine(actorFolderPath, normalizedResourcePath);
             return combinedPath.Replace("\\", "/");
+        }
+        public static bool IsSupportedResourceFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return false;
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".png":
+                case ".jpg":
+                case ".jpeg":
+                case ".tga":
+                case ".bmp":
+                case ".gif":
+                case ".psd":
+                case ".asset":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        public static bool TryGetResourcePathRelativeToActor(string actorAssetPath, string absoluteResourcePath, out string relativePath, out string errorMessage)
+        {
+            relativePath = "";
+            errorMessage = "";
+            if (string.IsNullOrWhiteSpace(actorAssetPath))
+            {
+                errorMessage = "Save the .actor file first so resource paths can be validated against its root folder.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(absoluteResourcePath) || !File.Exists(absoluteResourcePath))
+            {
+                errorMessage = "Selected file does not exist.";
+                return false;
+            }
+            if (!IsSupportedResourceFile(absoluteResourcePath))
+            {
+                errorMessage = "Only image files or .asset files are allowed.";
+                return false;
+            }
+            string actorAbsolutePath = Path.GetFullPath(actorAssetPath).Replace("\\", "/");
+            string actorRootFolder = Path.GetDirectoryName(actorAbsolutePath);
+            if (string.IsNullOrWhiteSpace(actorRootFolder))
+            {
+                errorMessage = "Could not resolve actor root folder.";
+                return false;
+            }
+            actorRootFolder = actorRootFolder.Replace("\\", "/");
+            string normalizedFilePath = Path.GetFullPath(absoluteResourcePath).Replace("\\", "/");
+            if (!normalizedFilePath.StartsWith(actorRootFolder + "/") && normalizedFilePath != actorRootFolder)
+            {
+                errorMessage = "Selected file must be inside the same root folder as the .actor file.";
+                return false;
+            }
+            relativePath = normalizedFilePath.Substring(actorRootFolder.Length).TrimStart('/');
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                errorMessage = "Could not resolve a valid relative resource path.";
+                return false;
+            }
+            return true;
+        }
+        public static string BuildResourceIdFromPath(string relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath)) return "resource";
+            string sanitized = new string(relativePath.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray());
+            while (sanitized.Contains("__")) sanitized = sanitized.Replace("__", "_");
+            sanitized = sanitized.Trim('_');
+            if (string.IsNullOrWhiteSpace(sanitized)) return "resource";
+            return sanitized;
         }
         #endregion
     }

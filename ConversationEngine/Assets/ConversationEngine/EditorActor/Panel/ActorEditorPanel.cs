@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using ConversationEditorActor.Helper;
 using ConversationScheme;
 using UnityEditor;
@@ -14,7 +15,7 @@ namespace ConversationEditorActor.Panel
         #endregion
 
         #region Draw
-        public bool Draw(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
+        public bool Draw(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath)
         {
             if (actor == null) return false;
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
@@ -24,7 +25,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.Space(6f);
             changed |= DrawBodyPartList(actor, ref selectedBodyPartId, hiddenBodyPartIds);
             EditorGUILayout.Space(6f);
-            changed |= DrawSelectedBodyPart(actor, ref selectedBodyPartId, hiddenBodyPartIds);
+            changed |= DrawSelectedBodyPart(actor, ref selectedBodyPartId, hiddenBodyPartIds, actorAssetPath);
             EditorGUILayout.EndScrollView();
             return changed;
         }
@@ -148,7 +149,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.EndVertical();
             return changed;
         }
-        private bool DrawSelectedBodyPart(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
+        private bool DrawSelectedBodyPart(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath)
         {
             int selectedId = selectedBodyPartId;
             BodyPartData bodyPart = null;
@@ -208,7 +209,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.Space(4f);
             changed |= DrawPivotPointList(bodyPart.PivotPoints, "BodyPart PivotPoints", "Add Pivot", "Base pivots for this body part.");
             EditorGUILayout.Space(4f);
-            changed |= DrawNestedResources(bodyPart);
+            changed |= DrawNestedResources(bodyPart, actorAssetPath);
             EditorGUILayout.EndVertical();
             return changed;
         }
@@ -263,7 +264,7 @@ namespace ConversationEditorActor.Panel
             }
             return changed;
         }
-        private bool DrawNestedResources(BodyPartData bodyPart)
+        private bool DrawNestedResources(BodyPartData bodyPart, string actorAssetPath)
         {
             bool changed = false;
             EditorGUILayout.LabelField(new GUIContent("Nested Resources", "Resources available for this body part."), EditorStyles.miniBoldLabel);
@@ -297,22 +298,94 @@ namespace ConversationEditorActor.Panel
                 EditorGUILayout.EndHorizontal();
                 EditorGUI.BeginChangeCheck();
                 nestedResource.Id = EditorGUILayout.TextField(new GUIContent("Id", "Resource id."), nestedResource.Id);
-                nestedResource.Path = EditorGUILayout.TextField(new GUIContent("Path", "Texture asset path for this resource."), nestedResource.Path);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(new GUIContent("Path", "Resource path relative to the .actor root folder."), GUILayout.Width(36f));
+                EditorGUILayout.LabelField(new GUIContent(string.IsNullOrEmpty(nestedResource.Path) ? "(no file selected)" : nestedResource.Path, "Read-only resource path relative to the .actor root folder."), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                if (GUILayout.Button(new GUIContent("...", "Change resource file path."), GUILayout.Width(28f)))
+                {
+                    string changedPath = SelectSingleResourcePath(actorAssetPath, nestedResource.Path);
+                    if (!string.IsNullOrEmpty(changedPath))
+                    {
+                        nestedResource.Path = changedPath;
+                        changed = true;
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
                 if (EditorGUI.EndChangeCheck()) changed = true;
                 changed |= DrawPivotPointList(nestedResource.PivotPoints, "Override PivotPoints", "Add Override Pivot", "Pivots that override the base body part pivots by id.");
                 EditorGUILayout.EndVertical();
             }
             if (GUILayout.Button(new GUIContent("Add Resource", "Add a new nested resource for this body part.")))
             {
-                bodyPart.NestedResources.Add(new BodyPartResource
+                List<string> selectedPaths = SelectMultipleResourcePaths(actorAssetPath);
+                foreach (string selectedPath in selectedPaths)
                 {
-                    Id = "resource_" + (bodyPart.NestedResources.Count + 1),
-                    Path = "",
-                    PivotPoints = new List<PivotPoint>()
-                });
-                changed = true;
+                    bodyPart.NestedResources.Add(new BodyPartResource
+                    {
+                        Id = ActorEditorHelpers.BuildResourceIdFromPath(selectedPath),
+                        Path = selectedPath,
+                        PivotPoints = new List<PivotPoint>()
+                    });
+                    changed = true;
+                }
             }
             return changed;
+        }
+        private List<string> SelectMultipleResourcePaths(string actorAssetPath)
+        {
+            List<string> selectedPaths = new List<string>();
+            if (string.IsNullOrWhiteSpace(actorAssetPath))
+            {
+                EditorUtility.DisplayDialog("Actor File Required", "Save the .actor file first so resources can be validated relative to its root folder.", "OK");
+                return selectedPaths;
+            }
+            string actorFolderAbsolutePath = Path.GetDirectoryName(Path.GetFullPath(actorAssetPath));
+            if (string.IsNullOrWhiteSpace(actorFolderAbsolutePath))
+            {
+                EditorUtility.DisplayDialog("Invalid Actor Path", "Could not resolve the .actor root folder.", "OK");
+                return selectedPaths;
+            }
+            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Resource File", actorFolderAbsolutePath, new[] { "Image or Asset", "png,jpg,jpeg,tga,bmp,gif,psd,asset" });
+            if (string.IsNullOrEmpty(absolutePath)) return selectedPaths;
+            if (!ActorEditorHelpers.TryGetResourcePathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string errorMessage))
+            {
+                EditorUtility.DisplayDialog("Invalid Resource", errorMessage, "OK");
+                return selectedPaths;
+            }
+            selectedPaths.Add(relativePath);
+            return selectedPaths;
+        }
+        private string SelectSingleResourcePath(string actorAssetPath, string currentRelativePath)
+        {
+            if (string.IsNullOrWhiteSpace(actorAssetPath))
+            {
+                EditorUtility.DisplayDialog("Actor File Required", "Save the .actor file first so resources can be validated relative to its root folder.", "OK");
+                return "";
+            }
+            string actorFolderAbsolutePath = Path.GetDirectoryName(Path.GetFullPath(actorAssetPath));
+            if (string.IsNullOrWhiteSpace(actorFolderAbsolutePath))
+            {
+                EditorUtility.DisplayDialog("Invalid Actor Path", "Could not resolve the .actor root folder.", "OK");
+                return "";
+            }
+            string startFolder = actorFolderAbsolutePath;
+            if (!string.IsNullOrWhiteSpace(currentRelativePath))
+            {
+                string currentFullPath = Path.Combine(actorFolderAbsolutePath, currentRelativePath);
+                if (File.Exists(currentFullPath))
+                {
+                    string currentDirectory = Path.GetDirectoryName(currentFullPath);
+                    if (!string.IsNullOrWhiteSpace(currentDirectory)) startFolder = currentDirectory;
+                }
+            }
+            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Resource File", startFolder, new[] { "Image or Asset", "png,jpg,jpeg,tga,bmp,gif,psd,asset" });
+            if (string.IsNullOrEmpty(absolutePath)) return "";
+            if (!ActorEditorHelpers.TryGetResourcePathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string errorMessage))
+            {
+                EditorUtility.DisplayDialog("Invalid Resource", errorMessage, "OK");
+                return "";
+            }
+            return relativePath;
         }
         private void BuildAttachPivotOptions(Actor actor, List<int> pivotIds, List<string> pivotLabels)
         {
