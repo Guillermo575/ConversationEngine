@@ -1,5 +1,6 @@
 using System.IO;
 using System.Collections.Generic;
+using ConversationEditorActor.Export;
 using ConversationEditorActor.Graph;
 using ConversationEditorActor.Helper;
 using ConversationEditorActor.Panel;
@@ -72,6 +73,7 @@ namespace ConversationEditorActor
             if (GUILayout.Button(new GUIContent("Open", "Open an existing .actor file."), EditorStyles.toolbarButton, GUILayout.Width(56f))) OpenActorFromDialog();
             if (GUILayout.Button(new GUIContent("Save", "Save current actor file."), EditorStyles.toolbarButton, GUILayout.Width(56f))) SaveActor(false);
             if (GUILayout.Button(new GUIContent("Save As", "Save actor file using a new file path."), EditorStyles.toolbarButton, GUILayout.Width(62f))) SaveActor(true);
+            if (GUILayout.Button(new GUIContent("Export", "Export current actor graph as scene objects."), EditorStyles.toolbarButton, GUILayout.Width(62f))) OpenExportWindow();
             GUI.enabled = CanUndo();
             if (GUILayout.Button(new GUIContent("Undo", "Undo last actor edit (Ctrl+Z)."), EditorStyles.toolbarButton, GUILayout.Width(52f))) PerformUndo();
             GUI.enabled = CanRedo();
@@ -306,6 +308,25 @@ namespace ConversationEditorActor
             if (actorEditorGraph == null) return;
             actorEditorGraph.SetPreviewResourceIndex(bodyPartId, resourceIndex);
             Repaint();
+        }
+        private void OpenExportWindow()
+        {
+            if (actorData == null)
+            {
+                EditorUtility.DisplayDialog("Actor Editor", "There is no actor data to export.", "OK");
+                return;
+            }
+            ActorExportWindow.Open(actorData, ExecuteExportToScene);
+        }
+        private void ExecuteExportToScene(ActorExportRequest options)
+        {
+            var actorRoot = ActorSceneExportService.ExportToScene(actorData, currentAssetPath, options);
+            if (actorRoot == null)
+            {
+                EditorUtility.DisplayDialog("Actor Export", "Actor export failed. Verify actor resources and options.", "OK");
+                return;
+            }
+            EditorUtility.DisplayDialog("Actor Export", "Actor exported to scene successfully.", "OK");
         }
         private void MarkDirty()
         {

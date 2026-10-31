@@ -133,6 +133,7 @@ Trabaja SOLO dentro de estas carpetas de `ConversationEngine/Assets/Conversation
 - `ConversationScheme/`
 - `Editor/`
 - `EditorActor/`
+- `ActorBuilder/`
 - `System/`
 - `Icons/` (solo imagenes para iconos)
 
@@ -153,6 +154,9 @@ Cualquier carpeta/archivo fuera de esta lista queda fuera de alcance, salvo soli
 
 - `ConversationBox/`  
   Runtime/UI de dialogos en juego (actualmente en evolucion).
+
+- `ActorBuilder/`
+  Construccion de actores en objetos de escena para uso en runtime y herramientas.
 
 - `System/`  
   Estado global y variables de juego usadas por el runtime.
@@ -181,6 +185,7 @@ Si existe logica similar:
 - UI del editor y flujos de autoria -> `Editor/`
 - UI del editor de actores y flujos de autoria `.actor` -> `EditorActor/`
 - Ejecucion runtime de conversacion/UI -> `ConversationBox/`
+- Construccion runtime de actores exportados a escena -> `ActorBuilder/`
 - Estado/variables globales de juego -> `System/`
 - Imagenes de iconos -> `Icons/`
 
@@ -215,6 +220,7 @@ No dar por terminado un cambio de esquema sin validar impacto en esos modulos.
 - `ConversationScheme`: estable (base del contrato)
 - `Editor`: estable en uso, en evolucion
 - `ConversationBox`: en construccion
+- `ActorBuilder`: en evolucion
 - `System`: en construccion
 - `Icons`: estable (visual)
 
