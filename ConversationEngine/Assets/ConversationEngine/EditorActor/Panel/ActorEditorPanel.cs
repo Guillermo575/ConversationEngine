@@ -107,6 +107,7 @@ namespace ConversationEditorActor.Panel
                 if (bodyPart == null) continue;
                 bool isSelected = bodyPart.Id == selectedBodyPartId;
                 bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
+                bool canDeleteBodyPart = !string.Equals(bodyPart.Name, "main", System.StringComparison.OrdinalIgnoreCase);
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
                 bool newVisible = EditorGUILayout.ToggleLeft(new GUIContent("", "Show or hide this body part in graph preview."), isVisible, GUILayout.Width(20f));
@@ -120,33 +121,24 @@ namespace ConversationEditorActor.Panel
                 string title = string.IsNullOrEmpty(bodyPart.Name) ? "bodypart" : bodyPart.Name;
                 string hiddenSuffix = isVisible ? "" : " (Hidden)";
                 if (GUILayout.Button(new GUIContent(title + " [" + bodyPart.Id + "]" + hiddenSuffix, "Select this body part."), buttonStyle)) selectedBodyPartId = bodyPart.Id;
-                EditorGUILayout.EndHorizontal();
-            }
-            int selectedId = selectedBodyPartId;
-            BodyPartData selectedBodyPart = null;
-            foreach (var existingBodyPart in actor.BodyParts)
-            {
-                if (existingBodyPart == null) continue;
-                if (existingBodyPart.Id != selectedId) continue;
-                selectedBodyPart = existingBodyPart;
-                break;
-            }
-            bool canDelete = selectedBodyPart != null && !string.Equals(selectedBodyPart.Name, "main", System.StringComparison.OrdinalIgnoreCase);
-            using (new EditorGUI.DisabledScope(!canDelete))
-            {
-                if (GUILayout.Button(new GUIContent("Delete Selected", "Delete selected body part except main.")))
+                using (new EditorGUI.DisabledScope(!canDeleteBodyPart))
                 {
-                    if (!EditorUtility.DisplayDialog("Delete BodyPart", "Delete selected BodyPart?", "Delete", "Cancel"))
+                    if (DrawDeleteButton("Delete this body part."))
                     {
+                        if (!EditorUtility.DisplayDialog("Delete BodyPart", "Delete this body part?", "Delete", "Cancel"))
+                        {
+                            EditorGUILayout.EndHorizontal();
+                            continue;
+                        }
+                        actor.BodyParts.Remove(bodyPart);
+                        hiddenBodyPartIds.Remove(bodyPart.Id);
+                        if (selectedBodyPartId == bodyPart.Id) selectedBodyPartId = actor.BodyParts.Count > 0 ? actor.BodyParts[0].Id : 0;
+                        changed = true;
                         EditorGUILayout.EndHorizontal();
-                        EditorGUILayout.EndVertical();
-                        return changed;
+                        break;
                     }
-                    actor.BodyParts.Remove(selectedBodyPart);
-                    hiddenBodyPartIds.Remove(selectedBodyPart.Id);
-                    selectedBodyPartId = actor.BodyParts.Count > 0 ? actor.BodyParts[0].Id : 0;
-                    changed = true;
                 }
+                EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndVertical();
             return changed;
