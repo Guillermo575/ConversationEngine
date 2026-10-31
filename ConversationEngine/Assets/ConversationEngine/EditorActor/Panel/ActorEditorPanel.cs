@@ -15,7 +15,7 @@ namespace ConversationEditorActor.Panel
         #endregion
 
         #region Draw
-        public bool Draw(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath)
+        public bool Draw(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath, System.Action<int, int> onPreviewResourceRequested)
         {
             if (actor == null) return false;
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
@@ -25,7 +25,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.Space(6f);
             changed |= DrawBodyPartList(actor, ref selectedBodyPartId, hiddenBodyPartIds);
             EditorGUILayout.Space(6f);
-            changed |= DrawSelectedBodyPart(actor, ref selectedBodyPartId, hiddenBodyPartIds, actorAssetPath);
+            changed |= DrawSelectedBodyPart(actor, ref selectedBodyPartId, hiddenBodyPartIds, actorAssetPath, onPreviewResourceRequested);
             EditorGUILayout.EndScrollView();
             return changed;
         }
@@ -143,7 +143,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.EndVertical();
             return changed;
         }
-        private bool DrawSelectedBodyPart(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath)
+        private bool DrawSelectedBodyPart(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath, System.Action<int, int> onPreviewResourceRequested)
         {
             int selectedId = selectedBodyPartId;
             BodyPartData bodyPart = null;
@@ -203,7 +203,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.Space(4f);
             changed |= DrawPivotPointList(bodyPart.PivotPoints, "BodyPart PivotPoints", "Add Pivot", "Base pivots for this body part.");
             EditorGUILayout.Space(4f);
-            changed |= DrawNestedResources(bodyPart, actorAssetPath);
+            changed |= DrawNestedResources(bodyPart, actorAssetPath, onPreviewResourceRequested);
             EditorGUILayout.EndVertical();
             return changed;
         }
@@ -260,7 +260,7 @@ namespace ConversationEditorActor.Panel
             }
             return changed;
         }
-        private bool DrawNestedResources(BodyPartData bodyPart, string actorAssetPath)
+        private bool DrawNestedResources(BodyPartData bodyPart, string actorAssetPath, System.Action<int, int> onPreviewResourceRequested)
         {
             bool changed = false;
             EditorGUILayout.BeginHorizontal();
@@ -291,7 +291,7 @@ namespace ConversationEditorActor.Panel
                 if (nestedResource.PivotPoints == null) nestedResource.PivotPoints = new List<PivotPoint>();
                 EditorGUILayout.BeginVertical("box");
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(new GUIContent("Resource " + i, "Body part resource definition."), EditorStyles.miniBoldLabel);
+                if (GUILayout.Button(new GUIContent("Resource " + i, "Preview this nested resource in graph."), EditorStyles.miniButtonLeft)) onPreviewResourceRequested?.Invoke(bodyPart.Id, i);
                 if (DrawDeleteButton("Delete this resource."))
                 {
                     if (!EditorUtility.DisplayDialog("Delete Resource", "Delete this nested resource?", "Delete", "Cancel"))

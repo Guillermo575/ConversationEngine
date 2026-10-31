@@ -41,6 +41,7 @@ namespace ConversationEditorActor.Graph
         private Vector2 lastMousePosition;
         private bool hasPivotDragMoved;
         private bool undoSnapshotRequested;
+        private readonly Dictionary<int, int> previewResourceIndexByBodyPart = new Dictionary<int, int>();
         #endregion
 
         #region Undo Helpers
@@ -53,6 +54,11 @@ namespace ConversationEditorActor.Graph
             if (!undoSnapshotRequested) return false;
             undoSnapshotRequested = false;
             return true;
+        }
+        public void SetPreviewResourceIndex(int bodyPartId, int resourceIndex)
+        {
+            if (bodyPartId <= 0 || resourceIndex < 0) return;
+            previewResourceIndexByBodyPart[bodyPartId] = resourceIndex;
         }
         #endregion
 
@@ -70,6 +76,7 @@ namespace ConversationEditorActor.Graph
         {
             if (actor == null) return false;
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
+            CleanupPreviewResourceState(actor);
             bool changed = false;
             Rect controlsRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 28f);
             Rect graphRect = new Rect(contentRect.x, contentRect.y + 30f, contentRect.width, contentRect.height - 30f);
@@ -95,7 +102,7 @@ namespace ConversationEditorActor.Graph
             {
                 if (hiddenBodyPartIds.Contains(renderInfo.BodyPart.Id)) continue;
                 visibleRenderInfos.Add(renderInfo);
-                DrawBodyPart(renderInfo, selectedBodyPartId == renderInfo.BodyPart.Id, showSupportVisuals);
+                DrawBodyPart(renderInfo, selectedBodyPartId == renderInfo.BodyPart.Id, showSupportVisuals, isReadOnly);
             }
             if (showSupportVisuals) foreach (var renderInfo in visibleRenderInfos) DrawBodyPartSelectionTriangle(renderInfo, ref selectedBodyPartId, isReadOnly);
             List<PivotHandleInfo> pivotHandles = new List<PivotHandleInfo>();
@@ -192,7 +199,7 @@ namespace ConversationEditorActor.Graph
             Handles.DrawAAPolyLine(2f, new Vector3(position.x - 30f, position.y), new Vector3(position.x + 30f, position.y));
             Handles.DrawAAPolyLine(2f, new Vector3(position.x, position.y - 30f), new Vector3(position.x, position.y + 30f));
         }
-        private void DrawBodyPart(BodyPartRenderInfo renderInfo, bool selected, bool showSupportVisuals)
+        private void DrawBodyPart(BodyPartRenderInfo renderInfo, bool selected, bool showSupportVisuals, bool isReadOnly)
         {
             if (renderInfo.Texture != null) GUI.DrawTexture(renderInfo.Rect, renderInfo.Texture, ScaleMode.StretchToFill, true);
             if (!showSupportVisuals) return;
@@ -201,7 +208,9 @@ namespace ConversationEditorActor.Graph
             Handles.DrawAAPolyLine(2f, new Vector3(renderInfo.Rect.xMin, renderInfo.Rect.yMin), new Vector3(renderInfo.Rect.xMax, renderInfo.Rect.yMin), new Vector3(renderInfo.Rect.xMax, renderInfo.Rect.yMax), new Vector3(renderInfo.Rect.xMin, renderInfo.Rect.yMax), new Vector3(renderInfo.Rect.xMin, renderInfo.Rect.yMin));
             GUIStyle labelStyle = new GUIStyle(EditorStyles.miniLabel);
             labelStyle.normal.textColor = borderColor;
-            GUI.Label(new Rect(renderInfo.Rect.xMin + 4f, renderInfo.Rect.yMin + 2f, renderInfo.Rect.width - 8f, 16f), renderInfo.BodyPart.Name + " [" + renderInfo.BodyPart.Id + "]", labelStyle);
+            string bodyPartLabel = renderInfo.BodyPart.Name + " [" + renderInfo.BodyPart.Id + "]";
+            Rect labelRect = new Rect(renderInfo.Rect.xMin + 4f, renderInfo.Rect.yMin + 2f, renderInfo.Rect.width - 8f, 16f);
+            GUI.Label(labelRect, bodyPartLabel, labelStyle);
         }
         private void DrawBodyPartSelectionTriangle(BodyPartRenderInfo renderInfo, ref int selectedBodyPartId, bool isReadOnly)
         {
@@ -237,12 +246,46 @@ namespace ConversationEditorActor.Graph
         private void DrawPivotRelationLine(Vector2 bodyPartCenter, Vector2 pivotPosition)
         {
             Handles.color = Color.white;
-            Handles.DrawAAPolyLine(6f, bodyPartCenter, pivotPosition);
+            Handles.DrawAAPolyLine(5f, bodyPartCenter, pivotPosition);
         }
         private bool IsOverridePivot(BodyPartResource activeResource, int pivotId)
         {
             if (activeResource?.PivotPoints == null) return false;
             return activeResource.PivotPoints.Any(x => x != null && x.Id == pivotId);
+        }
+        private BodyPartResource GetPreviewActiveResource(BodyPartData bodyPart)
+        {
+            if (bodyPart?.NestedResources == null || bodyPart.NestedResources.Count == 0) return null;
+            if (previewResourceIndexByBodyPart.TryGetValue(bodyPart.Id, out int previewIndex))
+            {
+                if (previewIndex >= 0 && previewIndex < bodyPart.NestedResources.Count)
+                {
+                    BodyPartResource previewResource = bodyPart.NestedResources[previewIndex];
+                    if (previewResource != null) return previewResource;
+                }
+            }
+            return ActorEditorHelpers.GetActiveResource(bodyPart);
+        }
+        private void CleanupPreviewResourceState(Actor actor)
+        {
+            if (actor?.BodyParts == null)
+            {
+                previewResourceIndexByBodyPart.Clear();
+                return;
+            }
+            HashSet<int> existingIds = new HashSet<int>();
+            foreach (var bodyPart in actor.BodyParts)
+            {
+                if (bodyPart == null) continue;
+                existingIds.Add(bodyPart.Id);
+            }
+            List<int> idsToRemove = new List<int>();
+            foreach (var bodyPartId in previewResourceIndexByBodyPart.Keys)
+            {
+                if (existingIds.Contains(bodyPartId)) continue;
+                idsToRemove.Add(bodyPartId);
+            }
+            foreach (var bodyPartId in idsToRemove) previewResourceIndexByBodyPart.Remove(bodyPartId);
         }
         #endregion
 
@@ -260,7 +303,7 @@ namespace ConversationEditorActor.Graph
                 {
                     if (renderMap.ContainsKey(bodyPart.Id)) continue;
                     if (!resolvedPivots.TryGetValue(bodyPart.AttachToPivotId, out var attachPosition)) continue;
-                    BodyPartResource activeResource = ActorEditorHelpers.GetActiveResource(bodyPart);
+                    BodyPartResource activeResource = GetPreviewActiveResource(bodyPart);
                     Texture2D texture = LoadTexture(activeResource, actorAssetPath);
                     Vector2 size = GetBodyPartSize(texture);
                     size *= zoom;
@@ -282,7 +325,7 @@ namespace ConversationEditorActor.Graph
             foreach (var bodyPart in bodyParts)
             {
                 if (renderMap.ContainsKey(bodyPart.Id)) continue;
-                BodyPartResource activeResource = ActorEditorHelpers.GetActiveResource(bodyPart);
+                BodyPartResource activeResource = GetPreviewActiveResource(bodyPart);
                 Texture2D texture = LoadTexture(activeResource, actorAssetPath);
                 Vector2 size = GetBodyPartSize(texture);
                 size *= zoom;
