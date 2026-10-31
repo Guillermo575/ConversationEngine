@@ -155,18 +155,6 @@ namespace ConversationActorBuilder
             ActorBuiltBodyPart builtBodyPart = bodyPartObject.AddComponent<ActorBuiltBodyPart>();
             builtBodyPart.ConfigureMetadata(bodyPart.Id, bodyPart.Name, bodyPart.AttachToPivotId);
             float worldPivotMultiplier = ResolveWorldPivotMultiplier(bodyPart, spriteProvider, options.TargetType, scale);
-            List<PivotPoint> allPivots = CollectAllPivotPoints(bodyPart);
-            for (int i = 0; i < allPivots.Count; i++)
-            {
-                PivotPoint pivotPoint = allPivots[i];
-                if (pivotPoint == null) continue;
-                GameObject pivotObject = new GameObject(string.IsNullOrWhiteSpace(pivotPoint.Name) ? "pivot_" + pivotPoint.Id : pivotPoint.Name);
-                pivotObject.transform.SetParent(bodyPartObject.transform, false);
-                ActorBuiltPivotPoint builtPivot = pivotObject.AddComponent<ActorBuiltPivotPoint>();
-                builtPivot.ConfigureBase(pivotPoint.Id, pivotPoint.Name, new Vector2(pivotPoint.X, pivotPoint.Y));
-                if (options.TargetType == ActorRenderTargetType.World) builtPivot.SetPositionMultiplier(new Vector2(worldPivotMultiplier, worldPivotMultiplier));
-                builtBodyPart.RegisterPivot(builtPivot);
-            }
             if (bodyPart.NestedResources == null) bodyPart.NestedResources = new List<BodyPartResource>();
             for (int i = 0; i < bodyPart.NestedResources.Count; i++)
             {
@@ -181,6 +169,18 @@ namespace ConversationActorBuilder
                 ConfigureVisual(resourceObject, sprite, options.TargetType, scale, sortingOrder);
                 List<PivotPoint> overridePivots = nestedResource.PivotPoints == null ? new List<PivotPoint>() : nestedResource.PivotPoints.Where(x => x != null).Select(x => new PivotPoint { Id = x.Id, Name = x.Name, X = x.X, Y = x.Y }).ToList();
                 builtBodyPart.RegisterResource(nestedResource.Id, resourceObject, overridePivots);
+            }
+            List<PivotPoint> allPivots = CollectAllPivotPoints(bodyPart);
+            for (int i = 0; i < allPivots.Count; i++)
+            {
+                PivotPoint pivotPoint = allPivots[i];
+                if (pivotPoint == null) continue;
+                GameObject pivotObject = new GameObject(string.IsNullOrWhiteSpace(pivotPoint.Name) ? "pivot_" + pivotPoint.Id : pivotPoint.Name);
+                pivotObject.transform.SetParent(bodyPartObject.transform, false);
+                ActorBuiltPivotPoint builtPivot = pivotObject.AddComponent<ActorBuiltPivotPoint>();
+                builtPivot.ConfigureBase(pivotPoint.Id, pivotPoint.Name, new Vector2(pivotPoint.X, pivotPoint.Y));
+                if (options.TargetType == ActorRenderTargetType.World) builtPivot.SetPositionMultiplier(new Vector2(worldPivotMultiplier, worldPivotMultiplier));
+                builtBodyPart.RegisterPivot(builtPivot);
             }
             builtBodyPart.SetCurrentResource(bodyPart.CurrentResourceId);
             return builtBodyPart;
