@@ -41,7 +41,14 @@ namespace ConversationEditorActor.Panel
             actor.Size = EditorGUILayout.Vector2Field(new GUIContent("Canvas Size", "Actor canvas size. Its center is the main pivot point."), actor.Size);
             if (EditorGUI.EndChangeCheck()) changed = true;
             EditorGUILayout.Space(4f);
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("Sound Effects", "Audio cues associated with this actor."), EditorStyles.miniBoldLabel);
+            if (DrawAddButton("Add a new sound effect path."))
+            {
+                actor.SoundEffectPaths.Add("");
+                changed = true;
+            }
+            EditorGUILayout.EndHorizontal();
             if (actor.SoundEffectPaths == null) actor.SoundEffectPaths = new List<string>();
             for (int i = 0; i < actor.SoundEffectPaths.Count; i++)
             {
@@ -49,7 +56,7 @@ namespace ConversationEditorActor.Panel
                 EditorGUI.BeginChangeCheck();
                 actor.SoundEffectPaths[i] = EditorGUILayout.TextField(new GUIContent("Path " + i, "Sound effect path."), actor.SoundEffectPaths[i]);
                 if (EditorGUI.EndChangeCheck()) changed = true;
-                if (GUILayout.Button(new GUIContent("X", "Remove sound effect path."), GUILayout.Width(24f)))
+                if (DrawDeleteButton("Remove sound effect path."))
                 {
                     if (!EditorUtility.DisplayDialog("Remove Sound Effect", "Remove this sound effect path?", "Remove", "Cancel"))
                     {
@@ -62,11 +69,6 @@ namespace ConversationEditorActor.Panel
                 }
                 EditorGUILayout.EndHorizontal();
             }
-            if (GUILayout.Button(new GUIContent("Add Sound Effect", "Add a new sound effect path.")))
-            {
-                actor.SoundEffectPaths.Add("");
-                changed = true;
-            }
             EditorGUILayout.EndVertical();
             return changed;
         }
@@ -75,29 +77,9 @@ namespace ConversationEditorActor.Panel
             bool changed = false;
             if (actor.BodyParts == null) actor.BodyParts = new List<BodyPartData>();
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField(new GUIContent("BodyParts", "Create, select and delete body parts."), EditorStyles.boldLabel);
-            foreach (var bodyPart in actor.BodyParts)
-            {
-                if (bodyPart == null) continue;
-                bool isSelected = bodyPart.Id == selectedBodyPartId;
-                bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
-                EditorGUILayout.BeginHorizontal();
-                EditorGUI.BeginChangeCheck();
-                bool newVisible = EditorGUILayout.ToggleLeft(new GUIContent("", "Show or hide this body part in graph preview."), isVisible, GUILayout.Width(20f));
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (newVisible) hiddenBodyPartIds.Remove(bodyPart.Id);
-                    else hiddenBodyPartIds.Add(bodyPart.Id);
-                    changed = true;
-                }
-                GUIStyle buttonStyle = isSelected ? EditorStyles.miniButtonMid : EditorStyles.miniButton;
-                string title = string.IsNullOrEmpty(bodyPart.Name) ? "bodypart" : bodyPart.Name;
-                string hiddenSuffix = isVisible ? "" : " (Hidden)";
-                if (GUILayout.Button(new GUIContent(title + " [" + bodyPart.Id + "]" + hiddenSuffix, "Select this body part."), buttonStyle)) selectedBodyPartId = bodyPart.Id;
-                EditorGUILayout.EndHorizontal();
-            }
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("Add BodyPart", "Create a new body part.")))
+            EditorGUILayout.LabelField(new GUIContent("BodyParts", "Create, select and delete body parts."), EditorStyles.boldLabel);
+            if (DrawAddButton("Create a new body part."))
             {
                 int maxId = 0;
                 foreach (var existingBodyPart in actor.BodyParts)
@@ -118,6 +100,27 @@ namespace ConversationEditorActor.Panel
                 });
                 selectedBodyPartId = nextId;
                 changed = true;
+            }
+            EditorGUILayout.EndHorizontal();
+            foreach (var bodyPart in actor.BodyParts)
+            {
+                if (bodyPart == null) continue;
+                bool isSelected = bodyPart.Id == selectedBodyPartId;
+                bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUI.BeginChangeCheck();
+                bool newVisible = EditorGUILayout.ToggleLeft(new GUIContent("", "Show or hide this body part in graph preview."), isVisible, GUILayout.Width(20f));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    if (newVisible) hiddenBodyPartIds.Remove(bodyPart.Id);
+                    else hiddenBodyPartIds.Add(bodyPart.Id);
+                    changed = true;
+                }
+                GUIStyle buttonStyle = isSelected ? EditorStyles.miniButtonMid : EditorStyles.miniButton;
+                string title = string.IsNullOrEmpty(bodyPart.Name) ? "bodypart" : bodyPart.Name;
+                string hiddenSuffix = isVisible ? "" : " (Hidden)";
+                if (GUILayout.Button(new GUIContent(title + " [" + bodyPart.Id + "]" + hiddenSuffix, "Select this body part."), buttonStyle)) selectedBodyPartId = bodyPart.Id;
+                EditorGUILayout.EndHorizontal();
             }
             int selectedId = selectedBodyPartId;
             BodyPartData selectedBodyPart = null;
@@ -145,7 +148,6 @@ namespace ConversationEditorActor.Panel
                     changed = true;
                 }
             }
-            EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
             return changed;
         }
@@ -216,7 +218,15 @@ namespace ConversationEditorActor.Panel
         private bool DrawPivotPointList(List<PivotPoint> pivotPoints, string title, string addButtonText, string tooltip)
         {
             bool changed = false;
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent(title, tooltip), EditorStyles.miniBoldLabel);
+            if (DrawAddButton(addButtonText))
+            {
+                int nextId = pivotPoints.Count == 0 ? 1 : pivotPoints.Max(x => x.Id) + 1;
+                pivotPoints.Add(new PivotPoint { Id = nextId, Name = "pivot_" + nextId, X = 0f, Y = 0f });
+                changed = true;
+            }
+            EditorGUILayout.EndHorizontal();
             for (int i = 0; i < pivotPoints.Count; i++)
             {
                 PivotPoint pivotPoint = pivotPoints[i];
@@ -229,7 +239,7 @@ namespace ConversationEditorActor.Panel
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(new GUIContent("Pivot " + i, "Editable pivot point."), EditorStyles.miniBoldLabel);
                 EditorGUILayout.LabelField(new GUIContent("Id: " + pivotPoint.Id, "Pivot id used for attachments and overrides."), EditorStyles.miniLabel, GUILayout.Width(56f));
-                if (GUILayout.Button(new GUIContent("X", "Delete this pivot point."), GUILayout.Width(24f)))
+                if (DrawDeleteButton("Delete this pivot point."))
                 {
                     if (!EditorUtility.DisplayDialog("Delete Pivot", "Delete this pivot point?", "Delete", "Cancel"))
                     {
@@ -256,18 +266,28 @@ namespace ConversationEditorActor.Panel
                 if (EditorGUI.EndChangeCheck()) changed = true;
                 EditorGUILayout.EndVertical();
             }
-            if (GUILayout.Button(new GUIContent(addButtonText, "Create a pivot point.")))
-            {
-                int nextId = pivotPoints.Count == 0 ? 1 : pivotPoints.Max(x => x.Id) + 1;
-                pivotPoints.Add(new PivotPoint { Id = nextId, Name = "pivot_" + nextId, X = 0f, Y = 0f });
-                changed = true;
-            }
             return changed;
         }
         private bool DrawNestedResources(BodyPartData bodyPart, string actorAssetPath)
         {
             bool changed = false;
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("Nested Resources", "Resources available for this body part."), EditorStyles.miniBoldLabel);
+            if (DrawAddButton("Add a new nested resource for this body part."))
+            {
+                List<string> selectedPaths = SelectMultipleResourcePaths(actorAssetPath);
+                foreach (string selectedPath in selectedPaths)
+                {
+                    bodyPart.NestedResources.Add(new BodyPartResource
+                    {
+                        Id = ActorEditorHelpers.BuildResourceIdFromPath(selectedPath),
+                        Path = selectedPath,
+                        PivotPoints = new List<PivotPoint>()
+                    });
+                    changed = true;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
             for (int i = 0; i < bodyPart.NestedResources.Count; i++)
             {
                 BodyPartResource nestedResource = bodyPart.NestedResources[i];
@@ -280,7 +300,7 @@ namespace ConversationEditorActor.Panel
                 EditorGUILayout.BeginVertical("box");
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(new GUIContent("Resource " + i, "Body part resource definition."), EditorStyles.miniBoldLabel);
-                if (GUILayout.Button(new GUIContent("X", "Delete this resource."), GUILayout.Width(24f)))
+                if (DrawDeleteButton("Delete this resource."))
                 {
                     if (!EditorUtility.DisplayDialog("Delete Resource", "Delete this nested resource?", "Delete", "Cancel"))
                     {
@@ -315,21 +335,28 @@ namespace ConversationEditorActor.Panel
                 changed |= DrawPivotPointList(nestedResource.PivotPoints, "Override PivotPoints", "Add Override Pivot", "Pivots that override the base body part pivots by id.");
                 EditorGUILayout.EndVertical();
             }
-            if (GUILayout.Button(new GUIContent("Add Resource", "Add a new nested resource for this body part.")))
-            {
-                List<string> selectedPaths = SelectMultipleResourcePaths(actorAssetPath);
-                foreach (string selectedPath in selectedPaths)
-                {
-                    bodyPart.NestedResources.Add(new BodyPartResource
-                    {
-                        Id = ActorEditorHelpers.BuildResourceIdFromPath(selectedPath),
-                        Path = selectedPath,
-                        PivotPoints = new List<PivotPoint>()
-                    });
-                    changed = true;
-                }
-            }
             return changed;
+        }
+        private bool DrawAddButton(string tooltip)
+        {
+            Color previousColor = GUI.color;
+            GUI.color = new Color(0.35f, 0.9f, 0.35f, 1f);
+            GUIStyle addStyle = new GUIStyle(EditorStyles.miniButton)
+            {
+                fontSize = EditorStyles.miniButton.fontSize + 2,
+                fontStyle = FontStyle.Bold
+            };
+            bool clicked = GUILayout.Button(new GUIContent("+", tooltip), addStyle, GUILayout.Width(30f), GUILayout.Height(22f));
+            GUI.color = previousColor;
+            return clicked;
+        }
+        private bool DrawDeleteButton(string tooltip)
+        {
+            Color previousColor = GUI.color;
+            GUI.color = new Color(0.9f, 0.3f, 0.3f, 1f);
+            bool clicked = GUILayout.Button(new GUIContent("X", tooltip), GUILayout.Width(24f));
+            GUI.color = previousColor;
+            return clicked;
         }
         private List<string> SelectMultipleResourcePaths(string actorAssetPath)
         {
