@@ -106,17 +106,22 @@ namespace ConversationEditorActor.Graph
                     var effectivePivots = ActorEditorHelpers.GetEffectivePivotPoints(renderInfo.BodyPart, renderInfo.ActiveResource);
                     foreach (var pivot in effectivePivots)
                     {
+                        bool isOverridePivot = IsOverridePivot(renderInfo.ActiveResource, pivot.Id);
                         Vector2 pivotPosition = new Vector2(renderInfo.Center.x + pivot.X * zoom, renderInfo.Center.y - pivot.Y * zoom);
                         float halfHitSize = pivotHitSize * 0.5f;
                         Rect pivotRect = new Rect(pivotPosition.x - halfHitSize, pivotPosition.y - halfHitSize, pivotHitSize, pivotHitSize);
+                        PivotPoint editablePivot = FindEditablePivot(renderInfo.BodyPart, renderInfo.ActiveResource, pivot.Id);
+                        bool isActivePivot = selectedBodyPartId == renderInfo.BodyPart.Id;
+                        if (editablePivot != null && draggingPivot == editablePivot) isActivePivot = true;
                         pivotHandles.Add(new PivotHandleInfo
                         {
-                            PivotPoint = FindEditablePivot(renderInfo.BodyPart, renderInfo.ActiveResource, pivot.Id),
+                            PivotPoint = editablePivot,
                             BodyPartId = renderInfo.BodyPart.Id,
                             Position = pivotPosition,
                             HitRect = pivotRect
                         });
-                        DrawPivotDiamond(pivotPosition, selectedBodyPartId == renderInfo.BodyPart.Id);
+                        if (isActivePivot) DrawPivotRelationLine(renderInfo.Center, pivotPosition);
+                        DrawPivotDiamond(pivotPosition, isActivePivot, isOverridePivot);
                     }
                 }
             }
@@ -182,7 +187,7 @@ namespace ConversationEditorActor.Graph
         }
         private void DrawMainPivot(Vector2 position)
         {
-            DrawPivotDiamond(position, true);
+            DrawPivotDiamond(position, true, false);
             Handles.color = new Color(1f, 0f, 0f, 0.6f);
             Handles.DrawAAPolyLine(2f, new Vector3(position.x - 30f, position.y), new Vector3(position.x + 30f, position.y));
             Handles.DrawAAPolyLine(2f, new Vector3(position.x, position.y - 30f), new Vector3(position.x, position.y + 30f));
@@ -217,15 +222,27 @@ namespace ConversationEditorActor.Graph
             selectedBodyPartId = renderInfo.BodyPart.Id;
             currentEvent.Use();
         }
-        private void DrawPivotDiamond(Vector2 position, bool selected)
+        private void DrawPivotDiamond(Vector2 position, bool selected, bool isOverride)
         {
             float size = selected ? 13f : 11f;
             Vector3 top = new Vector3(position.x, position.y - size);
             Vector3 right = new Vector3(position.x + size, position.y);
             Vector3 bottom = new Vector3(position.x, position.y + size);
             Vector3 left = new Vector3(position.x - size, position.y);
-            Handles.color = selected ? new Color(0.2f, 1f, 0.2f, 1f) : new Color(0.2f, 1f, 0.2f, 0.85f);
+            Color selectedColor = isOverride ? new Color(1f, 0.3f, 0.3f, 1f) : new Color(0.2f, 1f, 0.2f, 1f);
+            Color defaultColor = isOverride ? new Color(1f, 0.3f, 0.3f, 0.85f) : new Color(0.2f, 1f, 0.2f, 0.85f);
+            Handles.color = selected ? selectedColor : defaultColor;
             Handles.DrawAAConvexPolygon(top, right, bottom, left);
+        }
+        private void DrawPivotRelationLine(Vector2 bodyPartCenter, Vector2 pivotPosition)
+        {
+            Handles.color = Color.white;
+            Handles.DrawAAPolyLine(6f, bodyPartCenter, pivotPosition);
+        }
+        private bool IsOverridePivot(BodyPartResource activeResource, int pivotId)
+        {
+            if (activeResource?.PivotPoints == null) return false;
+            return activeResource.PivotPoints.Any(x => x != null && x.Id == pivotId);
         }
         #endregion
 
