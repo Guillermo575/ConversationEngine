@@ -111,7 +111,7 @@ namespace ConversationEditorActor.Graph
                         Rect pivotRect = new Rect(pivotPosition.x - halfHitSize, pivotPosition.y - halfHitSize, pivotHitSize, pivotHitSize);
                         pivotHandles.Add(new PivotHandleInfo
                         {
-                            PivotPoint = FindEditablePivot(renderInfo.BodyPart, pivot.Id),
+                            PivotPoint = FindEditablePivot(renderInfo.BodyPart, renderInfo.ActiveResource, pivot.Id),
                             BodyPartId = renderInfo.BodyPart.Id,
                             Position = pivotPosition,
                             HitRect = pivotRect
@@ -293,8 +293,13 @@ namespace ConversationEditorActor.Graph
             if (texture == null) return new Vector2(160f, 160f);
             return new Vector2(texture.width, texture.height);
         }
-        private PivotPoint FindEditablePivot(BodyPartData bodyPart, int pivotId)
+        private PivotPoint FindEditablePivot(BodyPartData bodyPart, BodyPartResource activeResource, int pivotId)
         {
+            if (activeResource?.PivotPoints != null)
+            {
+                PivotPoint overridePivot = activeResource.PivotPoints.FirstOrDefault(x => x != null && x.Id == pivotId);
+                if (overridePivot != null) return overridePivot;
+            }
             if (bodyPart?.PivotPoints == null) return null;
             return bodyPart.PivotPoints.FirstOrDefault(x => x != null && x.Id == pivotId);
         }
