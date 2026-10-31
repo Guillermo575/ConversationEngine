@@ -12,6 +12,7 @@ namespace ConversationActorBuilder
         [SerializeField] private Vector2 baseLocalPosition;
         [SerializeField] private Vector2 activeLocalPosition;
         [SerializeField] private bool hasOverridePosition;
+        [SerializeField] private Vector2 positionMultiplier = Vector2.one;
         #endregion
 
         #region Properties
@@ -20,6 +21,7 @@ namespace ConversationActorBuilder
         public Vector2 BaseLocalPosition => baseLocalPosition;
         public Vector2 ActiveLocalPosition => activeLocalPosition;
         public bool HasOverridePosition => hasOverridePosition;
+        public Vector2 PositionMultiplier => positionMultiplier;
         #endregion
 
         #region Setup
@@ -30,7 +32,12 @@ namespace ConversationActorBuilder
             baseLocalPosition = localPosition;
             activeLocalPosition = localPosition;
             hasOverridePosition = false;
-            transform.localPosition = new Vector3(localPosition.x, localPosition.y, 0f);
+            ApplyTransformPosition(activeLocalPosition);
+        }
+        public void SetPositionMultiplier(Vector2 multiplier)
+        {
+            positionMultiplier = new Vector2(Mathf.Approximately(multiplier.x, 0f) ? 1f : multiplier.x, Mathf.Approximately(multiplier.y, 0f) ? 1f : multiplier.y);
+            ApplyTransformPosition(activeLocalPosition);
         }
         #endregion
 
@@ -39,13 +46,17 @@ namespace ConversationActorBuilder
         {
             hasOverridePosition = true;
             activeLocalPosition = localPosition;
-            transform.localPosition = new Vector3(localPosition.x, localPosition.y, 0f);
+            ApplyTransformPosition(activeLocalPosition);
         }
         public void ClearOverride()
         {
             hasOverridePosition = false;
             activeLocalPosition = baseLocalPosition;
-            transform.localPosition = new Vector3(baseLocalPosition.x, baseLocalPosition.y, 0f);
+            ApplyTransformPosition(activeLocalPosition);
+        }
+        private void ApplyTransformPosition(Vector2 logicalLocalPosition)
+        {
+            transform.localPosition = new Vector3(logicalLocalPosition.x * positionMultiplier.x, logicalLocalPosition.y * positionMultiplier.y, 0f);
         }
         #endregion
     }

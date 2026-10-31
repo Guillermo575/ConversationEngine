@@ -154,6 +154,7 @@ namespace ConversationActorBuilder
             bodyPartObject.transform.localScale = Vector3.one;
             ActorBuiltBodyPart builtBodyPart = bodyPartObject.AddComponent<ActorBuiltBodyPart>();
             builtBodyPart.ConfigureMetadata(bodyPart.Id, bodyPart.Name, bodyPart.AttachToPivotId);
+            float worldPivotMultiplier = ResolveWorldPivotMultiplier(bodyPart, spriteProvider, options.TargetType, scale);
             List<PivotPoint> allPivots = CollectAllPivotPoints(bodyPart);
             for (int i = 0; i < allPivots.Count; i++)
             {
@@ -163,6 +164,7 @@ namespace ConversationActorBuilder
                 pivotObject.transform.SetParent(bodyPartObject.transform, false);
                 ActorBuiltPivotPoint builtPivot = pivotObject.AddComponent<ActorBuiltPivotPoint>();
                 builtPivot.ConfigureBase(pivotPoint.Id, pivotPoint.Name, new Vector2(pivotPoint.X, pivotPoint.Y));
+                if (options.TargetType == ActorRenderTargetType.World) builtPivot.SetPositionMultiplier(new Vector2(worldPivotMultiplier, worldPivotMultiplier));
                 builtBodyPart.RegisterPivot(builtPivot);
             }
             if (bodyPart.NestedResources == null) bodyPart.NestedResources = new List<BodyPartResource>();
@@ -233,9 +235,43 @@ namespace ConversationActorBuilder
                     SpriteRenderer spriteRenderer = resourceObject.AddComponent<SpriteRenderer>();
                     spriteRenderer.sprite = sprite;
                     spriteRenderer.sortingOrder = sortingOrder;
+                    resourceObject.transform.localPosition = ResolveWorldSpriteOffset(sprite, scale);
                     resourceObject.transform.localScale = Vector3.one * scale;
                     break;
             }
+        }
+        private static float ResolveWorldPivotMultiplier(BodyPartData bodyPart, IActorSpriteProvider spriteProvider, ActorRenderTargetType targetType, float scale)
+        {
+            if (targetType != ActorRenderTargetType.World) return 1f;
+            Sprite referenceSprite = ResolveBodyPartReferenceSprite(bodyPart, spriteProvider);
+            float pixelsPerUnit = referenceSprite == null || referenceSprite.pixelsPerUnit <= 0f ? 100f : referenceSprite.pixelsPerUnit;
+            return scale / pixelsPerUnit;
+        }
+        private static Sprite ResolveBodyPartReferenceSprite(BodyPartData bodyPart, IActorSpriteProvider spriteProvider)
+        {
+            if (bodyPart?.NestedResources == null || spriteProvider == null) return null;
+            BodyPartResource currentResource = bodyPart.NestedResources.FirstOrDefault(x => x != null && x.Id == (bodyPart.CurrentResourceId ?? ""));
+            if (currentResource != null)
+            {
+                Sprite currentSprite = spriteProvider.LoadSprite(currentResource.Path ?? "");
+                if (currentSprite != null) return currentSprite;
+            }
+            for (int i = 0; i < bodyPart.NestedResources.Count; i++)
+            {
+                BodyPartResource nestedResource = bodyPart.NestedResources[i];
+                if (nestedResource == null) continue;
+                Sprite nestedSprite = spriteProvider.LoadSprite(nestedResource.Path ?? "");
+                if (nestedSprite != null) return nestedSprite;
+            }
+            return null;
+        }
+        private static Vector3 ResolveWorldSpriteOffset(Sprite sprite, float scale)
+        {
+            if (sprite == null) return Vector3.zero;
+            float pixelsPerUnit = sprite.pixelsPerUnit <= 0f ? 100f : sprite.pixelsPerUnit;
+            Vector2 center = sprite.rect.size * 0.5f;
+            Vector2 offsetPixels = sprite.pivot - center;
+            return new Vector3((offsetPixels.x / pixelsPerUnit) * scale, (offsetPixels.y / pixelsPerUnit) * scale, 0f);
         }
         #endregion
     }
