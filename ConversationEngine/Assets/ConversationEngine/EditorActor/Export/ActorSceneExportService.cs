@@ -13,7 +13,7 @@ namespace ConversationEditorActor.Export
     }
     public class ActorExportRequest
     {
-        public ActorExportTargetType TargetType = ActorExportTargetType.World;
+        public ActorExportTargetType TargetType = ActorExportTargetType.Canvas;
         public Canvas TargetCanvas;
         public string NewCanvasName = "ActorCanvas";
         public string RootName = "";

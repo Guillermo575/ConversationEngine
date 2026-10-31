@@ -10,7 +10,7 @@ namespace ConversationEditorActor.Export
         #region State
         private Actor actorData;
         private Action<ActorExportRequest> onExport;
-        private ActorExportTargetType targetType = ActorExportTargetType.World;
+        private ActorExportTargetType targetType = ActorExportTargetType.Canvas;
         private string rootName = "";
         private Vector2 actorSize = Vector2.zero;
         private float exportScale = 1f;
