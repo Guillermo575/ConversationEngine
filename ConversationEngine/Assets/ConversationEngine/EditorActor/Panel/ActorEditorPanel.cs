@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using ConversationEditorActor.Helper;
@@ -76,6 +77,7 @@ namespace ConversationEditorActor.Panel
         {
             bool changed = false;
             if (actor.BodyParts == null) actor.BodyParts = new List<BodyPartData>();
+            if (EnsureMainBodyPartFirst(actor.BodyParts)) changed = true;
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("BodyParts", "Create, select and delete body parts."), EditorStyles.boldLabel);
@@ -102,12 +104,14 @@ namespace ConversationEditorActor.Panel
                 changed = true;
             }
             EditorGUILayout.EndHorizontal();
-            foreach (var bodyPart in actor.BodyParts)
+            for (int i = 0; i < actor.BodyParts.Count; i++)
             {
+                BodyPartData bodyPart = actor.BodyParts[i];
                 if (bodyPart == null) continue;
+                bool isMainBodyPart = IsMainBodyPart(bodyPart);
                 bool isSelected = bodyPart.Id == selectedBodyPartId;
                 bool isVisible = !hiddenBodyPartIds.Contains(bodyPart.Id);
-                bool canDeleteBodyPart = !string.Equals(bodyPart.Name, "main", System.StringComparison.OrdinalIgnoreCase);
+                bool canDeleteBodyPart = !isMainBodyPart;
                 EditorGUILayout.BeginHorizontal();
                 EditorGUI.BeginChangeCheck();
                 bool newVisible = EditorGUILayout.ToggleLeft(new GUIContent("", "Show or hide this body part in graph preview."), isVisible, GUILayout.Width(20f));
@@ -121,6 +125,32 @@ namespace ConversationEditorActor.Panel
                 string title = string.IsNullOrEmpty(bodyPart.Name) ? "bodypart" : bodyPart.Name;
                 string hiddenSuffix = isVisible ? "" : " (Hidden)";
                 if (GUILayout.Button(new GUIContent(title + " [" + bodyPart.Id + "]" + hiddenSuffix, "Select this body part."), buttonStyle)) selectedBodyPartId = bodyPart.Id;
+                if (!isMainBodyPart)
+                {
+                    bool canMoveUp = i > 1;
+                    bool canMoveDown = i < actor.BodyParts.Count - 1;
+                    using (new EditorGUI.DisabledScope(!canMoveUp))
+                    {
+                        if (DrawReorderButton("Up", "Move this body part one position up."))
+                        {
+                            SwapBodyParts(actor.BodyParts, i, i - 1);
+                            changed = true;
+                            EditorGUILayout.EndHorizontal();
+                            continue;
+                        }
+                    }
+                    using (new EditorGUI.DisabledScope(!canMoveDown))
+                    {
+                        if (DrawReorderButton("Down", "Move this body part one position down."))
+                        {
+                            SwapBodyParts(actor.BodyParts, i, i + 1);
+                            changed = true;
+                            EditorGUILayout.EndHorizontal();
+                            continue;
+                        }
+                    }
+                }
+                else GUILayout.Space(88f);
                 using (new EditorGUI.DisabledScope(!canDeleteBodyPart))
                 {
                     if (DrawDeleteButton("Delete this body part."))
@@ -130,12 +160,13 @@ namespace ConversationEditorActor.Panel
                             EditorGUILayout.EndHorizontal();
                             continue;
                         }
-                        actor.BodyParts.Remove(bodyPart);
+                        actor.BodyParts.RemoveAt(i);
                         hiddenBodyPartIds.Remove(bodyPart.Id);
                         if (selectedBodyPartId == bodyPart.Id) selectedBodyPartId = actor.BodyParts.Count > 0 ? actor.BodyParts[0].Id : 0;
                         changed = true;
                         EditorGUILayout.EndHorizontal();
-                        break;
+                        i--;
+                        continue;
                     }
                 }
                 EditorGUILayout.EndHorizontal();
@@ -349,6 +380,39 @@ namespace ConversationEditorActor.Panel
             bool clicked = GUILayout.Button(new GUIContent("X", tooltip), GUILayout.Width(24f));
             GUI.color = previousColor;
             return clicked;
+        }
+        private bool DrawReorderButton(string label, string tooltip)
+        {
+            return GUILayout.Button(new GUIContent(label, tooltip), GUILayout.Width(42f));
+        }
+        private bool IsMainBodyPart(BodyPartData bodyPart)
+        {
+            if (bodyPart == null) return false;
+            return string.Equals(bodyPart.Name, "main", System.StringComparison.OrdinalIgnoreCase);
+        }
+        private bool EnsureMainBodyPartFirst(List<BodyPartData> bodyParts)
+        {
+            if (bodyParts == null || bodyParts.Count <= 1) return false;
+            int mainIndex = -1;
+            for (int i = 0; i < bodyParts.Count; i++)
+            {
+                if (!IsMainBodyPart(bodyParts[i])) continue;
+                mainIndex = i;
+                break;
+            }
+            if (mainIndex <= 0) return false;
+            BodyPartData mainBodyPart = bodyParts[mainIndex];
+            bodyParts.RemoveAt(mainIndex);
+            bodyParts.Insert(0, mainBodyPart);
+            return true;
+        }
+        private void SwapBodyParts(List<BodyPartData> bodyParts, int indexA, int indexB)
+        {
+            if (bodyParts == null) return;
+            if (indexA < 0 || indexB < 0 || indexA >= bodyParts.Count || indexB >= bodyParts.Count) return;
+            BodyPartData temp = bodyParts[indexA];
+            bodyParts[indexA] = bodyParts[indexB];
+            bodyParts[indexB] = temp;
         }
         private List<string> SelectMultipleResourcePaths(string actorAssetPath)
         {
