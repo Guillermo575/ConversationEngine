@@ -33,8 +33,8 @@ namespace ConversationEditorActor.Export
             if (window.actorSize.x <= 0f) window.actorSize.x = 300f;
             if (window.actorSize.y <= 0f) window.actorSize.y = 400f;
             window.titleContent = new GUIContent("Actor Export", "Configure export options for scene build.");
-            window.minSize = new Vector2(420f, 320f);
-            window.maxSize = new Vector2(420f, 460f);
+            window.minSize = new Vector2(390f, 250f);
+            window.maxSize = new Vector2(390f, 340f);
             window.RefreshCanvasOptions();
             window.ShowUtility();
         }
@@ -62,10 +62,19 @@ namespace ConversationEditorActor.Export
             switch (targetType)
             {
                 case ActorExportTargetType.Canvas:
-                    if (GUILayout.Button(new GUIContent("Refresh Canvas List", "Refresh available canvas objects in active scenes."), GUILayout.Height(20f))) RefreshCanvasOptions();
-                    selectedCanvasIndex = EditorGUILayout.Popup(new GUIContent("Canvas", "Select an existing canvas or choose NEW to create one."), Mathf.Clamp(selectedCanvasIndex, 0, Mathf.Max(0, canvasLabels.Count - 1)), canvasLabels.ToArray());
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.PrefixLabel(new GUIContent("Canvas", "Select an existing canvas or choose NEW to create one."));
+                    selectedCanvasIndex = EditorGUILayout.Popup(Mathf.Clamp(selectedCanvasIndex, 0, Mathf.Max(0, canvasLabels.Count - 1)), canvasLabels.ToArray());
+                    if (GUILayout.Button(new GUIContent("Refresh", "Refresh available canvas objects in active scenes."), GUILayout.Width(80f))) RefreshCanvasOptions();
+                    EditorGUILayout.EndHorizontal();
                     if (selectedCanvasIndex == 0) newCanvasName = EditorGUILayout.TextField(new GUIContent("New Canvas", "Name for the canvas that will be created."), newCanvasName);
-                    canvasPosition = EditorGUILayout.Vector2Field(new GUIContent("Anchored Position", "UI local anchored position of the exported actor root."), canvasPosition);
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.LabelField(new GUIContent("Anchored Position", "UI local anchored position of the exported actor root."), GUILayout.Width(EditorGUIUtility.labelWidth - 4f));
+                    EditorGUILayout.LabelField(new GUIContent("X", "Anchored Position X value."), GUILayout.Width(14f));
+                    canvasPosition.x = EditorGUILayout.FloatField(canvasPosition.x);
+                    EditorGUILayout.LabelField(new GUIContent("Y", "Anchored Position Y value."), GUILayout.Width(14f));
+                    canvasPosition.y = EditorGUILayout.FloatField(canvasPosition.y);
+                    EditorGUILayout.EndHorizontal();
                     break;
                 default:
                     worldPosition = EditorGUILayout.Vector3Field(new GUIContent("World Position", "World position used by the exported actor root."), worldPosition);
@@ -78,14 +87,20 @@ namespace ConversationEditorActor.Export
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField(new GUIContent("Layout", "Size and root options for export."), EditorStyles.boldLabel);
             rootName = EditorGUILayout.TextField(new GUIContent("Root Name", "Name used for the generated actor root object."), rootName);
-            actorSize = EditorGUILayout.Vector2Field(new GUIContent("Actor Size", "Root actor size used by canvas mode and metadata."), actorSize);
-            exportScale = EditorGUILayout.FloatField(new GUIContent("Scale", "Scale multiplier applied to exported visual resources."), exportScale);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(new GUIContent("Actor Size", "Root actor size used by canvas mode and metadata."), GUILayout.Width(EditorGUIUtility.labelWidth - 4f));
+            EditorGUILayout.LabelField(new GUIContent("X", "Actor Size X value."), GUILayout.Width(14f));
+            actorSize.x = EditorGUILayout.FloatField(actorSize.x);
+            EditorGUILayout.LabelField(new GUIContent("Y", "Actor Size Y value."), GUILayout.Width(14f));
+            actorSize.y = EditorGUILayout.FloatField(actorSize.y);
+            EditorGUILayout.LabelField(new GUIContent("Scale", "Scale multiplier applied to exported visual resources."), GUILayout.Width(36f));
+            exportScale = EditorGUILayout.FloatField(exportScale);
+            EditorGUILayout.EndHorizontal();
             if (exportScale <= 0f) exportScale = 1f;
             EditorGUILayout.EndVertical();
         }
         private void DrawActionButtons()
         {
-            GUILayout.FlexibleSpace();
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button(new GUIContent("Cancel", "Close this export window."), GUILayout.Height(24f))) Close();
             if (GUILayout.Button(new GUIContent("Export", "Build actor objects in scene with current settings."), GUILayout.Height(24f))) ExecuteExport();
