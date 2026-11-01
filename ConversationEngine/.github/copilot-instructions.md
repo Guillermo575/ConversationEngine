@@ -125,6 +125,22 @@
 
 ---
 
+### Reglas UX rápidas para Copilot
+	* Mantener las ventanas del editor compactas (evitar espacios vacíos).
+	* Colocar campos relacionados en la misma línea:
+	  - `Vector2`/`Vector3` en una sola fila.
+	  - Campos de tamaño como `X`, `Y` y `Scale` en una sola fila.
+	* Colocar acciones contextuales junto a su campo (ejemplo: `Canvas` + `Refresh`).
+	* Mantener alineación visual consistente en etiquetas y anchos de campos.
+	* Usar dropdown para opciones fijas (enums/estados), no texto libre.
+	* Validar entradas al momento y corregir valores inválidos (ejemplo: `Scale <= 0 => 1`).
+	* Deshabilitar campos dependientes hasta que su campo base sea válido.
+	* Agregar tooltip a todo control UI nuevo o editado.
+	* Pedir confirmación en acciones destructivas (borrar/reiniciar).
+	* Reutilizar el mismo patrón de diseño en ventanas similares del editor.
+
+---
+
 # Instrucciones operativas para Copilot (ConversationEngine)
 
 ## 1) Alcance estricto (NO salir de aqui)
