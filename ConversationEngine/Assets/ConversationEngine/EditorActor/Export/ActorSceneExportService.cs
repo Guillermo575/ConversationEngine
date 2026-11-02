@@ -2,6 +2,7 @@ using ConversationScheme;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using System;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
 namespace ConversationEditorActor.Export
@@ -73,6 +74,8 @@ namespace ConversationEditorActor.Export
         {
             if (string.IsNullOrWhiteSpace(resourcePath)) return null;
             string resolvedAssetPath = global::ConversationEditorActor.Helper.ActorEditorHelpers.ResolveResourceAssetPath(actorAssetPath, resourcePath);
+            if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
+            if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = global::ConversationEditorActor.Helper.ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(resolvedAssetPath);
             if (sprite != null) return sprite;
