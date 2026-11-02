@@ -22,7 +22,7 @@ namespace ConversationEditorActor.Panel
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
             bool changed = false;
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-            changed |= DrawActorFields(actor);
+            changed |= DrawActorFields(actor, actorAssetPath);
             EditorGUILayout.Space(6f);
             changed |= DrawBodyPartList(actor, ref selectedBodyPartId, hiddenBodyPartIds);
             EditorGUILayout.Space(6f);
@@ -30,17 +30,28 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.EndScrollView();
             return changed;
         }
-        private bool DrawActorFields(Actor actor)
+        private bool DrawActorFields(Actor actor, string actorAssetPath)
         {
             bool changed = false;
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField(new GUIContent("Actor", "Main actor properties."), EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
             actor.Id = EditorGUILayout.TextField(new GUIContent("Id", "Unique actor id."), actor.Id);
-            actor.Path = EditorGUILayout.TextField(new GUIContent("Path", "Optional source path for this actor file."), actor.Path);
-            actor.IconPath = EditorGUILayout.TextField(new GUIContent("Icon Path", "Icon path used by conversation resources."), actor.IconPath);
             actor.Size = EditorGUILayout.Vector2Field(new GUIContent("Canvas Size", "Actor canvas size. Its center is the main pivot point."), actor.Size);
             if (EditorGUI.EndChangeCheck()) changed = true;
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(new GUIContent("Icon Path", "Icon path used by conversation resources."), GUILayout.Width(60f));
+            EditorGUILayout.LabelField(new GUIContent(string.IsNullOrEmpty(actor.IconPath) ? "(no file selected)" : actor.IconPath, "Read-only icon path relative to the .actor root folder."), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+            if (GUILayout.Button(new GUIContent("...", "Change icon file path."), GUILayout.Width(28f)))
+            {
+                string changedPath = SelectSingleResourcePath(actorAssetPath, actor.IconPath);
+                if (!string.IsNullOrEmpty(changedPath))
+                {
+                    actor.IconPath = changedPath;
+                    changed = true;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space(4f);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("Sound Effects", "Audio cues associated with this actor."), EditorStyles.miniBoldLabel);

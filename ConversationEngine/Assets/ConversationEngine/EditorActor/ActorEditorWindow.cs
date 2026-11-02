@@ -171,6 +171,7 @@ namespace ConversationEditorActor
             string json = File.ReadAllText(absolutePath);
             actorData = ActorEditorHelpers.DeserializeActor(json);
             currentAssetPath = ActorEditorHelpers.ToAssetPath(absolutePath);
+            if (actorData != null && !string.IsNullOrWhiteSpace(currentAssetPath)) actorData.Path = Path.GetFileName(currentAssetPath);
             hiddenBodyPartIds.Clear();
             SyncHiddenBodyPartIds();
             ClearHistory();
@@ -195,6 +196,7 @@ namespace ConversationEditorActor
                 }
             }
             string fullPath = Path.GetFullPath(targetPath);
+            actorData.Path = Path.GetFileName(targetPath);
             string json = ActorEditorHelpers.SerializeActor(actorData);
             File.WriteAllText(fullPath, json);
             AssetDatabase.Refresh();
