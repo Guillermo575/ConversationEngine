@@ -70,12 +70,15 @@ namespace ConversationEditor.Panel
             EditorGUILayout.LabelField("Conversation", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
             string newTitulo = EditorGUILayout.TextField(new GUIContent("Title", ""), conversationData.Title ?? "", GUILayout.ExpandWidth(true));
+            Language newDefaultLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("Default Language", "Language used when no alternate text is available."), conversationData.language);
             EditorGUILayout.LabelField(new GUIContent("Description", ""));
             var descriptionFieldStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
             string newDescripcion = EditorGUILayout.TextArea(conversationData.Description ?? "", descriptionFieldStyle, GUILayout.ExpandWidth(true), GUILayout.MinHeight(70f));
             if (EditorGUI.EndChangeCheck())
             {
+                RegisterUndoState("Edit Conversation Metadata");
                 conversationData.Title = newTitulo;
+                conversationData.language = newDefaultLanguage;
                 conversationData.Description = newDescripcion;
                 MarkDirty();
             }

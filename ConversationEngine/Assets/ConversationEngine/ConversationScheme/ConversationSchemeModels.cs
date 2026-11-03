@@ -14,7 +14,7 @@ namespace ConversationScheme
         public ResourceManager ResourceManager = new ResourceManager();
         public ConversationManager ConversationManager = new ConversationManager();
         public ConversationEditorSettings EditorSettings = new ConversationEditorSettings();
-        public Language defaultLanguage;
+        public Language language;
     }
 
     [Serializable]

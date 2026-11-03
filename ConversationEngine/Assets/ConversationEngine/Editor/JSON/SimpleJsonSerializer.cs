@@ -15,7 +15,7 @@ namespace ConversationEditor.JSON
             sb.AppendLine("{");
             sb.AppendLine($"  \"Title\": \"{EscapeString(data.Title)}\",");
             sb.AppendLine($"  \"Description\": \"{EscapeString(data.Description)}\",");
-            sb.AppendLine($"  \"defaultLanguage\": \"{data.defaultLanguage}\",");
+            sb.AppendLine($"  \"language\": \"{data.language}\",");
             sb.AppendLine("  \"ResourceManager\": {");
             SerializeResourceManager(sb, data.ResourceManager);
             sb.AppendLine("  },");

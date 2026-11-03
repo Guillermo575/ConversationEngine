@@ -1,6 +1,7 @@
 {
   "Title": "EJEMPLO",
   "Description": "ASI FUNCIONA EL EDITOR DE CONVERSACIONES",
+  "language": "Italian",
   "ResourceManager": {
     "SceneBackgrounds": [
     ],
@@ -16,6 +17,8 @@
         "NodeType": "Start",
         "SpeakerActorId": "",
         "Text": "",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 2,
         "Options": [
         ],
@@ -37,6 +40,8 @@
         "NodeType": "Function",
         "SpeakerActorId": "",
         "Text": "",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 3,
         "Options": [
         ],
@@ -70,6 +75,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 4,
         "Options": [
         ],
@@ -91,6 +98,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "actor_1",
         "Text": "Greetings, traveler. You look troubled. Is something wrong?",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 5,
         "Options": [
         ],
@@ -112,6 +121,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 6,
         "Options": [
         ],
@@ -133,6 +144,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "Will you accept this mission and help us rescue her?",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 7,
         "Options": [
         ],
@@ -154,6 +167,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "What do you want to do?",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 0,
         "Options": [
           {
@@ -235,6 +250,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "Thank you, brave knight. We leave at first light.",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 11,
         "Options": [
         ],
@@ -256,6 +273,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "actor_2",
         "Text": "I... understand. Very well. Deal.",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 11,
         "Options": [
         ],
@@ -277,6 +296,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "Without a word, the knight turns around and walks away.",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 12,
         "Options": [
         ],
@@ -298,6 +319,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "At sunrise, they depart toward the hideout where the princess was taken.",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 13,
         "Options": [
         ],
@@ -319,6 +342,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "THE END",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 14,
         "Options": [
         ],
@@ -340,6 +365,8 @@
         "NodeType": "Dialogue",
         "SpeakerActorId": "",
         "Text": "TO BE CONTINUED",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 14,
         "Options": [
         ],
@@ -361,6 +388,8 @@
         "NodeType": "End",
         "SpeakerActorId": "",
         "Text": "",
+        "lstAlternateText": [
+        ],
         "NextNodeId": 0,
         "Options": [
         ],
