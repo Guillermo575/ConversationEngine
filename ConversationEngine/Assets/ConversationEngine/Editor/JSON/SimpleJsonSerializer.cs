@@ -46,7 +46,8 @@ namespace ConversationEditor.JSON
                 var bg = rm.SceneBackgrounds[i];
                 sb.AppendLine("      {");
                 sb.AppendLine($"        \"Id\": \"{EscapeString(bg.Id)}\",");
-                sb.AppendLine($"        \"Path\": \"{EscapeString(bg.Path)}\"");
+                sb.AppendLine($"        \"Path\": \"{EscapeString(bg.Path)}\",");
+                sb.AppendLine($"        \"GUID\": \"{EscapeString(bg.GUID)}\"");
                 sb.Append("      }");
                 if (i < rm.SceneBackgrounds.Count - 1) sb.Append(",");
                 sb.AppendLine();
@@ -59,6 +60,7 @@ namespace ConversationEditor.JSON
                 sb.AppendLine("      {");
                 sb.AppendLine($"        \"Id\": \"{EscapeString(audio.Id)}\",");
                 sb.AppendLine($"        \"Path\": \"{EscapeString(audio.Path)}\",");
+                sb.AppendLine($"        \"GUID\": \"{EscapeString(audio.GUID)}\",");
                 sb.AppendLine($"        \"AudioType\": \"{audio.AudioType}\"");
                 sb.Append("      }");
                 if (i < rm.AudioBackgrounds.Count - 1) sb.Append(",");
@@ -72,8 +74,10 @@ namespace ConversationEditor.JSON
                 sb.AppendLine("      {");
                 sb.AppendLine($"        \"Id\": \"{EscapeString(actor.Id)}\",");
                 sb.AppendLine($"        \"Path\": \"{EscapeString(actor.Path)}\",");
+                sb.AppendLine($"        \"GUID\": \"{EscapeString(actor.GUID)}\",");
                 sb.AppendLine($"        \"IconPath\": \"{EscapeString(actor.IconPath)}\",");
-                sb.AppendLine("        \"SoundEffectPaths\": [],");
+                sb.AppendLine($"        \"IconPathGUID\": \"{EscapeString(actor.IconPathGUID)}\",");
+                sb.AppendLine("        \"SoundEffects\": [],");
                 sb.AppendLine("        \"BodyParts\": []");
                 sb.Append("      }");
                 if (i < rm.Actors.Count - 1) sb.Append(",");

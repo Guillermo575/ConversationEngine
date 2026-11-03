@@ -343,6 +343,8 @@ Both layouts intelligently handle:
 - Better canvas handling without artificial bounds
 - Zoom interaction reworked to scale graph elements with consistent hit detection
 - Vertical zoom slider at top-right (`0.1x` to `5.0x`) with persisted zoom per file
+- Resource references now keep `GUID` + `Path` for `SceneBackground`, `AudioBackground`, and simplified `Actor` entries
+- On `.conversation` load, missing `GUID` or `Path` values are auto-synchronized and the file is auto-saved with a notification
 
 ### Previous Features
 - Visual node-based editing

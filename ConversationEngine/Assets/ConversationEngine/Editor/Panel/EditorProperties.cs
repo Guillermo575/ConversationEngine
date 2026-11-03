@@ -1,5 +1,7 @@
 using ConversationScheme;
 using System.Collections.Generic;
+using ConversationEditor.Helper;
+using ConversationScheme;
 using UnityEditor;
 using UnityEngine;
 namespace ConversationEditor.Panel
@@ -85,10 +87,29 @@ namespace ConversationEditor.Panel
             EditorGUI.indentLevel++;
             for (int i = 0; i < resources.Count; i++)
             {
+                T resource = resources[i];
+                if (resource == null)
+                {
+                    resource = new T();
+                    resources[i] = resource;
+                }
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.BeginVertical("box");
-                resources[i].Id = EditorGUILayout.TextField("ID", resources[i].Id);
-                resources[i].Path = EditorGUILayout.TextField("Path", resources[i].Path);
+                EditorGUI.BeginChangeCheck();
+                resource.Id = EditorGUILayout.TextField("ID", resource.Id);
+                string resourcePathTooltip = "Resource path. GUID: " + (string.IsNullOrWhiteSpace(resource.GUID) ? "(empty)" : resource.GUID);
+                resource.Path = EditorGUILayout.TextField(new GUIContent("Path", resourcePathTooltip), resource.Path);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    resource.GUID = ConversationEditorHelpers.GetResourceGuidFromPath(conversationEditorCore.currentFilePath, resource.Path);
+                    MarkDirty();
+                }
+                if (ConversationEditorHelpers.IsMissingResource(resource, conversationEditorCore.currentFilePath))
+                {
+                    GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                    missingStyle.normal.textColor = Color.red;
+                    EditorGUILayout.LabelField(new GUIContent("Missing file: resource was not found by GUID or Path.", "The resource cannot be resolved using GUID or Path."), missingStyle);
+                }
                 EditorGUILayout.EndVertical();
                 if (!isReadOnly && GUILayout.Button("X", GUILayout.Width(25)))
                 {
@@ -112,11 +133,30 @@ namespace ConversationEditor.Panel
             EditorGUI.indentLevel++;
             for (int i = 0; i < resources.Count; i++)
             {
+                AudioBackground resource = resources[i];
+                if (resource == null)
+                {
+                    resource = new AudioBackground();
+                    resources[i] = resource;
+                }
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.BeginVertical("box");
-                resources[i].Id = EditorGUILayout.TextField("ID", resources[i].Id);
-                resources[i].Path = EditorGUILayout.TextField("Path", resources[i].Path);
-                resources[i].AudioType = (AudioChannelType)EditorGUILayout.EnumPopup("Audio Type", resources[i].AudioType);
+                EditorGUI.BeginChangeCheck();
+                resource.Id = EditorGUILayout.TextField("ID", resource.Id);
+                string resourcePathTooltip = "Audio path. GUID: " + (string.IsNullOrWhiteSpace(resource.GUID) ? "(empty)" : resource.GUID);
+                resource.Path = EditorGUILayout.TextField(new GUIContent("Path", resourcePathTooltip), resource.Path);
+                resource.AudioType = (AudioChannelType)EditorGUILayout.EnumPopup("Audio Type", resource.AudioType);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    resource.GUID = ConversationEditorHelpers.GetResourceGuidFromPath(conversationEditorCore.currentFilePath, resource.Path);
+                    MarkDirty();
+                }
+                if (ConversationEditorHelpers.IsMissingResource(resource, conversationEditorCore.currentFilePath))
+                {
+                    GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                    missingStyle.normal.textColor = Color.red;
+                    EditorGUILayout.LabelField(new GUIContent("Missing file: audio was not found by GUID or Path.", "The audio cannot be resolved using GUID or Path."), missingStyle);
+                }
                 EditorGUILayout.EndVertical();
                 if (!isReadOnly && GUILayout.Button("X", GUILayout.Width(25)))
                 {
@@ -140,11 +180,38 @@ namespace ConversationEditor.Panel
             EditorGUI.indentLevel++;
             for (int i = 0; i < actors.Count; i++)
             {
+                Actor actor = actors[i];
+                if (actor == null)
+                {
+                    actor = new Actor();
+                    actors[i] = actor;
+                }
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.BeginVertical("box");
-                actors[i].Id = EditorGUILayout.TextField("ID", actors[i].Id);
-                actors[i].Path = EditorGUILayout.TextField("Actor JSON Path", actors[i].Path);
-                actors[i].IconPath = EditorGUILayout.TextField("Icon Path", actors[i].IconPath);
+                EditorGUI.BeginChangeCheck();
+                actor.Id = EditorGUILayout.TextField("ID", actor.Id);
+                string actorPathTooltip = "Actor file path. GUID: " + (string.IsNullOrWhiteSpace(actor.GUID) ? "(empty)" : actor.GUID);
+                actor.Path = EditorGUILayout.TextField(new GUIContent("Actor JSON Path", actorPathTooltip), actor.Path);
+                string actorIconTooltip = "Actor icon path. GUID: " + (string.IsNullOrWhiteSpace(actor.IconPathGUID) ? "(empty)" : actor.IconPathGUID);
+                actor.IconPath = EditorGUILayout.TextField(new GUIContent("Icon Path", actorIconTooltip), actor.IconPath);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    actor.GUID = ConversationEditorHelpers.GetResourceGuidFromPath(conversationEditorCore.currentFilePath, actor.Path);
+                    actor.IconPathGUID = ConversationEditorHelpers.GetResourceGuidFromPath(conversationEditorCore.currentFilePath, actor.IconPath);
+                    MarkDirty();
+                }
+                if (ConversationEditorHelpers.IsMissingResource(actor, conversationEditorCore.currentFilePath))
+                {
+                    GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                    missingStyle.normal.textColor = Color.red;
+                    EditorGUILayout.LabelField(new GUIContent("Missing file: actor was not found by GUID or Path.", "The actor file cannot be resolved using GUID or Path."), missingStyle);
+                }
+                if (ConversationEditorHelpers.IsMissingResource(conversationEditorCore.currentFilePath, actor.IconPathGUID, actor.IconPath))
+                {
+                    GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                    missingStyle.normal.textColor = Color.red;
+                    EditorGUILayout.LabelField(new GUIContent("Missing file: icon was not found by GUID or Path.", "The icon cannot be resolved using GUID or Path."), missingStyle);
+                }
                 EditorGUILayout.EndVertical();
                 if (!isReadOnly && GUILayout.Button("X", GUILayout.Width(25)))
                 {

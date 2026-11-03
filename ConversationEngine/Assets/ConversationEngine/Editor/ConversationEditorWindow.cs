@@ -387,6 +387,14 @@ namespace ConversationEditor
             EnsureEditorSettings();
             NormalizeConversationConditionBooleanValues(conversationData);
             ConversationNodeUtility.EnsureStartNodeExists(conversationData);
+            int synchronizedFields = ConversationEditorHelpers.SyncConversationResourceIdentifiers(conversationData, filePath);
+            if (synchronizedFields > 0)
+            {
+                string synchronizedJson = ConversationJsonSettings.Serialize(conversationData);
+                File.WriteAllText(filePath, synchronizedJson);
+                AssetDatabase.Refresh();
+                EditorUtility.DisplayDialog("Conversation Editor", "Resource identifiers were synchronized automatically and the .conversation file was saved.", "OK");
+            }
             graphView?.SetConversationData(conversationData);
             currentFilePath = filePath;
             isDirty = false;

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using ConversationScheme;
 namespace ConversationEditor.Helper
 {
@@ -265,6 +266,155 @@ namespace ConversationEditor.Helper
             if (sourceText.Length <= safeLength) return sourceText;
             int trimmedLength = Mathf.Max(1, safeLength - 3);
             return sourceText.Substring(0, trimmedLength) + "...";
+        }
+        #endregion
+
+        #region Resource Paths
+        public static bool TryResolveResourceAssetPath(string conversationFilePath, string resourceGuid, string resourcePath, out string resolvedAssetPath, out bool resolvedByGuid)
+        {
+            resolvedAssetPath = "";
+            resolvedByGuid = false;
+            string normalizedGuid = string.IsNullOrWhiteSpace(resourceGuid) ? "" : resourceGuid.Trim();
+            if (!string.IsNullOrWhiteSpace(normalizedGuid))
+            {
+                string guidAssetPath = AssetDatabase.GUIDToAssetPath(normalizedGuid);
+                if (IsValidAssetPath(guidAssetPath))
+                {
+                    resolvedAssetPath = guidAssetPath;
+                    resolvedByGuid = true;
+                    return true;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(resourcePath)) return false;
+            string normalizedPath = resourcePath.Replace("\\", "/");
+            if (normalizedPath.StartsWith("Assets/"))
+            {
+                if (!IsValidAssetPath(normalizedPath)) return false;
+                resolvedAssetPath = normalizedPath;
+                return true;
+            }
+            if (string.IsNullOrWhiteSpace(conversationFilePath)) return false;
+            string conversationAbsolutePath = Path.GetFullPath(conversationFilePath);
+            string conversationRootFolder = Path.GetDirectoryName(conversationAbsolutePath);
+            if (string.IsNullOrWhiteSpace(conversationRootFolder)) return false;
+            string combinedAbsolutePath = Path.Combine(conversationRootFolder, normalizedPath);
+            string assetPath = ToAssetPath(combinedAbsolutePath);
+            if (!IsValidAssetPath(assetPath)) return false;
+            resolvedAssetPath = assetPath;
+            return true;
+        }
+        public static int SyncResourcePathAndGuid(Resource resource, string conversationFilePath)
+        {
+            if (resource == null) return 0;
+            if (!TryResolveResourceAssetPath(conversationFilePath, resource.GUID, resource.Path, out string resolvedAssetPath, out bool _)) return 0;
+            int updatedFields = 0;
+            if (string.IsNullOrWhiteSpace(resource.GUID))
+            {
+                string guid = AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+                if (!string.IsNullOrWhiteSpace(guid))
+                {
+                    resource.GUID = guid;
+                    updatedFields++;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(resource.Path))
+            {
+                if (TryGetPathRelativeToConversation(conversationFilePath, resolvedAssetPath, out string relativePath))
+                {
+                    resource.Path = relativePath;
+                    updatedFields++;
+                }
+            }
+            return updatedFields;
+        }
+        public static int SyncPathAndGuid(string conversationFilePath, ref string path, ref string guid)
+        {
+            if (!TryResolveResourceAssetPath(conversationFilePath, guid, path, out string resolvedAssetPath, out bool _)) return 0;
+            int updatedFields = 0;
+            if (string.IsNullOrWhiteSpace(guid))
+            {
+                string newGuid = AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+                if (!string.IsNullOrWhiteSpace(newGuid))
+                {
+                    guid = newGuid;
+                    updatedFields++;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                if (TryGetPathRelativeToConversation(conversationFilePath, resolvedAssetPath, out string relativePath))
+                {
+                    path = relativePath;
+                    updatedFields++;
+                }
+            }
+            return updatedFields;
+        }
+        public static int SyncConversationResourceIdentifiers(ConversationData conversationData, string conversationFilePath)
+        {
+            if (conversationData?.ResourceManager == null) return 0;
+            int updatedFields = 0;
+            if (conversationData.ResourceManager.SceneBackgrounds != null)
+            {
+                foreach (var background in conversationData.ResourceManager.SceneBackgrounds) updatedFields += SyncResourcePathAndGuid(background, conversationFilePath);
+            }
+            if (conversationData.ResourceManager.AudioBackgrounds != null)
+            {
+                foreach (var audioBackground in conversationData.ResourceManager.AudioBackgrounds) updatedFields += SyncResourcePathAndGuid(audioBackground, conversationFilePath);
+            }
+            if (conversationData.ResourceManager.Actors == null) return updatedFields;
+            foreach (var actor in conversationData.ResourceManager.Actors)
+            {
+                updatedFields += SyncResourcePathAndGuid(actor, conversationFilePath);
+                if (actor == null) continue;
+                updatedFields += SyncPathAndGuid(conversationFilePath, ref actor.IconPath, ref actor.IconPathGUID);
+            }
+            return updatedFields;
+        }
+        public static string GetResourceGuidFromPath(string conversationFilePath, string resourcePath)
+        {
+            if (!TryResolveResourceAssetPath(conversationFilePath, "", resourcePath, out string resolvedAssetPath, out bool _)) return "";
+            return AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+        }
+        public static bool IsMissingResource(Resource resource, string conversationFilePath)
+        {
+            if (resource == null) return true;
+            return !TryResolveResourceAssetPath(conversationFilePath, resource.GUID, resource.Path, out string _, out bool _);
+        }
+        public static bool IsMissingResource(string conversationFilePath, string resourceGuid, string resourcePath)
+        {
+            return !TryResolveResourceAssetPath(conversationFilePath, resourceGuid, resourcePath, out string _, out bool _);
+        }
+        private static bool TryGetPathRelativeToConversation(string conversationFilePath, string resolvedAssetPath, out string relativePath)
+        {
+            relativePath = "";
+            if (string.IsNullOrWhiteSpace(conversationFilePath)) return false;
+            string conversationAbsolutePath = Path.GetFullPath(conversationFilePath).Replace("\\", "/");
+            string conversationRootFolder = Path.GetDirectoryName(conversationAbsolutePath);
+            if (string.IsNullOrWhiteSpace(conversationRootFolder)) return false;
+            string absoluteAssetPath = resolvedAssetPath;
+            if (!Path.IsPathRooted(absoluteAssetPath))
+            {
+                absoluteAssetPath = Path.GetFullPath(resolvedAssetPath);
+            }
+            absoluteAssetPath = absoluteAssetPath.Replace("\\", "/");
+            conversationRootFolder = conversationRootFolder.Replace("\\", "/");
+            if (!absoluteAssetPath.StartsWith(conversationRootFolder + "/") && absoluteAssetPath != conversationRootFolder) return false;
+            relativePath = absoluteAssetPath.Substring(conversationRootFolder.Length).TrimStart('/');
+            return !string.IsNullOrWhiteSpace(relativePath);
+        }
+        private static string ToAssetPath(string absolutePath)
+        {
+            if (string.IsNullOrWhiteSpace(absolutePath)) return "";
+            string normalizedAbsolutePath = Path.GetFullPath(absolutePath).Replace("\\", "/");
+            string dataPath = Application.dataPath.Replace("\\", "/");
+            if (!normalizedAbsolutePath.StartsWith(dataPath)) return "";
+            return "Assets" + normalizedAbsolutePath.Substring(dataPath.Length);
+        }
+        private static bool IsValidAssetPath(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath)) return false;
+            return AssetDatabase.LoadMainAssetAtPath(assetPath) != null;
         }
         #endregion
     }
