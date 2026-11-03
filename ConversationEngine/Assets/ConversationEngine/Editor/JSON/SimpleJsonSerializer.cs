@@ -130,6 +130,7 @@ namespace ConversationEditor.JSON
             {
                 for (int i = 0; i < node.lstAlternateText.Count; i++)
                 {
+                    if (String.IsNullOrEmpty(node.lstAlternateText[i].Text)) continue;
                     var opt = node.lstAlternateText[i];
                     sb.AppendLine("          {");
                     sb.AppendLine($"            \"language\": \"{opt.language}\",");
