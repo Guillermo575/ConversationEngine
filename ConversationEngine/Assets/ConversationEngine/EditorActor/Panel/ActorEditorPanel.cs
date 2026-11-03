@@ -64,31 +64,73 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.Space(4f);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("Sound Effects", "Audio cues associated with this actor."), EditorStyles.miniBoldLabel);
-            if (DrawAddButton("Add a new sound effect path."))
+            if (DrawAddButton("Add a new sound effect audio file."))
             {
-                actor.SoundEffectPaths.Add("");
-                changed = true;
+                string selectedAudioPath = SelectSingleAudioPath(actorAssetPath, "");
+                if (!string.IsNullOrEmpty(selectedAudioPath))
+                {
+                    if (actor.SoundEffects == null) actor.SoundEffects = new List<AudioBackground>();
+                    string soundGuid = ActorEditorHelpers.GetResourceGuidFromPath(actorAssetPath, selectedAudioPath);
+                    actor.SoundEffects.Add(new AudioBackground
+                    {
+                        Id = BuildSoundEffectId(selectedAudioPath, actor.SoundEffects.Count),
+                        Path = selectedAudioPath,
+                        GUID = soundGuid,
+                        AudioType = AudioChannelType.SoundEffect
+                    });
+                    changed = true;
+                }
             }
             EditorGUILayout.EndHorizontal();
-            if (actor.SoundEffectPaths == null) actor.SoundEffectPaths = new List<string>();
-            for (int i = 0; i < actor.SoundEffectPaths.Count; i++)
+            if (actor.SoundEffects == null) actor.SoundEffects = new List<AudioBackground>();
+            for (int i = 0; i < actor.SoundEffects.Count; i++)
             {
-                EditorGUILayout.BeginHorizontal();
+                AudioBackground soundEffect = actor.SoundEffects[i];
+                if (soundEffect == null)
+                {
+                    soundEffect = new AudioBackground { AudioType = AudioChannelType.SoundEffect };
+                    actor.SoundEffects[i] = soundEffect;
+                }
+                soundEffect.AudioType = AudioChannelType.SoundEffect;
+                EditorGUILayout.BeginVertical("box");
                 EditorGUI.BeginChangeCheck();
-                actor.SoundEffectPaths[i] = EditorGUILayout.TextField(new GUIContent("Path " + i, "Sound effect path."), actor.SoundEffectPaths[i]);
+                soundEffect.Id = EditorGUILayout.TextField(new GUIContent("Id", "Sound effect id."), soundEffect.Id);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(new GUIContent("Path", "Sound effect path relative to the .actor root folder."), GUILayout.Width(36f));
+                string soundPathLabel = string.IsNullOrEmpty(soundEffect.Path) ? "(no file selected)" : soundEffect.Path;
+                string soundPathTooltip = "Read-only sound path relative to the .actor root folder. GUID: " + (string.IsNullOrWhiteSpace(soundEffect.GUID) ? "(empty)" : soundEffect.GUID);
+                EditorGUILayout.LabelField(new GUIContent(soundPathLabel, soundPathTooltip), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                if (GUILayout.Button(new GUIContent("...", "Change sound effect file path."), GUILayout.Width(28f)))
+                {
+                    string changedPath = SelectSingleAudioPath(actorAssetPath, soundEffect.Path);
+                    if (!string.IsNullOrEmpty(changedPath))
+                    {
+                        soundEffect.Path = changedPath;
+                        soundEffect.GUID = ActorEditorHelpers.GetResourceGuidFromPath(actorAssetPath, changedPath);
+                        if (string.IsNullOrWhiteSpace(soundEffect.Id)) soundEffect.Id = BuildSoundEffectId(changedPath, i);
+                        changed = true;
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
+                if (ActorEditorHelpers.IsMissingResource(soundEffect, actorAssetPath))
+                {
+                    GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                    missingStyle.normal.textColor = Color.red;
+                    EditorGUILayout.LabelField(new GUIContent("Missing file: sound effect was not found by GUID or Path.", "The sound effect cannot be resolved using GUID or Path."), missingStyle);
+                }
                 if (EditorGUI.EndChangeCheck()) changed = true;
-                if (DrawDeleteButton("Remove sound effect path."))
+                if (DrawDeleteButton("Remove sound effect."))
                 {
                     if (!EditorUtility.DisplayDialog("Remove Sound Effect", "Remove this sound effect path?", "Remove", "Cancel"))
                     {
-                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.EndVertical();
                         continue;
                     }
-                    actor.SoundEffectPaths.RemoveAt(i);
+                    actor.SoundEffects.RemoveAt(i);
                     changed = true;
                     i--;
                 }
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndVertical();
             return changed;
@@ -499,6 +541,44 @@ namespace ConversationEditorActor.Panel
                 return "";
             }
             return relativePath;
+        }
+        private string SelectSingleAudioPath(string actorAssetPath, string currentRelativePath)
+        {
+            if (string.IsNullOrWhiteSpace(actorAssetPath))
+            {
+                EditorUtility.DisplayDialog("Actor File Required", "Save the .actor file first so resources can be validated relative to its root folder.", "OK");
+                return "";
+            }
+            string actorFolderAbsolutePath = Path.GetDirectoryName(Path.GetFullPath(actorAssetPath));
+            if (string.IsNullOrWhiteSpace(actorFolderAbsolutePath))
+            {
+                EditorUtility.DisplayDialog("Invalid Actor Path", "Could not resolve the .actor root folder.", "OK");
+                return "";
+            }
+            string startFolder = actorFolderAbsolutePath;
+            if (!string.IsNullOrWhiteSpace(currentRelativePath))
+            {
+                string currentFullPath = Path.Combine(actorFolderAbsolutePath, currentRelativePath);
+                if (File.Exists(currentFullPath))
+                {
+                    string currentDirectory = Path.GetDirectoryName(currentFullPath);
+                    if (!string.IsNullOrWhiteSpace(currentDirectory)) startFolder = currentDirectory;
+                }
+            }
+            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Audio File", startFolder, new[] { "Audio", "mp3,wav,ogg,aiff,aif,xm,mod,it,s3m" });
+            if (string.IsNullOrEmpty(absolutePath)) return "";
+            if (!ActorEditorHelpers.TryGetAudioPathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string errorMessage))
+            {
+                EditorUtility.DisplayDialog("Invalid Audio", errorMessage, "OK");
+                return "";
+            }
+            return relativePath;
+        }
+        private string BuildSoundEffectId(string relativePath, int index)
+        {
+            string resourceId = ActorEditorHelpers.BuildResourceIdFromPath(relativePath);
+            if (string.IsNullOrWhiteSpace(resourceId)) resourceId = "soundeffect_" + index;
+            return resourceId;
         }
         private void BuildAttachPivotOptions(Actor actor, List<int> pivotIds, List<string> pivotLabels)
         {

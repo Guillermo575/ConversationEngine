@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using ConversationScheme;
 using UnityEditor;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace ConversationEditorActor.Helper
                 Path = "",
                 IconPath = "",
                 IconPathGUID = "",
-                SoundEffectPaths = new List<string>(),
+                SoundEffects = new List<AudioBackground>(),
                 BodyParts = new List<BodyPartData>(),
                 Size = new Vector2(300f, 400f)
             };
@@ -51,7 +52,15 @@ namespace ConversationEditorActor.Helper
             if (actor == null) return;
             if (actor.IconPath == null) actor.IconPath = "";
             if (actor.IconPathGUID == null) actor.IconPathGUID = "";
-            if (actor.SoundEffectPaths == null) actor.SoundEffectPaths = new List<string>();
+            if (actor.SoundEffects == null) actor.SoundEffects = new List<AudioBackground>();
+            foreach (var soundEffect in actor.SoundEffects)
+            {
+                if (soundEffect == null) continue;
+                if (soundEffect.Id == null) soundEffect.Id = "";
+                if (soundEffect.Path == null) soundEffect.Path = "";
+                if (soundEffect.GUID == null) soundEffect.GUID = "";
+                soundEffect.AudioType = AudioChannelType.SoundEffect;
+            }
             if (actor.BodyParts == null) actor.BodyParts = new List<BodyPartData>();
             foreach (var bodyPart in actor.BodyParts)
             {
@@ -211,6 +220,31 @@ namespace ConversationEditorActor.Helper
             }
             return resolvedByGuid || !string.IsNullOrWhiteSpace(resource.Path);
         }
+        public static bool TrySyncAudioPathAndGuid(AudioBackground audioResource, string actorAssetPath, out int updatedFields)
+        {
+            updatedFields = 0;
+            if (audioResource == null) return false;
+            if (!TryResolveResourceAssetPath(actorAssetPath, audioResource.GUID, audioResource.Path, out string resolvedAssetPath, out bool resolvedByGuid)) return false;
+            if (string.IsNullOrWhiteSpace(audioResource.GUID))
+            {
+                string guid = AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+                if (!string.IsNullOrWhiteSpace(guid))
+                {
+                    audioResource.GUID = guid;
+                    updatedFields++;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(audioResource.Path))
+            {
+                string absolutePath = Path.GetFullPath(resolvedAssetPath);
+                if (TryGetAudioPathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string _))
+                {
+                    audioResource.Path = relativePath;
+                    updatedFields++;
+                }
+            }
+            return resolvedByGuid || !string.IsNullOrWhiteSpace(audioResource.Path);
+        }
         public static int SyncActorResourceIdentifiers(Actor actor, string actorAssetPath)
         {
             if (actor == null) return 0;
@@ -231,6 +265,20 @@ namespace ConversationEditorActor.Helper
                     actor.IconPath = syncedIconPath;
                     actor.IconPathGUID = syncedIconGuid;
                     updatedCount += iconUpdatedFields;
+                }
+            }
+            if (actor.SoundEffects != null)
+            {
+                foreach (var soundEffect in actor.SoundEffects)
+                {
+                    if (soundEffect == null) continue;
+                    if (soundEffect.AudioType != AudioChannelType.SoundEffect)
+                    {
+                        soundEffect.AudioType = AudioChannelType.SoundEffect;
+                        updatedCount++;
+                    }
+                    TrySyncAudioPathAndGuid(soundEffect, actorAssetPath, out int updatedFields);
+                    updatedCount += updatedFields;
                 }
             }
             if (actor.BodyParts == null) return updatedCount;
@@ -310,6 +358,26 @@ namespace ConversationEditorActor.Helper
                     return false;
             }
         }
+        public static bool IsSupportedAudioFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) return false;
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".mp3":
+                case ".wav":
+                case ".ogg":
+                case ".aiff":
+                case ".aif":
+                case ".xm":
+                case ".mod":
+                case ".it":
+                case ".s3m":
+                    return true;
+                default:
+                    return false;
+            }
+        }
         public static bool TryGetResourcePathRelativeToActor(string actorAssetPath, string absoluteResourcePath, out string relativePath, out string errorMessage)
         {
             relativePath = "";
@@ -347,6 +415,47 @@ namespace ConversationEditorActor.Helper
             if (string.IsNullOrWhiteSpace(relativePath))
             {
                 errorMessage = "Could not resolve a valid relative resource path.";
+                return false;
+            }
+            return true;
+        }
+        public static bool TryGetAudioPathRelativeToActor(string actorAssetPath, string absoluteResourcePath, out string relativePath, out string errorMessage)
+        {
+            relativePath = "";
+            errorMessage = "";
+            if (string.IsNullOrWhiteSpace(actorAssetPath))
+            {
+                errorMessage = "Save the .actor file first so audio paths can be validated against its root folder.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(absoluteResourcePath) || !File.Exists(absoluteResourcePath))
+            {
+                errorMessage = "Selected audio file does not exist.";
+                return false;
+            }
+            if (!IsSupportedAudioFile(absoluteResourcePath))
+            {
+                errorMessage = "Only audio files are allowed (.mp3, .wav, .ogg, .aiff, .aif, .xm, .mod, .it, .s3m).";
+                return false;
+            }
+            string actorAbsolutePath = Path.GetFullPath(actorAssetPath).Replace("\\", "/");
+            string actorRootFolder = Path.GetDirectoryName(actorAbsolutePath);
+            if (string.IsNullOrWhiteSpace(actorRootFolder))
+            {
+                errorMessage = "Could not resolve actor root folder.";
+                return false;
+            }
+            actorRootFolder = actorRootFolder.Replace("\\", "/");
+            string normalizedFilePath = Path.GetFullPath(absoluteResourcePath).Replace("\\", "/");
+            if (!normalizedFilePath.StartsWith(actorRootFolder + "/") && normalizedFilePath != actorRootFolder)
+            {
+                errorMessage = "Selected audio file must be inside the same root folder as the .actor file.";
+                return false;
+            }
+            relativePath = normalizedFilePath.Substring(actorRootFolder.Length).TrimStart('/');
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                errorMessage = "Could not resolve a valid relative audio path.";
                 return false;
             }
             return true;

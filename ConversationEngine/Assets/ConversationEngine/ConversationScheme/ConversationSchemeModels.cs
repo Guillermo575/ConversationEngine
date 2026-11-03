@@ -59,7 +59,7 @@ namespace ConversationScheme
     {
         public string IconPath;
         public string IconPathGUID;
-        public List<string> SoundEffectPaths = new List<string>();
+        public List<AudioBackground> SoundEffects = new List<AudioBackground>();
         public List<BodyPart> BodyParts = new List<BodyPart>();
         public Vector2 Size; // Actor canvas size; the center is the main actor pivot point (for example, feet for full body characters or neck for bust characters)
     }
