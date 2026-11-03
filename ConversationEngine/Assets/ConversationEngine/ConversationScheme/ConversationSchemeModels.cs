@@ -173,7 +173,7 @@ namespace ConversationScheme
     [Serializable]
     public class AlternateText
     {
-	    public Language eLanguage;
+	    public Language language;
         public string Text;
     }
 

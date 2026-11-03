@@ -15,6 +15,7 @@ namespace ConversationEditor.JSON
             sb.AppendLine("{");
             sb.AppendLine($"  \"Title\": \"{EscapeString(data.Title)}\",");
             sb.AppendLine($"  \"Description\": \"{EscapeString(data.Description)}\",");
+            sb.AppendLine($"  \"defaultLanguage\": \"{data.defaultLanguage}\",");
             sb.AppendLine("  \"ResourceManager\": {");
             SerializeResourceManager(sb, data.ResourceManager);
             sb.AppendLine("  },");
@@ -124,6 +125,21 @@ namespace ConversationEditor.JSON
             sb.AppendLine($"        \"NodeType\": \"{node.NodeType}\",");
             sb.AppendLine($"        \"SpeakerActorId\": \"{EscapeString(node.SpeakerActorId)}\",");
             sb.AppendLine($"        \"Text\": \"{EscapeString(node.Text)}\",");
+            sb.AppendLine("        \"lstAlternateText\": [");
+            if (node.lstAlternateText != null)
+            {
+                for (int i = 0; i < node.lstAlternateText.Count; i++)
+                {
+                    var opt = node.lstAlternateText[i];
+                    sb.AppendLine("          {");
+                    sb.AppendLine($"            \"language\": \"{opt.language}\",");
+                    sb.AppendLine($"            \"Text\": \"{EscapeString(opt.Text)}\",");
+                    sb.Append("          }");
+                    if (i < node.lstAlternateText.Count - 1) sb.Append(",");
+                    sb.AppendLine();
+                }
+            }
+            sb.AppendLine("        ],");
             if (!String.IsNullOrEmpty(node.Comment)) sb.AppendLine($"        \"Comment\": \"{EscapeString(node.Comment)}\",");
             sb.AppendLine($"        \"NextNodeId\": {node.NextNodeId},");
             sb.AppendLine("        \"Options\": [");
@@ -252,7 +268,8 @@ namespace ConversationEditor.JSON
                 { typeof(ConversationNodeType), "NodeType" },
                 { typeof(AudioChannelType), "AudioType" },
                 { typeof(ComparisonOperator), "Operator" },
-                { typeof(ConversationScheme.ValueType), "ValueDataType" }
+                { typeof(ConversationScheme.ValueType), "ValueDataType" },
+                { typeof(Language), "language" }
             };
             foreach (var mapping in enumMappings)
             {
