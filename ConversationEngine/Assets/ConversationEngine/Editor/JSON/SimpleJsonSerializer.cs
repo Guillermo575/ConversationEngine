@@ -134,7 +134,7 @@ namespace ConversationEditor.JSON
                     var opt = node.lstAlternateText[i];
                     sb.AppendLine("          {");
                     sb.AppendLine($"            \"language\": \"{opt.language}\",");
-                    sb.AppendLine($"            \"Text\": \"{EscapeString(opt.Text)}\",");
+                    sb.AppendLine($"            \"Text\": \"{EscapeString(opt.Text)}\"");
                     sb.Append("          }");
                     if (i < node.lstAlternateText.Count - 1) sb.Append(",");
                     sb.AppendLine();

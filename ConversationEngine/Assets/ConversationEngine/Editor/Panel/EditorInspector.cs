@@ -64,6 +64,7 @@ namespace ConversationEditor.Panel
 
         #region UI State
         private Vector2 inspectorScrollPos;
+        private readonly Dictionary<Node, Language> selectedAlternateLanguageByNode = new Dictionary<Node, Language>();
         #endregion
 
         #region Events
@@ -143,6 +144,7 @@ namespace ConversationEditor.Panel
                 case ConversationNodeType.Observation:
                     EditorGUILayout.LabelField(new GUIContent("Text", "Observation text shown to the user."));
                     node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+                    DrawAlternateTextSection(node);
                     break;
                 default:
                     DrawDialogueOrFunctionInspector(conversationNode);
@@ -219,6 +221,7 @@ namespace ConversationEditor.Panel
             }
             EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
             node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+            DrawAlternateTextSection(node);
         }
 
         private void DrawOptionInspector(ConversationOption option)
@@ -232,6 +235,7 @@ namespace ConversationEditor.Panel
             EnsureOptionEditorData(graphView?.SelectedNode as ConversationNode, option, Mathf.Max(0, selectedOptionIndex));
             EditorGUILayout.LabelField(new GUIContent("Text", "Option text shown to the player."));
             option.Text = EditorGUILayout.TextArea(option.Text ?? "", GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+            DrawAlternateTextSection(option);
             option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode as ConversationNode, "Target node for this option.");
             option.HideOption = EditorGUILayout.Toggle(new GUIContent("Hide Option", "If enabled, this option will stay hidden."), option.HideOption, GUILayout.ExpandWidth(true));
             EditorGUILayout.LabelField(new GUIContent("Block Text", "Text shown when this option is blocked."));
@@ -528,6 +532,52 @@ namespace ConversationEditor.Panel
                     return true;
             }
         }
+
+        private void DrawAlternateTextSection(Node node)
+        {
+            if (node == null) return;
+            if (node.lstAlternateText == null) node.lstAlternateText = new List<AlternateText>();
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(new GUIContent("Alternate Text", "Configure text entries by language."), EditorStyles.boldLabel);
+            Language selectedLanguage = GetSelectedAlternateLanguage(node);
+            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("Language", "Language to edit in alternate texts."), selectedLanguage, GUILayout.ExpandWidth(true));
+            if (newSelectedLanguage != selectedLanguage) selectedAlternateLanguageByNode[node] = newSelectedLanguage;
+            AlternateText selectedAlternateText = GetOrCreateAlternateText(node, selectedAlternateLanguageByNode[node]);
+            string oldText = selectedAlternateText.Text ?? "";
+            string newText = EditorGUILayout.TextArea(oldText, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
+            if (newText == oldText) return;
+            RegisterUndoState("Edit Alternate Text");
+            selectedAlternateText.Text = newText;
+            MarkDirty();
+        }
+
+        private Language GetSelectedAlternateLanguage(Node node)
+        {
+            if (selectedAlternateLanguageByNode.TryGetValue(node, out var selectedLanguage)) return selectedLanguage;
+            Language defaultLanguage = conversationData != null ? conversationData.language : Language.English;
+            selectedAlternateLanguageByNode[node] = defaultLanguage;
+            return defaultLanguage;
+        }
+
+        private AlternateText GetOrCreateAlternateText(Node node, Language language)
+        {
+            for (int i = 0; i < node.lstAlternateText.Count; i++)
+            {
+                AlternateText alternateText = node.lstAlternateText[i];
+                if (alternateText == null) continue;
+                if (alternateText.language == language) return alternateText;
+            }
+            RegisterUndoState("Add Alternate Text");
+            AlternateText newAlternateText = new AlternateText
+            {
+                language = language,
+                Text = ""
+            };
+            node.lstAlternateText.Add(newAlternateText);
+            MarkDirty();
+            return newAlternateText;
+        }
+
         private void DrawConditionList(List<ConditionRule> conditions)
         {
             if (conditions == null) return;
