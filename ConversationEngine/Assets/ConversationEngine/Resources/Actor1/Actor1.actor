@@ -1,85 +1,115 @@
 {
-  "Id": "actor1",
-  "Path": "actor1.actor",
-  "IconPath": "actor1.png",
-  "Size": {
-    "x": 300.0,
-    "y": 400.0
-  }, 
-  "SoundEffectPaths": [],
-  "BodyParts": [
-    {
-	  "Id": 1,
-      "Name": "main",
-      "AttachToPivotId": 0,
-      "CurrentResourceId": "",
-      "NestedResources": [],
-      "PivotPoints": [
-        { "Id": 1, "Name": "main", "X": 0, "Y": -80 }
-      ]
-    },
-    {
-	  "Id": 2,
-      "Name": "torso",
-      "AttachToPivotId": 1,
-      "CurrentResourceId": "torso_default",
-      "NestedResources": [
+    "Id": "actor1",
+    "Path": "Actor1.actor",
+    "GUID": "38736d421f5e73849bf209466f347523",
+    "IconPath": "actor1.png",
+    "SoundEffectPaths": [],
+    "BodyParts": [
         {
-          "Id": "torso_default",
-          "Path": "BodyPart_Torso.png",
-		  "PivotPoints": [
-			{ "Id": 2, "Name": "neck_socket", "X": 0, "Y": 180 }
-		  ]
-        }
-      ],
-      "PivotPoints": [
-        { "Id": 2, "Name": "neck_socket", "X": 0, "Y": 180 }
-      ]
-    },
-    {
-	  "Id": 3,
-      "Name": "head",
-      "AttachToPivotId": 2,
-      "CurrentResourceId": "head_default",
-      "NestedResources": [
+            "Id": 1,
+            "Name": "main",
+            "AttachToPivotId": 0,
+            "NestedResources": [],
+            "CurrentResourceId": "",
+            "PivotPoints": [
+                {
+                    "Id": 1,
+                    "Name": "main",
+                    "X": 0.0,
+                    "Y": -80.0
+                }
+            ]
+        },
         {
-          "Id": "head_default",
-          "Path": "BodyPart_Head.png",
-		  "PivotPoints": []
-        }
-      ],
-      "PivotPoints": [
-        { "Id": 3, "Name": "eyes_socket", "X": 0, "Y": 20 },
-        { "Id": 4, "Name": "mouth_socket", "X": 0, "Y": -60 }
-      ]
-    },
-    {
-	  "Id": 4,
-      "Name": "eyes",
-      "AttachToPivotId": 3,
-      "CurrentResourceId": "eyes_default",
-      "NestedResources": [
+            "Id": 2,
+            "Name": "torso",
+            "AttachToPivotId": 1,
+            "NestedResources": [
+                {
+                    "Id": "torso_default",
+                    "Path": "BodyPart_Torso.png",
+                    "GUID": "00e15415a9230fa48ba6635b3c283e95",
+                    "PivotPoints": [
+                        {
+                            "Id": 2,
+                            "Name": "neck_socket",
+                            "X": 0.0,
+                            "Y": 180.0
+                        }
+                    ]
+                }
+            ],
+            "CurrentResourceId": "torso_default",
+            "PivotPoints": [
+                {
+                    "Id": 2,
+                    "Name": "neck_socket",
+                    "X": 0.0,
+                    "Y": 180.0
+                }
+            ]
+        },
         {
-          "Id": "eyes_default",
-          "Path": "BodyPart_Eyes.png",
-		  "PivotPoints": []
-        }
-      ],
-      "PivotPoints": []
-    },
-    {
-	  "Id": 5,
-      "Name": "mouth",
-      "AttachToPivotId": 4,
-      "CurrentResourceId": "mouth_default",
-      "NestedResources": [
+            "Id": 3,
+            "Name": "head",
+            "AttachToPivotId": 2,
+            "NestedResources": [
+                {
+                    "Id": "head_default",
+                    "Path": "BodyPart_Head.png",
+                    "GUID": "82d042652070a144fa83dd8cacbc6086",
+                    "PivotPoints": []
+                }
+            ],
+            "CurrentResourceId": "head_default",
+            "PivotPoints": [
+                {
+                    "Id": 3,
+                    "Name": "eyes_socket",
+                    "X": 0.0,
+                    "Y": 20.0
+                },
+                {
+                    "Id": 4,
+                    "Name": "mouth_socket",
+                    "X": 0.0,
+                    "Y": -60.0
+                }
+            ]
+        },
         {
-          "Id": "mouth_default",
-          "Path": "BodyPart_Mouth.png",
-		  "PivotPoints": []
+            "Id": 4,
+            "Name": "eyes",
+            "AttachToPivotId": 3,
+            "NestedResources": [
+                {
+                    "Id": "eyes_default",
+                    "Path": "BodyPart_Eyes.png",
+                    "GUID": "705c599aefc0c4e45ab9f37136156ae1",
+                    "PivotPoints": []
+                }
+            ],
+            "CurrentResourceId": "eyes_default",
+            "PivotPoints": []
+        },
+        {
+            "Id": 5,
+            "Name": "mouth",
+            "AttachToPivotId": 4,
+            "NestedResources": [
+                {
+                    "Id": "mouth_default",
+                    "Path": "BodyPart_Mouth.png",
+                    "GUID": "33700780d33cf154abb09010f5e37e71",
+                    "PivotPoints": []
+                }
+            ],
+            "CurrentResourceId": "mouth_default",
+            "PivotPoints": []
         }
-      ],
-      "PivotPoints": []
+    ],
+    "Size": {
+        "x": 300.0,
+        "y": 400.0
     }
-  ]
 }

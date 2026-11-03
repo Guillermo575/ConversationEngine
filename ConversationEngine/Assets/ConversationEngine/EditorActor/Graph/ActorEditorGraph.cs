@@ -343,8 +343,8 @@ namespace ConversationEditorActor.Graph
         }
         private Texture2D LoadTexture(BodyPartResource resource, string actorAssetPath)
         {
-            if (resource == null || string.IsNullOrWhiteSpace(resource.Path)) return null;
-            string resolvedPath = ActorEditorHelpers.ResolveResourceAssetPath(actorAssetPath, resource.Path);
+            if (resource == null) return null;
+            if (!ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resource.GUID, resource.Path, out string resolvedPath, out bool _)) return null;
             if (string.IsNullOrWhiteSpace(resolvedPath)) return null;
             return AssetDatabase.LoadAssetAtPath<Texture2D>(resolvedPath);
         }

@@ -316,6 +316,7 @@ namespace ConversationEditorActor.Panel
                     {
                         Id = ActorEditorHelpers.BuildResourceIdFromPath(selectedPath),
                         Path = selectedPath,
+                        GUID = ActorEditorHelpers.GetResourceGuidFromPath(actorAssetPath, selectedPath),
                         PivotPoints = new List<PivotPoint>()
                     });
                     changed = true;
@@ -354,17 +355,26 @@ namespace ConversationEditorActor.Panel
                 nestedResource.Id = EditorGUILayout.TextField(new GUIContent("Id", "Resource id."), nestedResource.Id);
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(new GUIContent("Path", "Resource path relative to the .actor root folder."), GUILayout.Width(36f));
-                EditorGUILayout.LabelField(new GUIContent(string.IsNullOrEmpty(nestedResource.Path) ? "(no file selected)" : nestedResource.Path, "Read-only resource path relative to the .actor root folder."), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                string resourcePathLabel = string.IsNullOrEmpty(nestedResource.Path) ? "(no file selected)" : nestedResource.Path;
+                string resourcePathTooltip = "Read-only resource path relative to the .actor root folder. GUID: " + (string.IsNullOrWhiteSpace(nestedResource.GUID) ? "(empty)" : nestedResource.GUID);
+                EditorGUILayout.LabelField(new GUIContent(resourcePathLabel, resourcePathTooltip), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
                 if (GUILayout.Button(new GUIContent("...", "Change resource file path."), GUILayout.Width(28f)))
                 {
                     string changedPath = SelectSingleResourcePath(actorAssetPath, nestedResource.Path);
                     if (!string.IsNullOrEmpty(changedPath))
                     {
                         nestedResource.Path = changedPath;
+                        nestedResource.GUID = ActorEditorHelpers.GetResourceGuidFromPath(actorAssetPath, changedPath);
                         changed = true;
                     }
                 }
                 EditorGUILayout.EndHorizontal();
+                if (ActorEditorHelpers.IsMissingResource(nestedResource, actorAssetPath))
+                {
+                    GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                    missingStyle.normal.textColor = Color.red;
+                    EditorGUILayout.LabelField(new GUIContent("Missing file: resource was not found by GUID or Path.", "The resource cannot be resolved using GUID or Path."), missingStyle);
+                }
                 if (EditorGUI.EndChangeCheck()) changed = true;
                 changed |= DrawPivotPointList(nestedResource.PivotPoints, "Override PivotPoints", "Add Override Pivot", "Pivots that override the base body part pivots by id.");
                 EditorGUILayout.EndVertical();

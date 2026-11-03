@@ -162,6 +162,93 @@ namespace ConversationEditorActor.Helper
             string combinedPath = Path.Combine(actorFolderPath, normalizedResourcePath);
             return combinedPath.Replace("\\", "/");
         }
+        public static bool TryResolveResourceAssetPath(string actorAssetPath, string resourceGuid, string resourcePath, out string resolvedAssetPath, out bool resolvedByGuid)
+        {
+            resolvedAssetPath = "";
+            resolvedByGuid = false;
+            string normalizedGuid = string.IsNullOrWhiteSpace(resourceGuid) ? "" : resourceGuid.Trim();
+            if (!string.IsNullOrWhiteSpace(normalizedGuid))
+            {
+                string guidAssetPath = AssetDatabase.GUIDToAssetPath(normalizedGuid);
+                if (IsValidAssetPath(guidAssetPath))
+                {
+                    resolvedAssetPath = guidAssetPath;
+                    resolvedByGuid = true;
+                    return true;
+                }
+            }
+            string pathAssetPath = ResolveResourceAssetPath(actorAssetPath, resourcePath);
+            if (Path.IsPathRooted(pathAssetPath)) pathAssetPath = ToAssetPath(pathAssetPath);
+            if (!IsValidAssetPath(pathAssetPath)) return false;
+            resolvedAssetPath = pathAssetPath;
+            return true;
+        }
+        public static bool TrySyncResourcePathAndGuid(Resource resource, string actorAssetPath, out int updatedFields)
+        {
+            updatedFields = 0;
+            if (resource == null) return false;
+            if (!TryResolveResourceAssetPath(actorAssetPath, resource.GUID, resource.Path, out string resolvedAssetPath, out bool resolvedByGuid)) return false;
+            if (string.IsNullOrWhiteSpace(resource.GUID))
+            {
+                string guid = AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+                if (!string.IsNullOrWhiteSpace(guid))
+                {
+                    resource.GUID = guid;
+                    updatedFields++;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(resource.Path))
+            {
+                string absolutePath = Path.GetFullPath(resolvedAssetPath);
+                if (TryGetResourcePathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string _))
+                {
+                    resource.Path = relativePath;
+                    updatedFields++;
+                }
+            }
+            return resolvedByGuid || !string.IsNullOrWhiteSpace(resource.Path);
+        }
+        public static int SyncActorResourceIdentifiers(Actor actor, string actorAssetPath)
+        {
+            if (actor == null) return 0;
+            int updatedCount = 0;
+            if (string.IsNullOrWhiteSpace(actor.GUID) && !string.IsNullOrWhiteSpace(actorAssetPath))
+            {
+                string actorGuid = AssetDatabase.AssetPathToGUID(actorAssetPath);
+                if (!string.IsNullOrWhiteSpace(actorGuid))
+                {
+                    actor.GUID = actorGuid;
+                    updatedCount++;
+                }
+            }
+            if (actor.BodyParts == null) return updatedCount;
+            foreach (var bodyPart in actor.BodyParts)
+            {
+                if (bodyPart?.NestedResources == null) continue;
+                foreach (var nestedResource in bodyPart.NestedResources)
+                {
+                    if (nestedResource == null) continue;
+                    TrySyncResourcePathAndGuid(nestedResource, actorAssetPath, out int updatedFields);
+                    updatedCount += updatedFields;
+                }
+            }
+            return updatedCount;
+        }
+        public static string GetResourceGuidFromPath(string actorAssetPath, string resourcePath)
+        {
+            if (!TryResolveResourceAssetPath(actorAssetPath, "", resourcePath, out string resolvedAssetPath, out bool _)) return "";
+            return AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+        }
+        public static bool IsMissingResource(Resource resource, string actorAssetPath)
+        {
+            if (resource == null) return true;
+            return !TryResolveResourceAssetPath(actorAssetPath, resource.GUID, resource.Path, out string _, out bool _);
+        }
+        private static bool IsValidAssetPath(string assetPath)
+        {
+            if (string.IsNullOrWhiteSpace(assetPath)) return false;
+            return AssetDatabase.LoadMainAssetAtPath(assetPath) != null;
+        }
         public static bool IsSupportedResourceFile(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath)) return false;

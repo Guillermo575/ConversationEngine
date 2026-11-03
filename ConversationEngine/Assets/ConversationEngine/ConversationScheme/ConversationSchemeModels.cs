@@ -29,6 +29,7 @@ namespace ConversationScheme
     {
         public string Id;
         public string Path;
+        public string GUID;
 
         [XmlIgnore]
         [NonSerialized]

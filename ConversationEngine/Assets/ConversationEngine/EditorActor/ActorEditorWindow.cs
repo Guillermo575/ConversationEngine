@@ -172,6 +172,12 @@ namespace ConversationEditorActor
             actorData = ActorEditorHelpers.DeserializeActor(json);
             currentAssetPath = ActorEditorHelpers.ToAssetPath(absolutePath);
             if (actorData != null && !string.IsNullOrWhiteSpace(currentAssetPath)) actorData.Path = Path.GetFileName(currentAssetPath);
+            int synchronizedFieldCount = ActorEditorHelpers.SyncActorResourceIdentifiers(actorData, currentAssetPath);
+            if (synchronizedFieldCount > 0)
+            {
+                SaveActor(false);
+                EditorUtility.DisplayDialog("Actor Editor", "Resource identifiers were synchronized automatically and the .actor file was saved.", "OK");
+            }
             hiddenBodyPartIds.Clear();
             SyncHiddenBodyPartIds();
             ClearHistory();
