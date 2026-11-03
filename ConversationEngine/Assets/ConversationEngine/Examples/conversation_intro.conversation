@@ -3,33 +3,10 @@
   "Description": "ASI FUNCIONA EL EDITOR DE CONVERSACIONES",
   "ResourceManager": {
     "SceneBackgrounds": [
-      {
-        "Id": "bg_kingdom_gate",
-        "Path": "Assets/Art/Backgrounds/KingdomGate.png"
-      }
     ],
     "AudioBackgrounds": [
-      {
-        "Id": "bgm_intro_theme",
-        "Path": "Assets/Audio/BGM/IntroTheme.ogg",
-        "AudioType": "BackgroundMusic"
-      }
     ],
     "Actors": [
-      {
-        "Id": "actor_1",
-        "Path": "Assets/ConversationEngine/Examples/Actors/actor_knight.json",
-        "IconPath": "",
-        "SoundEffectPaths": [],
-        "BodyParts": []
-      },
-      {
-        "Id": "actor_2",
-        "Path": "Assets/ConversationEngine/Examples/Actors/royal_messenger.json",
-        "IconPath": "",
-        "SoundEffectPaths": [],
-        "BodyParts": []
-      }
     ]
   },
   "ConversationManager": {
@@ -52,7 +29,7 @@
         },
         "EditorSize": {
           "X": 150,
-          "Y": 80
+          "Y": 150
         }
       },
       {
@@ -85,7 +62,7 @@
         },
         "EditorSize": {
           "X": 180,
-          "Y": 100
+          "Y": 180
         }
       },
       {
@@ -182,6 +159,8 @@
           {
             "Text": "Yes",
             "NextNodeId": 8,
+            "HideOption": false,
+            "BlockText": "",
             "EditorPosition": {
               "X": 230.9499,
               "Y": 26.03723
@@ -195,6 +174,8 @@
           {
             "Text": "Alright, but you will pay me double",
             "NextNodeId": 9,
+            "HideOption": false,
+            "BlockText": "",
             "EditorPosition": {
               "X": 492.8951,
               "Y": -23.59608
@@ -208,6 +189,8 @@
           {
             "Text": "Can you repeat that again?",
             "NextNodeId": 5,
+            "HideOption": false,
+            "BlockText": "",
             "EditorPosition": {
               "X": 237.3344,
               "Y": 133.6241
@@ -221,6 +204,8 @@
           {
             "Text": "No thanks",
             "NextNodeId": 10,
+            "HideOption": false,
+            "BlockText": "",
             "EditorPosition": {
               "X": 171.7192,
               "Y": 274.883
@@ -389,17 +374,20 @@
         },
         "EditorSize": {
           "X": 150,
-          "Y": 80
+          "Y": 150
         }
       }
+    ],
+    "Observations": [
     ]
   },
   "EditorSettings": {
-    "Zoom": 0.85,
+    "Zoom": 1.45,
     "IsResourcePanelHidden": false,
+    "IsReadOnly": false,
     "CameraPosition": {
-      "X": 491.2251,
-      "Y": -727.2859
+      "X": 216.183,
+      "Y": -752.6217
     }
   }
 }
