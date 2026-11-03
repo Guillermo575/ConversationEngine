@@ -3,6 +3,7 @@
     "Path": "Actor1.actor",
     "GUID": "38736d421f5e73849bf209466f347523",
     "IconPath": "actor1.png",
+    "IconPathGUID": "2e8d71af4db20b24681f9f564e23418c",
     "SoundEffectPaths": [],
     "BodyParts": [
         {

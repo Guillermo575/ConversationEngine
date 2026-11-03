@@ -17,6 +17,7 @@ namespace ConversationEditorActor.Helper
                 Id = "new_actor",
                 Path = "",
                 IconPath = "",
+                IconPathGUID = "",
                 SoundEffectPaths = new List<string>(),
                 BodyParts = new List<BodyPartData>(),
                 Size = new Vector2(300f, 400f)
@@ -48,6 +49,8 @@ namespace ConversationEditorActor.Helper
         public static void EnsureActorDefaults(Actor actor)
         {
             if (actor == null) return;
+            if (actor.IconPath == null) actor.IconPath = "";
+            if (actor.IconPathGUID == null) actor.IconPathGUID = "";
             if (actor.SoundEffectPaths == null) actor.SoundEffectPaths = new List<string>();
             if (actor.BodyParts == null) actor.BodyParts = new List<BodyPartData>();
             foreach (var bodyPart in actor.BodyParts)
@@ -221,6 +224,15 @@ namespace ConversationEditorActor.Helper
                     updatedCount++;
                 }
             }
+            if (TrySyncPathAndGuid(actorAssetPath, actor.IconPathGUID, actor.IconPath, out string syncedIconPath, out string syncedIconGuid, out int iconUpdatedFields))
+            {
+                if (iconUpdatedFields > 0)
+                {
+                    actor.IconPath = syncedIconPath;
+                    actor.IconPathGUID = syncedIconGuid;
+                    updatedCount += iconUpdatedFields;
+                }
+            }
             if (actor.BodyParts == null) return updatedCount;
             foreach (var bodyPart in actor.BodyParts)
             {
@@ -234,6 +246,36 @@ namespace ConversationEditorActor.Helper
             }
             return updatedCount;
         }
+        public static bool TrySyncPathAndGuid(string actorAssetPath, string currentGuid, string currentPath, out string syncedPath, out string syncedGuid, out int updatedFields)
+        {
+            syncedPath = currentPath ?? "";
+            syncedGuid = currentGuid ?? "";
+            updatedFields = 0;
+            if (!TryResolveResourceAssetPath(actorAssetPath, syncedGuid, syncedPath, out string resolvedAssetPath, out bool _)) return false;
+            if (string.IsNullOrWhiteSpace(syncedGuid))
+            {
+                string guid = AssetDatabase.AssetPathToGUID(resolvedAssetPath);
+                if (!string.IsNullOrWhiteSpace(guid))
+                {
+                    syncedGuid = guid;
+                    updatedFields++;
+                }
+            }
+            if (string.IsNullOrWhiteSpace(syncedPath))
+            {
+                string absolutePath = Path.GetFullPath(resolvedAssetPath);
+                if (TryGetResourcePathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string _))
+                {
+                    syncedPath = relativePath;
+                    updatedFields++;
+                }
+            }
+            return true;
+        }
+        public static bool IsMissingResource(string actorAssetPath, string resourceGuid, string resourcePath)
+        {
+            return !TryResolveResourceAssetPath(actorAssetPath, resourceGuid, resourcePath, out string _, out bool _);
+        }
         public static string GetResourceGuidFromPath(string actorAssetPath, string resourcePath)
         {
             if (!TryResolveResourceAssetPath(actorAssetPath, "", resourcePath, out string resolvedAssetPath, out bool _)) return "";
@@ -242,7 +284,7 @@ namespace ConversationEditorActor.Helper
         public static bool IsMissingResource(Resource resource, string actorAssetPath)
         {
             if (resource == null) return true;
-            return !TryResolveResourceAssetPath(actorAssetPath, resource.GUID, resource.Path, out string _, out bool _);
+            return IsMissingResource(actorAssetPath, resource.GUID, resource.Path);
         }
         private static bool IsValidAssetPath(string assetPath)
         {

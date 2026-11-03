@@ -41,17 +41,26 @@ namespace ConversationEditorActor.Panel
             if (EditorGUI.EndChangeCheck()) changed = true;
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("Icon Path", "Icon path used by conversation resources."), GUILayout.Width(60f));
-            EditorGUILayout.LabelField(new GUIContent(string.IsNullOrEmpty(actor.IconPath) ? "(no file selected)" : actor.IconPath, "Read-only icon path relative to the .actor root folder."), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+            string iconPathLabel = string.IsNullOrEmpty(actor.IconPath) ? "(no file selected)" : actor.IconPath;
+            string iconPathTooltip = "Read-only icon path relative to the .actor root folder. GUID: " + (string.IsNullOrWhiteSpace(actor.IconPathGUID) ? "(empty)" : actor.IconPathGUID);
+            EditorGUILayout.LabelField(new GUIContent(iconPathLabel, iconPathTooltip), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
             if (GUILayout.Button(new GUIContent("...", "Change icon file path."), GUILayout.Width(28f)))
             {
                 string changedPath = SelectSingleResourcePath(actorAssetPath, actor.IconPath);
                 if (!string.IsNullOrEmpty(changedPath))
                 {
                     actor.IconPath = changedPath;
+                    actor.IconPathGUID = ActorEditorHelpers.GetResourceGuidFromPath(actorAssetPath, changedPath);
                     changed = true;
                 }
             }
             EditorGUILayout.EndHorizontal();
+            if (ActorEditorHelpers.IsMissingResource(actorAssetPath, actor.IconPathGUID, actor.IconPath))
+            {
+                GUIStyle missingStyle = new GUIStyle(EditorStyles.miniLabel);
+                missingStyle.normal.textColor = Color.red;
+                EditorGUILayout.LabelField(new GUIContent("Missing file: icon was not found by GUID or Path.", "The icon cannot be resolved using GUID or Path."), missingStyle);
+            }
             EditorGUILayout.Space(4f);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(new GUIContent("Sound Effects", "Audio cues associated with this actor."), EditorStyles.miniBoldLabel);
