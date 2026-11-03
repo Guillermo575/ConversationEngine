@@ -14,6 +14,7 @@ namespace ConversationScheme
         public ResourceManager ResourceManager = new ResourceManager();
         public ConversationManager ConversationManager = new ConversationManager();
         public ConversationEditorSettings EditorSettings = new ConversationEditorSettings();
+        public Language defaultLanguage;
     }
 
     [Serializable]
@@ -106,6 +107,7 @@ namespace ConversationScheme
         public string Comment;
         public Vector2 EditorPosition;
         public Vector2 EditorSize = new Vector2(200, 100);
+        public List<AlternateText> lstAlternateText;
     }
 
     [Serializable]
@@ -168,6 +170,13 @@ namespace ConversationScheme
         public bool IsValueVariable = false;
     }
 
+    [Serializable]
+    public class AlternateText
+    {
+	    public Language eLanguage;
+        public string Text;
+    }
+
     public enum ComparisonOperator
     {
         Equal,
@@ -184,6 +193,16 @@ namespace ConversationScheme
         Integer,
         Decimal,
         Boolean
+    }
+
+    public enum Language
+    {
+        English,
+        Spanish,
+        French,
+        Italian,
+        Japanese,
+        Other
     }
 
     [Serializable]

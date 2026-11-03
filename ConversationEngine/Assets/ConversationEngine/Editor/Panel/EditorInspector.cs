@@ -185,9 +185,6 @@ namespace ConversationEditor.Panel
                     DrawSpeakerAndTextFields(node);
                     node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
                     DrawSectionSeparator();
-                    EditorGUILayout.LabelField(new GUIContent("Options", "Player options available from this dialogue node."), EditorStyles.boldLabel);
-                    DrawOptionSection(node);
-                    DrawSectionSeparator();
                     EditorGUILayout.LabelField(new GUIContent("Functions", "Timed functions executed while this node is active."), EditorStyles.boldLabel);
                     if (node.Functions == null) node.Functions = new List<ConversationFunction>();
                     DrawFunctionList(node.Functions);
@@ -233,7 +230,8 @@ namespace ConversationEditor.Panel
             EditorGUI.BeginChangeCheck();
             int selectedOptionIndex = (graphView?.SelectedNode as ConversationNode)?.Options?.IndexOf(option) ?? 0;
             EnsureOptionEditorData(graphView?.SelectedNode as ConversationNode, option, Mathf.Max(0, selectedOptionIndex));
-            option.Text = EditorGUILayout.TextField(new GUIContent("Text", "Option text shown to the player."), option.Text, GUILayout.ExpandWidth(true));
+            EditorGUILayout.LabelField(new GUIContent("Text", "Option text shown to the player."));
+            option.Text = EditorGUILayout.TextArea(option.Text ?? "", GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
             option.NextNodeId = DrawNodeIdDropdown("Next Node", option.NextNodeId, graphView?.SelectedNode as ConversationNode, "Target node for this option.");
             option.HideOption = EditorGUILayout.Toggle(new GUIContent("Hide Option", "If enabled, this option will stay hidden."), option.HideOption, GUILayout.ExpandWidth(true));
             EditorGUILayout.LabelField(new GUIContent("Block Text", "Text shown when this option is blocked."));

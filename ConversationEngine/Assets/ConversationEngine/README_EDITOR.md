@@ -610,7 +610,7 @@ Planned features for future versions:
 - **Comments**: Add annotation nodes
 - **Validation**: Real-time error checking
 - **Templates**: Pre-built conversation patterns
-- **Localization**: Multi-language support
+- **Localization**: Expanded tooling for editing multi-language node text in inspector panels
 - **Version Control**: Better diff/merge support
 
 ## Technical Details

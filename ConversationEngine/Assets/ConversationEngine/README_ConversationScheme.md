@@ -17,6 +17,7 @@ Defines core data structures used by conversations.
 - Option and branching models for player choices and conditional routes.
 - Resource models for backgrounds, audio, and actor definitions.
 - Editor persistence fields for graph position, zoom, and panel state.
+- Conversation-level default language and per-node alternate localized texts.
 
 ### `ConversationScheme/ConversationNodeUtility.cs`
 Provides utility logic for node-related operations.
