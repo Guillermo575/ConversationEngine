@@ -220,7 +220,7 @@ namespace ConversationEditor.Graph
 
         public GUIStyle GetNodeStyle(Node node, bool isSelected, bool isDragging)
         {
-            switch (node.NodeType)
+            switch (ConversationNodeUtility.ParseConversationNodeType(node.NodeType))
             {
                 case ConversationNodeType.Start:
                     if (isDragging) return startNodeDraggingStyle;

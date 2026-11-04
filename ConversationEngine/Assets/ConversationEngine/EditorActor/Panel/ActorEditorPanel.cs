@@ -76,7 +76,7 @@ namespace ConversationEditorActor.Panel
                         Id = BuildSoundEffectId(selectedAudioPath, actor.SoundEffects.Count),
                         Path = selectedAudioPath,
                         GUID = soundGuid,
-                        AudioType = AudioChannelType.SoundEffect
+                        AudioType = AudioChannelType.Voice.ToString()
                     });
                     changed = true;
                 }
@@ -88,10 +88,10 @@ namespace ConversationEditorActor.Panel
                 AudioBackground soundEffect = actor.SoundEffects[i];
                 if (soundEffect == null)
                 {
-                    soundEffect = new AudioBackground { AudioType = AudioChannelType.SoundEffect };
+                    soundEffect = new AudioBackground { AudioType = AudioChannelType.Voice.ToString() };
                     actor.SoundEffects[i] = soundEffect;
                 }
-                soundEffect.AudioType = AudioChannelType.SoundEffect;
+                soundEffect.AudioType = AudioChannelType.Voice.ToString();
                 EditorGUILayout.BeginVertical("box");
                 EditorGUI.BeginChangeCheck();
                 soundEffect.Id = EditorGUILayout.TextField(new GUIContent("Id", "Sound effect id."), soundEffect.Id);

@@ -23,7 +23,7 @@ namespace ConversationBox
         public static bool ProcessRule(ConditionRule conditionRule)
         {
             if (conditionRule == null) return false;
-            switch (conditionRule.ValueDataType)
+            switch (ConversationNodeUtility.ParseValueType(conditionRule.ValueDataType))
             {
                 case ConversationScheme.ValueType.Integer: return CompareInteger(conditionRule);
                 case ConversationScheme.ValueType.Decimal: return CompareDecimal(conditionRule);
@@ -44,7 +44,7 @@ namespace ConversationBox
         {
             int A = ParseInt(getDict(conditionRule.VariableName));
             int B = ParseInt(conditionRule.IsValueVariable ? getDict(conditionRule.Value) : conditionRule.Value);
-            switch (conditionRule.Operator)
+            switch (ConversationNodeUtility.ParseComparisonOperator(conditionRule.Operator))
             {
                 case ComparisonOperator.Equal: return A == B;
                 case ComparisonOperator.NotEqual: return A != B;
@@ -59,7 +59,7 @@ namespace ConversationBox
         {
             Decimal A = ParseDecimal(getDict(conditionRule.VariableName));
             Decimal B = ParseDecimal(conditionRule.IsValueVariable ? getDict(conditionRule.Value) : conditionRule.Value);
-            switch (conditionRule.Operator)
+            switch (ConversationNodeUtility.ParseComparisonOperator(conditionRule.Operator))
             {
                 case ComparisonOperator.Equal: return A == B;
                 case ComparisonOperator.NotEqual: return A != B;
@@ -74,7 +74,7 @@ namespace ConversationBox
         {
             string A = getDict(conditionRule.VariableName);
             string B = conditionRule.IsValueVariable ? getDict(conditionRule.Value) : conditionRule.Value;
-            switch (conditionRule.Operator)
+            switch (ConversationNodeUtility.ParseComparisonOperator(conditionRule.Operator))
             {
                 case ComparisonOperator.Equal: return A == B;
                 case ComparisonOperator.NotEqual: return A != B;
@@ -85,7 +85,7 @@ namespace ConversationBox
         {
             bool A = ParseBool(getDict(conditionRule.VariableName));
             bool B = ParseBool(conditionRule.IsValueVariable ? getDict(conditionRule.Value) : conditionRule.Value);
-            switch (conditionRule.Operator)
+            switch (ConversationNodeUtility.ParseComparisonOperator(conditionRule.Operator))
             {
                 case ComparisonOperator.Equal: return A == B;
                 case ComparisonOperator.NotEqual: return A != B;

@@ -339,7 +339,7 @@ namespace ConversationEditor.Graph
         private bool UsesUniformNodeSize(Node node)
         {
             if (node == null) return false;
-            switch (node.NodeType)
+            switch (ConversationNodeUtility.ParseConversationNodeType(node.NodeType))
             {
                 case ConversationNodeType.Start:
                 case ConversationNodeType.End:

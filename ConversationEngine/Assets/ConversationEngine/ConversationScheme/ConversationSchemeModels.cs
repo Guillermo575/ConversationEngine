@@ -11,10 +11,10 @@ namespace ConversationScheme
     {
         public string Title = "";
         public string Description = "";
+        public string language;
         public ResourceManager ResourceManager = new ResourceManager();
         public ConversationManager ConversationManager = new ConversationManager();
         public ConversationEditorSettings EditorSettings = new ConversationEditorSettings();
-        public Language language;
     }
 
     [Serializable]
@@ -31,10 +31,7 @@ namespace ConversationScheme
         public string Id;
         public string Path;
         public string GUID;
-
-        [XmlIgnore]
-        [NonSerialized]
-        public GameObject gameObject;
+        [JsonIgnore][XmlIgnore] [NonSerialized] public GameObject gameObject;
     }
 
     [Serializable]
@@ -45,7 +42,7 @@ namespace ConversationScheme
     [Serializable]
     public class AudioBackground : Resource
     {
-        public AudioChannelType AudioType = AudioChannelType.BackgroundMusic;
+        public string AudioType = AudioChannelType.BackgroundMusic.ToString();
     }
 
     public enum AudioChannelType
@@ -102,7 +99,7 @@ namespace ConversationScheme
     public class Node
     {
         public int Id;
-        public ConversationNodeType NodeType = ConversationNodeType.Dialogue;
+        public string NodeType = ConversationNodeType.Dialogue.ToString();
         public string Text;
         public string Comment;
         public Vector2 EditorPosition;
@@ -115,7 +112,7 @@ namespace ConversationScheme
     {
         public string SpeakerActorId;
         public int NextNodeId;
-        [JsonIgnore][XmlIgnore]public ConversationNode NextNode;
+        [JsonIgnore][XmlIgnore][NonSerialized]public ConversationNode NextNode;
         public List<ConversationOption> Options = new List<ConversationOption>();
         public List<ConversationFunction> Functions = new List<ConversationFunction>();
         public ConditionalBranch conditionalBranch = null;
@@ -125,9 +122,9 @@ namespace ConversationScheme
     [Serializable]
     public class ConversationOption : Node
     {
-        public ConversationOption() { NodeType = ConversationNodeType.Option; }
+        public ConversationOption() { NodeType = ConversationNodeType.Option.ToString(); }
         public int NextNodeId;
-        [JsonIgnore][XmlIgnore] public ConversationNode NextNode;
+        [JsonIgnore][XmlIgnore][NonSerialized] public ConversationNode NextNode;
         public List<ConditionRule> Conditions = new List<ConditionRule>();
         public bool HideOption = false;
         public string BlockText;
@@ -136,7 +133,7 @@ namespace ConversationScheme
     [Serializable]
     public class ObservationNode : Node
     {
-        public ObservationNode() { NodeType = ConversationNodeType.Observation; }
+        public ObservationNode() { NodeType = ConversationNodeType.Observation.ToString(); }
     }
 
     public enum ConversationNodeType
@@ -155,17 +152,17 @@ namespace ConversationScheme
     {
         public List<ConditionRule> Conditions = new List<ConditionRule>();
         public int NextNodeIdTrue;
-        [JsonIgnore][XmlIgnore] public ConversationNode NextNodeTrue;
+        [JsonIgnore][XmlIgnore][NonSerialized] public ConversationNode NextNodeTrue;
         public int NextNodeIdFalse;
-        [JsonIgnore][XmlIgnore] public ConversationNode NextNodeFalse;
+        [JsonIgnore][XmlIgnore][NonSerialized] public ConversationNode NextNodeFalse;
     }
 
     [Serializable]
     public class ConditionRule
     {
         public string VariableName;
-        public ComparisonOperator Operator = ComparisonOperator.Equal;
-        public ValueType ValueDataType = ValueType.String;
+        public string Operator = ComparisonOperator.Equal.ToString();
+        public string ValueDataType = ValueType.String.ToString();
         public string Value;
         public bool IsValueVariable = false;
     }
@@ -173,7 +170,7 @@ namespace ConversationScheme
     [Serializable]
     public class AlternateText
     {
-	    public Language language;
+	    public string language;
         public string Text;
     }
 

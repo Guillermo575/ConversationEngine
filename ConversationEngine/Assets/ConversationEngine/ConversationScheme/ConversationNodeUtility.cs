@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 namespace ConversationScheme
 {
     public static class ConversationNodeUtility
     {
+        #region Id
         public static int GetNextAvailableId(List<Node> nodes)
         {
             if (nodes == null || nodes.Count == 0) return 1;
@@ -23,6 +25,9 @@ namespace ConversationScheme
             if (nodes == null) return true;
             return !nodes.Any(n => n.Id == nodeId && n.Id != excludeNodeId);
         }
+        #endregion
+
+        #region Validation Helper
         public static void RemoveNodeReferences(int deletedNodeId, List<ConversationNode> nodes)
         {
             if (nodes == null) return;
@@ -48,14 +53,14 @@ namespace ConversationScheme
         {
             if (conversationData?.ConversationManager?.Nodes == null) return;
             var nodes = conversationData.ConversationManager.Nodes;
-            var startNode = nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
+            var startNode = nodes.FirstOrDefault(n => ConversationNodeUtility.ParseConversationNodeType(n.NodeType) == ConversationNodeType.Start);
             if (startNode == null)
             {
-                var firstNonStartNode = nodes.FirstOrDefault(n => n.NodeType != ConversationNodeType.Start);
+                var firstNonStartNode = nodes.FirstOrDefault(n => ConversationNodeUtility.ParseConversationNodeType(n.NodeType) != ConversationNodeType.Start);
                 startNode = new ConversationNode
                 {
                     Id = GetNextAvailableId(nodes.Cast<Node>().ToList()),
-                    NodeType = ConversationNodeType.Start,
+                    NodeType = ConversationNodeType.Start.ToString(),
                     Text = "",
                     SpeakerActorId = "",
                     NextNodeId = firstNonStartNode?.Id ?? 0,
@@ -65,10 +70,13 @@ namespace ConversationScheme
                 nodes.Insert(0, startNode);
             }
         }
+        #endregion
+
+        #region Parsing Helper
         public static bool ValidateStartNode(List<Node> nodes)
         {
             if (nodes == null) return false;
-            return nodes.Count(n => n.NodeType == ConversationNodeType.Start) == 1;
+            return nodes.Count(n => ConversationNodeUtility.ParseConversationNodeType(n.NodeType) == ConversationNodeType.Start) == 1;
         }
         public static List<int> GetNodeReferences(int targetNodeId, List<ConversationNode> nodes)
         {
@@ -90,5 +98,31 @@ namespace ConversationScheme
             }
             return references;
         }
+        public static Language ParseLanguage(string languageValue)
+        {
+            if (string.IsNullOrWhiteSpace(languageValue)) return Language.English;
+            return System.Enum.TryParse(languageValue, true, out Language parsedLanguage) ? parsedLanguage : Language.English;
+        }
+        public static ValueType ParseValueType(string valueTypeValue)
+        {
+            if (string.IsNullOrWhiteSpace(valueTypeValue)) return ValueType.String;
+            return System.Enum.TryParse(valueTypeValue, true, out ValueType parsedValueType) ? parsedValueType : ValueType.String;
+        }
+        public static ComparisonOperator ParseComparisonOperator(string comparisonOperatorValue)
+        {
+            if (string.IsNullOrWhiteSpace(comparisonOperatorValue)) return ComparisonOperator.Equal;
+            return System.Enum.TryParse(comparisonOperatorValue, true, out ComparisonOperator parsedComparisonOperator) ? parsedComparisonOperator : ComparisonOperator.Equal;
+        }
+        public static ConversationNodeType ParseConversationNodeType(string conversationNodeTypeValue)
+        {
+            if (string.IsNullOrWhiteSpace(conversationNodeTypeValue)) return ConversationNodeType.Start;
+            return System.Enum.TryParse(conversationNodeTypeValue, true, out ConversationNodeType parsedConversationNodeType) ? parsedConversationNodeType : ConversationNodeType.Start;
+        }
+        public static AudioChannelType ParseAudioChannelType(string audioChannelTypeValue)
+        {
+            if (string.IsNullOrWhiteSpace(audioChannelTypeValue)) return AudioChannelType.BackgroundMusic;
+            return System.Enum.TryParse(audioChannelTypeValue, true, out AudioChannelType parsedAudioChannelType) ? parsedAudioChannelType : AudioChannelType.BackgroundMusic;
+        }
+        #endregion
     }
 }

@@ -1,422 +1,460 @@
 {
-  "Title": "EJEMPLO",
-  "Description": "ASI FUNCIONA EL EDITOR DE CONVERSACIONES",
-  "language": "Italian",
-  "ResourceManager": {
-    "SceneBackgrounds": [
-    ],
-    "AudioBackgrounds": [
-    ],
-    "Actors": [
-    ]
-  },
-  "ConversationManager": {
-    "Nodes": [
-      {
-        "Id": 1,
-        "NodeType": "Start",
-        "SpeakerActorId": "",
-        "Text": "",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 2,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 397.6135,
-          "y": 485.2839
-        },
-        "EditorSize": {
-          "x": 150,
-          "y": 150
-        }
-      },
-      {
-        "Id": 2,
-        "NodeType": "Function",
-        "SpeakerActorId": "",
-        "Text": "",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 3,
-        "Options": [
-        ],
-        "Functions": [
-          {
-            "MethodName": "SetBackground",
-            "Parameters": {
+    "Title": "EJEMPLO",
+    "Description": "ASI FUNCIONA EL EDITOR DE CONVERSACIONES",
+    "language": "Italian",
+    "ResourceManager": {
+        "SceneBackgrounds": [],
+        "AudioBackgrounds": [],
+        "Actors": []
+    },
+    "ConversationManager": {
+        "Nodes": [
+            {
+                "Id": 1,
+                "NodeType": "Start",
+                "Text": "",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 397.6134948730469,
+                    "y": 485.2839050292969
+                },
+                "EditorSize": {
+                    "x": 150.0,
+                    "y": 150.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 2,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "Timestamp": 0
-          },
-          {
-            "MethodName": "PlayAudio",
-            "Parameters": {
+            {
+                "Id": 2,
+                "NodeType": "Function",
+                "Text": "",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 392.7272033691406,
+                    "y": 620.9088745117188
+                },
+                "EditorSize": {
+                    "x": 180.0,
+                    "y": 180.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 3,
+                "Options": [],
+                "Functions": [
+                    {
+                        "MethodName": "SetBackground",
+                        "Timestamp": 0
+                    },
+                    {
+                        "MethodName": "PlayAudio",
+                        "Timestamp": 0
+                    }
+                ],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "Timestamp": 0
-          }
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 392.7272,
-          "y": 620.9089
-        },
-        "EditorSize": {
-          "x": 180,
-          "y": 180
-        }
-      },
-      {
-        "Id": 3,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "",
-        "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 4,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 402.7272,
-          "y": 877.9824
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 93.125
-        }
-      },
-      {
-        "Id": 4,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "actor_1",
-        "Text": "Greetings, traveler. You look troubled. Is something wrong?",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 5,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 400.909,
-          "y": 1088.182
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 100
-        }
-      },
-      {
-        "Id": 5,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "actor_2",
-        "Text": "I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 6,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 399.0908,
-          "y": 1298.183
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 100
-        }
-      },
-      {
-        "Id": 6,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "actor_2",
-        "Text": "Will you accept this mission and help us rescue her?",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 7,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 100,
-          "y": 1393.636
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 100
-        }
-      },
-      {
-        "Id": 7,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "",
-        "Text": "What do you want to do?",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 0,
-        "Options": [
-          {
-            "Text": "Yes",
-            "NextNodeId": 8,
-            "HideOption": false,
-            "BlockText": "",
-            "EditorPosition": {
-              "x": 230.9499,
-              "y": 26.03723
+            {
+                "Id": 3,
+                "NodeType": "Dialogue",
+                "Text": "Many years ago, in a distant land, an old kingdom stood against the shadows.",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 402.7272033691406,
+                    "y": 877.982421875
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 93.125
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 4,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "EditorSize": {
-              "x": 150,
-              "y": 40.76929
+            {
+                "Id": 4,
+                "NodeType": "Dialogue",
+                "Text": "Greetings, traveler. You look troubled. Is something wrong?",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 400.90899658203127,
+                    "y": 1088.1820068359375
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "actor_1",
+                "NextNodeId": 5,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "Conditions": []
-          },
-          {
-            "Text": "Alright, but you will pay me double",
-            "NextNodeId": 9,
-            "HideOption": false,
-            "BlockText": "",
-            "EditorPosition": {
-              "x": 492.8951,
-              "y": -23.59608
+            {
+                "Id": 5,
+                "NodeType": "Dialogue",
+                "Text": "I come from the royal court. The princess was taken at dawn by raiders from Blackstone Keep.",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 399.0907897949219,
+                    "y": 1298.1829833984375
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "actor_2",
+                "NextNodeId": 6,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "EditorSize": {
-              "x": 150,
-              "y": 60
+            {
+                "Id": 6,
+                "NodeType": "Dialogue",
+                "Text": "Will you accept this mission and help us rescue her?",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 100.0,
+                    "y": 1393.635986328125
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "actor_2",
+                "NextNodeId": 7,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "Conditions": []
-          },
-          {
-            "Text": "Can you repeat that again?",
-            "NextNodeId": 5,
-            "HideOption": false,
-            "BlockText": "",
-            "EditorPosition": {
-              "x": 237.3344,
-              "y": 133.6241
+            {
+                "Id": 7,
+                "NodeType": "Dialogue",
+                "Text": "What do you want to do?",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 622.0286254882813,
+                    "y": 1647.800048828125
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 150.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 0,
+                "Options": [
+                    {
+                        "Id": 0,
+                        "NodeType": "Option",
+                        "Text": "Yes",
+                        "Comment": "",
+                        "EditorPosition": {
+                            "x": 230.9499053955078,
+                            "y": 26.037229537963868
+                        },
+                        "EditorSize": {
+                            "x": 150.0,
+                            "y": 40.769290924072269
+                        },
+                        "lstAlternateText": [],
+                        "NextNodeId": 8,
+                        "Conditions": [],
+                        "HideOption": false,
+                        "BlockText": ""
+                    },
+                    {
+                        "Id": 0,
+                        "NodeType": "Option",
+                        "Text": "Alright, but you will pay me double",
+                        "Comment": "",
+                        "EditorPosition": {
+                            "x": 492.8951110839844,
+                            "y": -23.596080780029298
+                        },
+                        "EditorSize": {
+                            "x": 150.0,
+                            "y": 60.0
+                        },
+                        "lstAlternateText": [],
+                        "NextNodeId": 9,
+                        "Conditions": [],
+                        "HideOption": false,
+                        "BlockText": ""
+                    },
+                    {
+                        "Id": 0,
+                        "NodeType": "Option",
+                        "Text": "Can you repeat that again?",
+                        "Comment": "",
+                        "EditorPosition": {
+                            "x": 237.3343963623047,
+                            "y": 133.6240997314453
+                        },
+                        "EditorSize": {
+                            "x": 150.0,
+                            "y": 60.0
+                        },
+                        "lstAlternateText": [],
+                        "NextNodeId": 5,
+                        "Conditions": [],
+                        "HideOption": false,
+                        "BlockText": ""
+                    },
+                    {
+                        "Id": 0,
+                        "NodeType": "Option",
+                        "Text": "No thanks",
+                        "Comment": "",
+                        "EditorPosition": {
+                            "x": 171.7191925048828,
+                            "y": 274.88299560546877
+                        },
+                        "EditorSize": {
+                            "x": 150.0,
+                            "y": 60.0
+                        },
+                        "lstAlternateText": [],
+                        "NextNodeId": 10,
+                        "Conditions": [],
+                        "HideOption": false,
+                        "BlockText": ""
+                    }
+                ],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "EditorSize": {
-              "x": 150,
-              "y": 60
+            {
+                "Id": 8,
+                "NodeType": "Dialogue",
+                "Text": "Thank you, brave knight. We leave at first light.",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 231.923095703125,
+                    "y": 1819.3389892578125
+                },
+                "EditorSize": {
+                    "x": 200.76919555664063,
+                    "y": 109.23079681396485
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "actor_2",
+                "NextNodeId": 11,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "Conditions": []
-          },
-          {
-            "Text": "No thanks",
-            "NextNodeId": 10,
-            "HideOption": false,
-            "BlockText": "",
-            "EditorPosition": {
-              "x": 171.7192,
-              "y": 274.883
+            {
+                "Id": 9,
+                "NodeType": "Dialogue",
+                "Text": "I... understand. Very well. Deal.",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 697.1427001953125,
+                    "y": 2054.287109375
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "actor_2",
+                "NextNodeId": 11,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "EditorSize": {
-              "x": 150,
-              "y": 60
+            {
+                "Id": 10,
+                "NodeType": "Dialogue",
+                "Text": "Without a word, the knight turns around and walks away.",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 178.84620666503907,
+                    "y": 1959.23095703125
+                },
+                "EditorSize": {
+                    "x": 258.46148681640627,
+                    "y": 93.8460693359375
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 12,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
             },
-            "Conditions": []
-          }
+            {
+                "Id": 11,
+                "NodeType": "Dialogue",
+                "Text": "At sunrise, they depart toward the hideout where the princess was taken.",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 424.28570556640627,
+                    "y": 2225.712890625
+                },
+                "EditorSize": {
+                    "x": 200.0,
+                    "y": 100.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 13,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
+            },
+            {
+                "Id": 12,
+                "NodeType": "Dialogue",
+                "Text": "THE END",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 177.1428985595703,
+                    "y": 2098.572998046875
+                },
+                "EditorSize": {
+                    "x": 150.0,
+                    "y": 80.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 14,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
+            },
+            {
+                "Id": 13,
+                "NodeType": "Dialogue",
+                "Text": "TO BE CONTINUED",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 337.272705078125,
+                    "y": 2405.455078125
+                },
+                "EditorSize": {
+                    "x": 150.0,
+                    "y": 80.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 14,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
+            },
+            {
+                "Id": 14,
+                "NodeType": "End",
+                "Text": "",
+                "Comment": "",
+                "EditorPosition": {
+                    "x": 184.54539489746095,
+                    "y": 2671.818115234375
+                },
+                "EditorSize": {
+                    "x": 150.0,
+                    "y": 150.0
+                },
+                "lstAlternateText": [],
+                "SpeakerActorId": "",
+                "NextNodeId": 0,
+                "Options": [],
+                "Functions": [],
+                "conditionalBranch": {
+                    "Conditions": [],
+                    "NextNodeIdTrue": 0,
+                    "NextNodeIdFalse": 0
+                },
+                "DefaultBranchNodeId": 0
+            }
         ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 622.0286,
-          "y": 1647.8
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 150
+        "Observations": []
+    },
+    "EditorSettings": {
+        "Zoom": 1.4500000476837159,
+        "IsResourcePanelHidden": false,
+        "IsReadOnly": false,
+        "CameraPosition": {
+            "x": 216.18299865722657,
+            "y": -752.6217041015625
         }
-      },
-      {
-        "Id": 8,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "actor_2",
-        "Text": "Thank you, brave knight. We leave at first light.",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 11,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 231.9231,
-          "y": 1819.339
-        },
-        "EditorSize": {
-          "x": 200.7692,
-          "y": 109.2308
-        }
-      },
-      {
-        "Id": 9,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "actor_2",
-        "Text": "I... understand. Very well. Deal.",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 11,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 697.1427,
-          "y": 2054.287
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 100
-        }
-      },
-      {
-        "Id": 10,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "",
-        "Text": "Without a word, the knight turns around and walks away.",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 12,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 178.8462,
-          "y": 1959.231
-        },
-        "EditorSize": {
-          "x": 258.4615,
-          "y": 93.84607
-        }
-      },
-      {
-        "Id": 11,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "",
-        "Text": "At sunrise, they depart toward the hideout where the princess was taken.",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 13,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 424.2857,
-          "y": 2225.713
-        },
-        "EditorSize": {
-          "x": 200,
-          "y": 100
-        }
-      },
-      {
-        "Id": 12,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "",
-        "Text": "THE END",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 14,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 177.1429,
-          "y": 2098.573
-        },
-        "EditorSize": {
-          "x": 150,
-          "y": 80
-        }
-      },
-      {
-        "Id": 13,
-        "NodeType": "Dialogue",
-        "SpeakerActorId": "",
-        "Text": "TO BE CONTINUED",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 14,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 337.2727,
-          "y": 2405.455
-        },
-        "EditorSize": {
-          "x": 150,
-          "y": 80
-        }
-      },
-      {
-        "Id": 14,
-        "NodeType": "End",
-        "SpeakerActorId": "",
-        "Text": "",
-        "lstAlternateText": [
-        ],
-        "NextNodeId": 0,
-        "Options": [
-        ],
-        "Functions": [
-        ],
-        "conditionalBranch": {},
-        "DefaultBranchNodeId": 0,
-        "EditorPosition": {
-          "x": 184.5454,
-          "y": 2671.818
-        },
-        "EditorSize": {
-          "x": 150,
-          "y": 150
-        }
-      }
-    ],
-    "Observations": [
-    ]
-  },
-  "EditorSettings": {
-    "Zoom": 1.45,
-    "IsResourcePanelHidden": false,
-    "IsReadOnly": false,
-    "CameraPosition": {
-      "x": 216.183,
-      "y": -752.6217
     }
-  }
 }

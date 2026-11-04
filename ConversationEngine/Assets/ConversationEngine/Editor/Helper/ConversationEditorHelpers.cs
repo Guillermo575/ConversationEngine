@@ -53,7 +53,7 @@ namespace ConversationEditor.Helper
         public static void AutoArrangeNodes(List<ConversationNode> nodes, float spacing, bool horizontal = true)
         {
             if (nodes == null || nodes.Count == 0) return;
-            var startNode = nodes.FirstOrDefault(n => n.NodeType == ConversationNodeType.Start);
+            var startNode = nodes.FirstOrDefault(n => ConversationNodeUtility.ParseConversationNodeType(n.NodeType) == ConversationNodeType.Start);
             if (startNode == null) return;
             Dictionary<int, List<ConversationNode>> layers = new Dictionary<int, List<ConversationNode>>();
             HashSet<int> visited = new HashSet<int>();
@@ -225,7 +225,7 @@ namespace ConversationEditor.Helper
             string actorPart = string.IsNullOrEmpty(node.SpeakerActorId) ? "" : $" - {node.SpeakerActorId}";
             string textPart = string.IsNullOrEmpty(node.Text) ? "" : $" - {(node.Text.Length > 30 ? node.Text.Substring(0, 30) + "..." : node.Text)}";
             string nodeTypePart = "";
-            switch (node.NodeType)
+            switch (ConversationNodeUtility.ParseConversationNodeType(node.NodeType))
             {
                 case ConversationNodeType.Start:
                     nodeTypePart = " [START]";

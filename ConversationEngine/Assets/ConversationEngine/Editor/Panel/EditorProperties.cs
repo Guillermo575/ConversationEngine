@@ -70,7 +70,7 @@ namespace ConversationEditor.Panel
             EditorGUILayout.LabelField("Conversation", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
             string newTitulo = EditorGUILayout.TextField(new GUIContent("Title", ""), conversationData.Title ?? "", GUILayout.ExpandWidth(true));
-            Language newDefaultLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("Default Language", "Language used when no alternate text is available."), conversationData.language);
+            Language newDefaultLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("Default Language", "Language used when no alternate text is available."), ConversationNodeUtility.ParseLanguage(conversationData.language));
             EditorGUILayout.LabelField(new GUIContent("Description", ""));
             var descriptionFieldStyle = new GUIStyle(EditorStyles.textArea) { wordWrap = true };
             string newDescripcion = EditorGUILayout.TextArea(conversationData.Description ?? "", descriptionFieldStyle, GUILayout.ExpandWidth(true), GUILayout.MinHeight(70f));
@@ -78,7 +78,7 @@ namespace ConversationEditor.Panel
             {
                 RegisterUndoState("Edit Conversation Metadata");
                 conversationData.Title = newTitulo;
-                conversationData.language = newDefaultLanguage;
+                conversationData.language = newDefaultLanguage.ToString();
                 conversationData.Description = newDescripcion;
                 MarkDirty();
             }
@@ -148,7 +148,7 @@ namespace ConversationEditor.Panel
                 resource.Id = EditorGUILayout.TextField("ID", resource.Id);
                 string resourcePathTooltip = "Audio path. GUID: " + (string.IsNullOrWhiteSpace(resource.GUID) ? "(empty)" : resource.GUID);
                 resource.Path = EditorGUILayout.TextField(new GUIContent("Path", resourcePathTooltip), resource.Path);
-                resource.AudioType = (AudioChannelType)EditorGUILayout.EnumPopup("Audio Type", resource.AudioType);
+                resource.AudioType = EditorGUILayout.EnumPopup("Audio Type", ConversationNodeUtility.ParseAudioChannelType(resource.AudioType)).ToString();
                 if (EditorGUI.EndChangeCheck())
                 {
                     resource.GUID = ConversationEditorHelpers.GetResourceGuidFromPath(conversationEditorCore.currentFilePath, resource.Path);

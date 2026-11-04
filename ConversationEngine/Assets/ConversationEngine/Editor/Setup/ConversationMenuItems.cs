@@ -21,7 +21,7 @@ namespace ConversationEditor.Setup
             var startNode = new ConversationNode
             {
                 Id = 1,
-                NodeType = ConversationNodeType.Start,
+                NodeType = ConversationNodeType.Start.ToString(),
                 EditorPosition = new Vector2(0, 0),
                 EditorSize = new Vector2(150, 80)
             };
@@ -29,7 +29,7 @@ namespace ConversationEditor.Setup
             var endNode = new ConversationNode
             {
                 Id = 2,
-                NodeType = ConversationNodeType.End,
+                NodeType = ConversationNodeType.End.ToString(),
                 EditorPosition = new Vector2(400, 0),
                 EditorSize = new Vector2(150, 80)
             };
@@ -37,7 +37,7 @@ namespace ConversationEditor.Setup
             conversationData.ConversationManager.Nodes.Add(startNode);
             conversationData.ConversationManager.Nodes.Add(endNode);
             // Serialize to JSON
-            string json = ConversationJsonSettings.Serialize(conversationData);
+            string json = JsonUtility.ToJson(conversationData, true);
             // Find unique filename
             string fileName = "NewConversation.conversation";
             string fullPath = Path.Combine(path, fileName);

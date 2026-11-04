@@ -21,7 +21,7 @@ namespace ConversationEditor.Setup
             string jsonContent = File.ReadAllText(ctx.assetPath);
             try
             {
-                var conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
+                var conversationData = JsonUtility.FromJson<ConversationData>(jsonContent);
                 if (conversationData != null && 
                     conversationData.ConversationManager != null && 
                     conversationData.ResourceManager != null)
@@ -53,7 +53,7 @@ namespace ConversationEditor.Setup
             try
             {
                 string jsonContent = File.ReadAllText(assetPath);
-                var conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
+                var conversationData = JsonUtility.FromJson<ConversationData>(jsonContent);
                 if (conversationData != null && 
                     conversationData.ConversationManager != null && 
                     conversationData.ResourceManager != null)

@@ -359,8 +359,8 @@ namespace ConversationEditor
             conversationData = new ConversationData();
             EnsureEditorSettings();
             conversationData.ConversationManager = new ConversationManager();
-            var startNode = new ConversationNode { Id = 1, NodeType = ConversationNodeType.Start, NextNodeId = 0, EditorPosition = new Vector2(0, 0), EditorSize = new Vector2(150, 80) };
-            var endNode = new ConversationNode { Id = 2, NodeType = ConversationNodeType.End, NextNodeId = 0, EditorPosition = new Vector2(400, 0), EditorSize = new Vector2(150, 80) };
+            var startNode = new ConversationNode { Id = 1, NodeType = ConversationNodeType.Start.ToString(), NextNodeId = 0, EditorPosition = new Vector2(0, 0), EditorSize = new Vector2(150, 80) };
+            var endNode = new ConversationNode { Id = 2, NodeType = ConversationNodeType.End.ToString(), NextNodeId = 0, EditorPosition = new Vector2(400, 0), EditorSize = new Vector2(150, 80) };
             conversationData.ConversationManager.Nodes.Add(startNode);
             conversationData.ConversationManager.Nodes.Add(endNode);
             graphView?.SetConversationData(conversationData);
@@ -378,7 +378,7 @@ namespace ConversationEditor
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
             string json = File.ReadAllText(filePath);
-            conversationData = ConversationJsonSettings.Deserialize<ConversationData>(json);
+            conversationData = JsonUtility.FromJson<ConversationData>(json);
             if (conversationData == null)
             {
                 EditorUtility.DisplayDialog("Error", "Failed to load conversation file.", "OK");
@@ -390,7 +390,7 @@ namespace ConversationEditor
             int synchronizedFields = ConversationEditorHelpers.SyncConversationResourceIdentifiers(conversationData, filePath);
             if (synchronizedFields > 0)
             {
-                string synchronizedJson = ConversationJsonSettings.Serialize(conversationData);
+                string synchronizedJson = JsonUtility.ToJson(conversationData, true);
                 File.WriteAllText(filePath, synchronizedJson);
                 AssetDatabase.Refresh();
                 EditorUtility.DisplayDialog("Conversation Editor", "Resource identifiers were synchronized automatically and the .conversation file was saved.", "OK");
@@ -422,7 +422,7 @@ namespace ConversationEditor
             if (conditions == null) return;
             foreach (var condition in conditions)
             {
-                if (condition == null || condition.ValueDataType != ValueType.Boolean) continue;
+                if (condition == null || condition.ValueDataType != ValueType.Boolean.ToString()) continue;
                 condition.Value = ConversationEditorHelpers.NormalizeBooleanValue(condition.Value);
                 condition.IsValueVariable = false;
             }
@@ -453,7 +453,7 @@ namespace ConversationEditor
             if (conversationData == null || string.IsNullOrEmpty(filePath)) return false;
             try
             {
-                string json = ConversationJsonSettings.Serialize(conversationData);
+                string json = JsonUtility.ToJson(conversationData, true);
                 File.WriteAllText(filePath, json);
                 isDirty = false;
                 AssetDatabase.Refresh();

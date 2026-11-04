@@ -125,9 +125,9 @@ namespace ConversationEditor.Panel
             EditorGUILayout.IntField(new GUIContent("ID", "Unique node identifier."), node.Id, GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.EnumPopup(new GUIContent("Node Type", "Node behavior type (read-only)."), node.NodeType, GUILayout.ExpandWidth(true));
+            EditorGUILayout.EnumPopup(new GUIContent("Node Type", "Node behavior type (read-only)."), ConversationNodeUtility.ParseConversationNodeType(node.NodeType), GUILayout.ExpandWidth(true));
             EditorGUI.EndDisabledGroup();
-            switch (node.NodeType)
+            switch (ConversationNodeUtility.ParseConversationNodeType(node.NodeType))
             {
                 case ConversationNodeType.Start:
                     DrawSectionSeparator();
@@ -150,7 +150,7 @@ namespace ConversationEditor.Panel
                     DrawDialogueOrFunctionInspector(conversationNode);
                     break;
             }
-            if (node.NodeType != ConversationNodeType.Observation)
+            if (node.NodeType != ConversationNodeType.Observation.ToString())
             {
                 DrawSectionSeparator();
                 EditorGUILayout.LabelField(new GUIContent("Comment", "Comment for this node."));
@@ -159,7 +159,7 @@ namespace ConversationEditor.Panel
             DrawSectionSeparator();
             EditorGUILayout.LabelField("Editor Properties", EditorStyles.boldLabel);
             node.EditorPosition = EditorGUILayout.Vector2Field(new GUIContent("Position", "Graph center position for this node."), node.EditorPosition, GUILayout.ExpandWidth(true));
-            if (RequiresSquareNodeSize(node.NodeType))
+            if (RequiresSquareNodeSize(ConversationNodeUtility.ParseConversationNodeType(node.NodeType)))
             {
                 EditorGUILayout.LabelField(new GUIContent("Size", "Graph size for this node. Y is locked to X."));
                 EditorGUILayout.BeginHorizontal();
@@ -181,7 +181,7 @@ namespace ConversationEditor.Panel
 
         private void DrawDialogueOrFunctionInspector(ConversationNode node)
         {
-            switch (node.NodeType)
+            switch (ConversationNodeUtility.ParseConversationNodeType(node.NodeType))
             {
                 case ConversationNodeType.Dialogue:
                     DrawSpeakerAndTextFields(node);
@@ -274,7 +274,7 @@ namespace ConversationEditor.Panel
             nodeIds.Add(0);
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
-                if (node.NodeType == ConversationNodeType.Start || node == excludeNode) continue;
+                if (node.NodeType == ConversationNodeType.Start.ToString() || node == excludeNode) continue;
                 nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
                 nodeIds.Add(node.Id);
             }
@@ -293,7 +293,7 @@ namespace ConversationEditor.Panel
             nodeIds.Add(0);
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
-                if (node.NodeType == ConversationNodeType.Start || node == excludeNode) continue;
+                if (node.NodeType == ConversationNodeType.Start.ToString() || node == excludeNode) continue;
                 nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
                 nodeIds.Add(node.Id);
             }
@@ -428,17 +428,17 @@ namespace ConversationEditor.Panel
                 pendingCondition = new ConditionRule
                 {
                     VariableName = "",
-                    Operator = ComparisonOperator.Equal,
-                    ValueDataType = ValueType.String,
+                    Operator = ComparisonOperator.Equal.ToString(),
+                    ValueDataType = ValueType.String.ToString(),
                     Value = "",
                     IsValueVariable = false
                 };
                 pendingConditionsByBranch[branch] = pendingCondition;
             }
             EditorGUILayout.BeginVertical("box");
-            pendingCondition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for the condition value."), pendingCondition.ValueDataType, GUILayout.ExpandWidth(true));
+            pendingCondition.ValueDataType = EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for the condition value."), ConversationNodeUtility.ParseValueType(pendingCondition.ValueDataType), GUILayout.ExpandWidth(true)).ToString();
             pendingCondition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name for this condition."), pendingCondition.VariableName ?? "", GUILayout.ExpandWidth(true));
-            pendingCondition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), pendingCondition.Operator);
+            pendingCondition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), ConversationNodeUtility.ParseComparisonOperator(pendingCondition.Operator));
             DrawConditionValueRow(pendingCondition, false);
             if (!isReadOnly && GUILayout.Button(new GUIContent("Add", "Add this condition to the branch."), GUILayout.ExpandWidth(true)))
             {
@@ -452,11 +452,11 @@ namespace ConversationEditor.Panel
                         VariableName = pendingCondition.VariableName.Trim(),
                         Operator = pendingCondition.Operator,
                         ValueDataType = pendingCondition.ValueDataType,
-                        Value = pendingCondition.ValueDataType == ValueType.Boolean ? ConversationEditorHelpers.NormalizeBooleanValue(pendingCondition.Value) : (pendingCondition.Value ?? ""),
-                        IsValueVariable = pendingCondition.ValueDataType == ValueType.Boolean ? false : pendingCondition.IsValueVariable
+                        Value = pendingCondition.ValueDataType == ValueType.Boolean.ToString() ? ConversationEditorHelpers.NormalizeBooleanValue(pendingCondition.Value) : (pendingCondition.Value ?? ""),
+                        IsValueVariable = pendingCondition.ValueDataType == ValueType.Boolean.ToString() ? false : pendingCondition.IsValueVariable
                     });
-                    pendingCondition.Operator = ComparisonOperator.Equal;
-                    pendingCondition.Value = pendingCondition.ValueDataType == ValueType.Boolean ? "true" : "";
+                    pendingCondition.Operator = ComparisonOperator.Equal.ToString();
+                    pendingCondition.Value = pendingCondition.ValueDataType == ValueType.Boolean.ToString() ? "true" : "";
                     pendingCondition.IsValueVariable = false;
                     MarkDirty();
                 }
@@ -472,10 +472,10 @@ namespace ConversationEditor.Panel
                 var condition = conditions[i];
                 EditorGUILayout.BeginVertical("box");
                 EditorGUI.BeginDisabledGroup(true);
-                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type used by this condition."), condition.ValueDataType, GUILayout.ExpandWidth(true));
+                condition.ValueDataType = EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type used by this condition."), ConversationNodeUtility.ParseValueType(condition.ValueDataType), GUILayout.ExpandWidth(true)).ToString();
                 condition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name used by this condition."), condition.VariableName ?? "", GUILayout.ExpandWidth(true));
                 EditorGUI.EndDisabledGroup();
-                condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), condition.Operator);
+                condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), ConversationNodeUtility.ParseComparisonOperator(condition.Operator));
                 DrawConditionValueRow(condition, true);
                 if (!isReadOnly && GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
                 {
@@ -491,7 +491,7 @@ namespace ConversationEditor.Panel
 
         private void DrawConditionValueRow(ConditionRule condition, bool lockTypeSpecificFields)
         {
-            if (condition.ValueDataType == ValueType.Boolean)
+            if (condition.ValueDataType == ValueType.Boolean.ToString())
             {
                 bool currentBool = ConversationEditorHelpers.ParseBooleanCondition(condition.Value);
                 bool newBool = EditorGUILayout.ToggleLeft(new GUIContent("Is true", "Boolean value for this condition."), currentBool);
@@ -508,19 +508,19 @@ namespace ConversationEditor.Panel
             EditorGUILayout.EndHorizontal();
         }
 
-        private ComparisonOperator DrawComparisonOperatorDropdown(GUIContent label, ComparisonOperator value)
+        private string DrawComparisonOperatorDropdown(GUIContent label, ComparisonOperator value)
         {
             int index = System.Array.IndexOf(comparisonOperatorValues, value);
             if (index < 0) index = 0;
             int newIndex = EditorGUILayout.Popup(label, index, comparisonOperatorLabels, GUILayout.ExpandWidth(true));
-            return comparisonOperatorValues[newIndex];
+            return comparisonOperatorValues[newIndex].ToString();
         }
 
         private bool IsConditionValueValid(ConditionRule condition)
         {
             if (condition == null) return false;
             if (condition.IsValueVariable) return !string.IsNullOrWhiteSpace(condition.Value);
-            switch (condition.ValueDataType)
+            switch (ConversationNodeUtility.ParseValueType(condition.ValueDataType))
             {
                 case ValueType.Integer:
                     return int.TryParse(condition.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _);
@@ -554,7 +554,7 @@ namespace ConversationEditor.Panel
         private Language GetSelectedAlternateLanguage(Node node)
         {
             if (selectedAlternateLanguageByNode.TryGetValue(node, out var selectedLanguage)) return selectedLanguage;
-            Language defaultLanguage = conversationData != null ? conversationData.language : Language.English;
+            Language defaultLanguage = conversationData != null ? ConversationNodeUtility.ParseLanguage(conversationData.language) : Language.English;
             selectedAlternateLanguageByNode[node] = defaultLanguage;
             return defaultLanguage;
         }
@@ -565,12 +565,12 @@ namespace ConversationEditor.Panel
             {
                 AlternateText alternateText = node.lstAlternateText[i];
                 if (alternateText == null) continue;
-                if (alternateText.language == language) return alternateText;
+                if (alternateText.language == language.ToString()) return alternateText;
             }
             RegisterUndoState("Add Alternate Text");
             AlternateText newAlternateText = new AlternateText
             {
-                language = language,
+                language = language.ToString(),
                 Text = ""
             };
             node.lstAlternateText.Add(newAlternateText);
@@ -587,8 +587,8 @@ namespace ConversationEditor.Panel
                 var condition = conditions[i];
                 EditorGUILayout.LabelField($"Condition {i + 1}", EditorStyles.boldLabel);
                 condition.VariableName = EditorGUILayout.TextField(new GUIContent("Variable", "Variable name for this condition."), condition.VariableName ?? "", GUILayout.ExpandWidth(true));
-                condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), condition.Operator);
-                condition.ValueDataType = (ValueType)EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for this condition."), condition.ValueDataType, GUILayout.ExpandWidth(true));
+                condition.Operator = DrawComparisonOperatorDropdown(new GUIContent("Operator", "Comparison operator."), ConversationNodeUtility.ParseComparisonOperator(condition.Operator));
+                condition.ValueDataType = EditorGUILayout.EnumPopup(new GUIContent("Value Type", "Data type expected for this condition."), ConversationNodeUtility.ParseValueType(condition.ValueDataType), GUILayout.ExpandWidth(true)).ToString();
                 DrawConditionValueRow(condition, false);
                 if (!isReadOnly && GUILayout.Button(new GUIContent("Remove", "Remove this condition."), GUILayout.ExpandWidth(true)))
                 {
@@ -606,8 +606,8 @@ namespace ConversationEditor.Panel
                 var newCondition = new ConditionRule
                 {
                     VariableName = "newVariable",
-                    Operator = ComparisonOperator.Equal,
-                    ValueDataType = ValueType.String,
+                    Operator = ComparisonOperator.Equal.ToString(),
+                    ValueDataType = ValueType.String.ToString(),
                     Value = "",
                     IsValueVariable = false
                 };

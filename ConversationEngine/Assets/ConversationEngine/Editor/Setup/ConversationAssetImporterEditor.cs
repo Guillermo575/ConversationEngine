@@ -68,7 +68,7 @@ namespace ConversationEditor.Setup
             try
             {
                 string jsonContent = File.ReadAllText(importer.assetPath);
-                conversationData = ConversationJsonSettings.Deserialize<ConversationData>(jsonContent);
+                conversationData = JsonUtility.FromJson<ConversationData>(jsonContent);
                 isValidConversation = conversationData != null && conversationData.ConversationManager != null && conversationData.ResourceManager != null;
                 if (!isValidConversation) return;
                 graphView.SetConversationData(conversationData);

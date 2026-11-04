@@ -31,8 +31,8 @@ namespace ConversationEditor.JSON
             sb.AppendLine($"    \"IsResourcePanelHidden\": {(isResourcePanelHidden ? "true" : "false")},");
             sb.AppendLine($"    \"IsReadOnly\": {(isReadOnly ? "true" : "false")},");
             sb.AppendLine("    \"CameraPosition\": {");
-            sb.AppendLine($"      \"X\": {cameraPosition.x},");
-            sb.AppendLine($"      \"Y\": {cameraPosition.y}");
+            sb.AppendLine($"      \"x\": {cameraPosition.x},");
+            sb.AppendLine($"      \"y\": {cameraPosition.y}");
             sb.AppendLine("    }");
             sb.AppendLine("  }");
             sb.AppendLine("}");
@@ -103,12 +103,12 @@ namespace ConversationEditor.JSON
                     sb.AppendLine($"        \"NodeType\": \"{obs.NodeType}\",");
                     sb.AppendLine($"        \"Text\": \"{EscapeString(obs.Text)}\",");
                     sb.AppendLine("        \"EditorPosition\": {");
-                    sb.AppendLine($"          \"X\": {obs.EditorPosition.x},");
-                    sb.AppendLine($"          \"Y\": {obs.EditorPosition.y}");
+                    sb.AppendLine($"          \"x\": {obs.EditorPosition.x},");
+                    sb.AppendLine($"          \"y\": {obs.EditorPosition.y}");
                     sb.AppendLine("        },");
                     sb.AppendLine("        \"EditorSize\": {");
-                    sb.AppendLine($"          \"X\": {obs.EditorSize.x},");
-                    sb.AppendLine($"          \"Y\": {obs.EditorSize.y}");
+                    sb.AppendLine($"          \"x\": {obs.EditorSize.x},");
+                    sb.AppendLine($"          \"y\": {obs.EditorSize.y}");
                     sb.AppendLine("        }");
                     sb.Append("      }");
                     if (i < cm.Observations.Count - 1) sb.Append(",");
@@ -156,12 +156,12 @@ namespace ConversationEditor.JSON
                     sb.AppendLine($"            \"HideOption\": {(opt.HideOption ? "true" : "false")},");
                     sb.AppendLine($"            \"BlockText\": \"{EscapeString(opt.BlockText)}\",");
                     sb.AppendLine("            \"EditorPosition\": {");
-                    sb.AppendLine($"              \"X\": {opt.EditorPosition.x},");
-                    sb.AppendLine($"              \"Y\": {opt.EditorPosition.y}");
+                    sb.AppendLine($"              \"x\": {opt.EditorPosition.x},");
+                    sb.AppendLine($"              \"y\": {opt.EditorPosition.y}");
                     sb.AppendLine("            },");
                     sb.AppendLine("            \"EditorSize\": {");
-                    sb.AppendLine($"              \"X\": {opt.EditorSize.x},");
-                    sb.AppendLine($"              \"Y\": {opt.EditorSize.y}");
+                    sb.AppendLine($"              \"x\": {opt.EditorSize.x},");
+                    sb.AppendLine($"              \"y\": {opt.EditorSize.y}");
                     sb.AppendLine("            },");
                     sb.AppendLine("            \"Conditions\": []");
                     sb.Append("          }");
@@ -197,7 +197,7 @@ namespace ConversationEditor.JSON
                 }
             }
             sb.AppendLine("        ],");
-            if (node.NodeType == ConversationNodeType.Conditional && node.conditionalBranch != null)
+            if (ConversationNodeUtility.ParseConversationNodeType(node.NodeType) == ConversationNodeType.Conditional && node.conditionalBranch != null)
             {
                 sb.AppendLine("        \"conditionalBranch\": {");
                 sb.AppendLine("          \"Conditions\": [],");
@@ -211,12 +211,12 @@ namespace ConversationEditor.JSON
             }
             sb.AppendLine($"        \"DefaultBranchNodeId\": {node.DefaultBranchNodeId},");
             sb.AppendLine("        \"EditorPosition\": {");
-            sb.AppendLine($"          \"X\": {node.EditorPosition.x},");
-            sb.AppendLine($"          \"Y\": {node.EditorPosition.y}");
+            sb.AppendLine($"          \"x\": {node.EditorPosition.x},");
+            sb.AppendLine($"          \"y\": {node.EditorPosition.y}");
             sb.AppendLine("        },");
             sb.AppendLine("        \"EditorSize\": {");
-            sb.AppendLine($"          \"X\": {node.EditorSize.x},");
-            sb.AppendLine($"          \"Y\": {node.EditorSize.y}");
+            sb.AppendLine($"          \"x\": {node.EditorSize.x},");
+            sb.AppendLine($"          \"y\": {node.EditorSize.y}");
             sb.AppendLine("        }");
             sb.Append("      }");
             if (addComma) sb.Append(",");
@@ -266,11 +266,11 @@ namespace ConversationEditor.JSON
         {
             var enumMappings = new Dictionary<Type, string>
             {
-                { typeof(ConversationNodeType), "NodeType" },
-                { typeof(AudioChannelType), "AudioType" },
-                { typeof(ComparisonOperator), "Operator" },
-                { typeof(ConversationScheme.ValueType), "ValueDataType" },
-                { typeof(Language), "language" }
+                //{ typeof(ConversationNodeType), "NodeType" },
+                //{ typeof(AudioChannelType), "AudioType" },
+                //{ typeof(ComparisonOperator), "Operator" },
+                //{ typeof(ConversationScheme.ValueType), "ValueDataType" },
+                //{ typeof(Language), "language" }
             };
             foreach (var mapping in enumMappings)
             {

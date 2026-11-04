@@ -59,7 +59,7 @@ namespace ConversationEditorActor.Helper
                 if (soundEffect.Id == null) soundEffect.Id = "";
                 if (soundEffect.Path == null) soundEffect.Path = "";
                 if (soundEffect.GUID == null) soundEffect.GUID = "";
-                soundEffect.AudioType = AudioChannelType.SoundEffect;
+                soundEffect.AudioType = AudioChannelType.Voice.ToString();
             }
             if (actor.BodyParts == null) actor.BodyParts = new List<BodyPartData>();
             foreach (var bodyPart in actor.BodyParts)
@@ -272,9 +272,9 @@ namespace ConversationEditorActor.Helper
                 foreach (var soundEffect in actor.SoundEffects)
                 {
                     if (soundEffect == null) continue;
-                    if (soundEffect.AudioType != AudioChannelType.SoundEffect)
+                    if (soundEffect.AudioType != AudioChannelType.Voice.ToString())
                     {
-                        soundEffect.AudioType = AudioChannelType.SoundEffect;
+                        soundEffect.AudioType = AudioChannelType.Voice.ToString();
                         updatedCount++;
                     }
                     TrySyncAudioPathAndGuid(soundEffect, actorAssetPath, out int updatedFields);

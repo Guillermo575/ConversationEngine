@@ -50,7 +50,7 @@ namespace ConversationBox
             if (conversationManager == null || conversationManager.Nodes == null)
                 lstNodes = conversationManager.Nodes;
             Node CurrentNode = null;
-            var StartNode = (from x in lstNodes where x.NodeType == ConversationNodeType.Start select x).ToList();
+            var StartNode = (from x in lstNodes where ConversationNodeUtility.ParseConversationNodeType(x.NodeType) == ConversationNodeType.Start select x).ToList();
             if (StartNode.Count == 0) return;
             CurrentNode = StartNode.First();
             foreach (var obj in lstNodes)
@@ -94,7 +94,7 @@ namespace ConversationBox
         {
             if (CursorNode == null) return;
             this.CursorNode = CursorNode;
-            switch (CursorNode.NodeType)
+            switch (ConversationNodeUtility.ParseConversationNodeType(CursorNode.NodeType))
             {
                 case ConversationNodeType.Start: break;
                 case ConversationNodeType.Dialogue: break;
