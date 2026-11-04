@@ -27,12 +27,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 397.6135,
-          "Y": 485.2839
+          "x": 397.6135,
+          "y": 485.2839
         },
         "EditorSize": {
-          "X": 150,
-          "Y": 150
+          "x": 150,
+          "y": 150
         }
       },
       {
@@ -62,12 +62,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 392.7272,
-          "Y": 620.9089
+          "x": 392.7272,
+          "y": 620.9089
         },
         "EditorSize": {
-          "X": 180,
-          "Y": 180
+          "x": 180,
+          "y": 180
         }
       },
       {
@@ -85,12 +85,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 402.7272,
-          "Y": 877.9824
+          "x": 402.7272,
+          "y": 877.9824
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 93.125
+          "x": 200,
+          "y": 93.125
         }
       },
       {
@@ -108,12 +108,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 400.909,
-          "Y": 1088.182
+          "x": 400.909,
+          "y": 1088.182
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "x": 200,
+          "y": 100
         }
       },
       {
@@ -131,12 +131,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 399.0908,
-          "Y": 1298.183
+          "x": 399.0908,
+          "y": 1298.183
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "x": 200,
+          "y": 100
         }
       },
       {
@@ -154,12 +154,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 100,
-          "Y": 1393.636
+          "x": 100,
+          "y": 1393.636
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "x": 200,
+          "y": 100
         }
       },
       {
@@ -177,12 +177,12 @@
             "HideOption": false,
             "BlockText": "",
             "EditorPosition": {
-              "X": 230.9499,
-              "Y": 26.03723
+              "x": 230.9499,
+              "y": 26.03723
             },
             "EditorSize": {
-              "X": 150,
-              "Y": 40.76929
+              "x": 150,
+              "y": 40.76929
             },
             "Conditions": []
           },
@@ -192,12 +192,12 @@
             "HideOption": false,
             "BlockText": "",
             "EditorPosition": {
-              "X": 492.8951,
-              "Y": -23.59608
+              "x": 492.8951,
+              "y": -23.59608
             },
             "EditorSize": {
-              "X": 150,
-              "Y": 60
+              "x": 150,
+              "y": 60
             },
             "Conditions": []
           },
@@ -207,12 +207,12 @@
             "HideOption": false,
             "BlockText": "",
             "EditorPosition": {
-              "X": 237.3344,
-              "Y": 133.6241
+              "x": 237.3344,
+              "y": 133.6241
             },
             "EditorSize": {
-              "X": 150,
-              "Y": 60
+              "x": 150,
+              "y": 60
             },
             "Conditions": []
           },
@@ -222,12 +222,12 @@
             "HideOption": false,
             "BlockText": "",
             "EditorPosition": {
-              "X": 171.7192,
-              "Y": 274.883
+              "x": 171.7192,
+              "y": 274.883
             },
             "EditorSize": {
-              "X": 150,
-              "Y": 60
+              "x": 150,
+              "y": 60
             },
             "Conditions": []
           }
@@ -237,12 +237,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 622.0286,
-          "Y": 1647.8
+          "x": 622.0286,
+          "y": 1647.8
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 150
+          "x": 200,
+          "y": 150
         }
       },
       {
@@ -260,12 +260,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 231.9231,
-          "Y": 1819.339
+          "x": 231.9231,
+          "y": 1819.339
         },
         "EditorSize": {
-          "X": 200.7692,
-          "Y": 109.2308
+          "x": 200.7692,
+          "y": 109.2308
         }
       },
       {
@@ -283,12 +283,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 697.1427,
-          "Y": 2054.287
+          "x": 697.1427,
+          "y": 2054.287
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "x": 200,
+          "y": 100
         }
       },
       {
@@ -306,12 +306,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 178.8462,
-          "Y": 1959.231
+          "x": 178.8462,
+          "y": 1959.231
         },
         "EditorSize": {
-          "X": 258.4615,
-          "Y": 93.84607
+          "x": 258.4615,
+          "y": 93.84607
         }
       },
       {
@@ -329,12 +329,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 424.2857,
-          "Y": 2225.713
+          "x": 424.2857,
+          "y": 2225.713
         },
         "EditorSize": {
-          "X": 200,
-          "Y": 100
+          "x": 200,
+          "y": 100
         }
       },
       {
@@ -352,12 +352,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 177.1429,
-          "Y": 2098.573
+          "x": 177.1429,
+          "y": 2098.573
         },
         "EditorSize": {
-          "X": 150,
-          "Y": 80
+          "x": 150,
+          "y": 80
         }
       },
       {
@@ -375,12 +375,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 337.2727,
-          "Y": 2405.455
+          "x": 337.2727,
+          "y": 2405.455
         },
         "EditorSize": {
-          "X": 150,
-          "Y": 80
+          "x": 150,
+          "y": 80
         }
       },
       {
@@ -398,12 +398,12 @@
         "conditionalBranch": {},
         "DefaultBranchNodeId": 0,
         "EditorPosition": {
-          "X": 184.5454,
-          "Y": 2671.818
+          "x": 184.5454,
+          "y": 2671.818
         },
         "EditorSize": {
-          "X": 150,
-          "Y": 150
+          "x": 150,
+          "y": 150
         }
       }
     ],
@@ -415,8 +415,8 @@
     "IsResourcePanelHidden": false,
     "IsReadOnly": false,
     "CameraPosition": {
-      "X": 216.183,
-      "Y": -752.6217
+      "x": 216.183,
+      "y": -752.6217
     }
   }
 }
