@@ -109,6 +109,20 @@
 
 ---
 
+ ## Uso de LINQ
+	* Usa `System.Linq` siempre que manejes listas o colecciones (filtrar, mapear, buscar, agrupar, ordenar, agregar).
+	* Prefiere expresiones LINQ (`Where`, `Select`, `FirstOrDefault`, `Any`, `OrderBy`, etc.) en lugar de bucles `for`/`foreach` manuales cuando el resultado sea equivalente y más corto, con el fin de reducir código.
+
+ ## Serialización de datos
+    * Algunas clases están diseñadas para serializarse y deserializarse (JSON, XML, etc.). Al diseñar sus campos y propiedades:
+	  - Evita referencias circulares o recursivas entre objetos.
+	  - Evita diseños que puedan causar pérdida de datos al serializar o deserializar.
+    * Los `enum` normalmente no se serializan correctamente con las librerías de Unity (provocan pérdida de datos). Por lo tanto:
+	  - En clases serializables, declara siempre el valor como `string`, nunca como `enum`.
+	  - Si necesitas procesar ese valor como `enum`, crea un método que parsee el texto al `enum` que representa (por ejemplo, con `Enum.TryParse`), y maneja el caso de valor inválido con un valor por defecto.
+
+---
+
 ## Experiencia de usuario (UX) en campos de interfaz
 	* En proyectos con interaccion constante del usuario, define primero el ROL de cada campo (identificador, referencia, dato editable, calculado) y elige el control segun como el usuario interactuara con el.
 	* Identificadores (ej. IDs numericos): mostrarlos como solo lectura, no como captura manual.
