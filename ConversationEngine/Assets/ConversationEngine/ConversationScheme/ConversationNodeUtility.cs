@@ -85,6 +85,8 @@ namespace ConversationScheme
                 nodesToValidate = nodesToValidate.Concat(conversationManager.Observations.Cast<Node>());
             foreach (var node in nodesToValidate.Where(node => node?.lstAlternateText != null))
                 node.lstAlternateText.RemoveAll(alternateText => alternateText == null || string.IsNullOrWhiteSpace(alternateText.Text));
+            foreach (var node in conversationManager.Nodes.Where(node => node?.lstAlternateTitle != null))
+                node.lstAlternateTitle.RemoveAll(alternateTitle => alternateTitle == null || string.IsNullOrWhiteSpace(alternateTitle.Text));
         }
         #endregion
 

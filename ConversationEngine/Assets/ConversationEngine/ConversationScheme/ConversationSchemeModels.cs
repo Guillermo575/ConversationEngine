@@ -117,6 +117,8 @@ namespace ConversationScheme
         public List<ConversationFunction> Functions = new List<ConversationFunction>();
         public ConditionalBranch conditionalBranch = null;
         public int DefaultBranchNodeId;
+        public string Title;
+        public List<AlternateText> lstAlternateTitle;
     }
 
     [Serializable]

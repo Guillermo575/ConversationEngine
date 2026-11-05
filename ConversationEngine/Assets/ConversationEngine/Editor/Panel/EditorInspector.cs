@@ -65,6 +65,7 @@ namespace ConversationEditor.Panel
         #region UI State
         private Vector2 inspectorScrollPos;
         private readonly Dictionary<Node, Language> selectedAlternateLanguageByNode = new Dictionary<Node, Language>();
+        private readonly Dictionary<ConversationNode, Language> selectedAlternateLanguageByTitleNode = new Dictionary<ConversationNode, Language>();
         #endregion
 
         #region Events
@@ -186,6 +187,8 @@ namespace ConversationEditor.Panel
                 case ConversationNodeType.Dialogue:
                     DrawSpeakerAndTextFields(node);
                     node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
+                    DrawSectionSeparator();
+                    DrawTitleSection(node);
                     DrawSectionSeparator();
                     EditorGUILayout.LabelField(new GUIContent("Functions", "Timed functions executed while this node is active."), EditorStyles.boldLabel);
                     if (node.Functions == null) node.Functions = new List<ConversationFunction>();
@@ -551,11 +554,51 @@ namespace ConversationEditor.Panel
             MarkDirty();
         }
 
+        private void DrawTitleSection(ConversationNode node)
+        {
+            if (node == null) return;
+            string oldTitle = node.Title ?? "";
+            string newTitle = EditorGUILayout.TextField(new GUIContent("Title", "Dialogue title shown to the player."), oldTitle, GUILayout.ExpandWidth(true));
+            if (newTitle != oldTitle)
+            {
+                RegisterUndoState("Edit Title");
+                node.Title = newTitle;
+                MarkDirty();
+            }
+            DrawAlternateTitleSection(node);
+        }
+
+        private void DrawAlternateTitleSection(ConversationNode node)
+        {
+            if (node == null) return;
+            if (node.lstAlternateTitle == null) node.lstAlternateTitle = new List<AlternateText>();
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(new GUIContent("Alternate Title", "Configure title entries by language."), EditorStyles.boldLabel);
+            Language selectedLanguage = GetSelectedAlternateTitleLanguage(node);
+            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("Language", "Language to edit in alternate titles."), selectedLanguage, GUILayout.ExpandWidth(true));
+            if (newSelectedLanguage != selectedLanguage) selectedAlternateLanguageByTitleNode[node] = newSelectedLanguage;
+            AlternateText selectedAlternateTitle = GetOrCreateAlternateTitle(node, selectedAlternateLanguageByTitleNode[node]);
+            string oldTitle = selectedAlternateTitle.Text ?? "";
+            string newTitle = EditorGUILayout.TextField(new GUIContent("Text", "Alternate title text for the selected language."), oldTitle, GUILayout.ExpandWidth(true));
+            if (newTitle == oldTitle) return;
+            RegisterUndoState("Edit Alternate Title");
+            selectedAlternateTitle.Text = newTitle;
+            MarkDirty();
+        }
+
         private Language GetSelectedAlternateLanguage(Node node)
         {
             if (selectedAlternateLanguageByNode.TryGetValue(node, out var selectedLanguage)) return selectedLanguage;
             Language defaultLanguage = conversationData != null ? ConversationNodeUtility.ParseLanguage(conversationData.language) : Language.English;
             selectedAlternateLanguageByNode[node] = defaultLanguage;
+            return defaultLanguage;
+        }
+
+        private Language GetSelectedAlternateTitleLanguage(ConversationNode node)
+        {
+            if (selectedAlternateLanguageByTitleNode.TryGetValue(node, out var selectedLanguage)) return selectedLanguage;
+            Language defaultLanguage = conversationData != null ? ConversationNodeUtility.ParseLanguage(conversationData.language) : Language.English;
+            selectedAlternateLanguageByTitleNode[node] = defaultLanguage;
             return defaultLanguage;
         }
 
@@ -576,6 +619,25 @@ namespace ConversationEditor.Panel
             node.lstAlternateText.Add(newAlternateText);
             MarkDirty();
             return newAlternateText;
+        }
+
+        private AlternateText GetOrCreateAlternateTitle(ConversationNode node, Language language)
+        {
+            for (int i = 0; i < node.lstAlternateTitle.Count; i++)
+            {
+                AlternateText alternateTitle = node.lstAlternateTitle[i];
+                if (alternateTitle == null) continue;
+                if (alternateTitle.language == language.ToString()) return alternateTitle;
+            }
+            RegisterUndoState("Add Alternate Title");
+            AlternateText newAlternateTitle = new AlternateText
+            {
+                language = language.ToString(),
+                Text = ""
+            };
+            node.lstAlternateTitle.Add(newAlternateTitle);
+            MarkDirty();
+            return newAlternateTitle;
         }
 
         private void DrawConditionList(List<ConditionRule> conditions)
