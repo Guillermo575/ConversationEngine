@@ -37,7 +37,7 @@ namespace ConversationEditorActor.Helper
         public static string SerializeActor(Actor actor)
         {
             EnsureActorDefaults(actor);
-            return JsonUtility.ToJson(actor, true);
+            return ConversationNodeUtility.SerializeWithoutEmptyValues(actor);
         }
         public static Actor DeserializeActor(string json)
         {

@@ -37,7 +37,7 @@ namespace ConversationEditor.Setup
             conversationData.ConversationManager.Nodes.Add(startNode);
             conversationData.ConversationManager.Nodes.Add(endNode);
             // Serialize to JSON
-            string json = JsonUtility.ToJson(conversationData, true);
+            string json = ConversationNodeUtility.SerializeWithoutEmptyValues(conversationData);
             // Find unique filename
             string fileName = "NewConversation.conversation";
             string fullPath = Path.Combine(path, fileName);

@@ -97,7 +97,7 @@ namespace ConversationEditor
         public void RegisterUndoSnapshot()
         {
             if (conversationData == null) return;
-            string currentSnapshot = JsonUtility.ToJson(conversationData, true);
+            string currentSnapshot = ConversationNodeUtility.SerializeWithoutEmptyValues(conversationData);
             if (undoHistory.Count > 0 && undoHistory[undoHistory.Count - 1] == currentSnapshot) return;
             undoHistory.Add(currentSnapshot);
             if (undoHistory.Count > maxHistoryEntries) undoHistory.RemoveAt(0);
@@ -106,7 +106,7 @@ namespace ConversationEditor
         public bool TryUndo()
         {
             if (!CanUndo()) return false;
-            string currentSnapshot = JsonUtility.ToJson(conversationData, true);
+            string currentSnapshot = ConversationNodeUtility.SerializeWithoutEmptyValues(conversationData);
             string targetSnapshot = undoHistory[undoHistory.Count - 1];
             undoHistory.RemoveAt(undoHistory.Count - 1);
             redoHistory.Add(currentSnapshot);
@@ -120,7 +120,7 @@ namespace ConversationEditor
         public bool TryRedo()
         {
             if (!CanRedo()) return false;
-            string currentSnapshot = JsonUtility.ToJson(conversationData, true);
+            string currentSnapshot = ConversationNodeUtility.SerializeWithoutEmptyValues(conversationData);
             string targetSnapshot = redoHistory[redoHistory.Count - 1];
             redoHistory.RemoveAt(redoHistory.Count - 1);
             undoHistory.Add(currentSnapshot);

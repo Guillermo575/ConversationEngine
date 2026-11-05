@@ -390,7 +390,7 @@ namespace ConversationEditor
             int synchronizedFields = ConversationEditorHelpers.SyncConversationResourceIdentifiers(conversationData, filePath);
             if (synchronizedFields > 0)
             {
-                string synchronizedJson = JsonUtility.ToJson(conversationData, true);
+                string synchronizedJson = ConversationNodeUtility.SerializeWithoutEmptyValues(conversationData);
                 File.WriteAllText(filePath, synchronizedJson);
                 AssetDatabase.Refresh();
                 EditorUtility.DisplayDialog("Conversation Editor", "Resource identifiers were synchronized automatically and the .conversation file was saved.", "OK");
@@ -454,7 +454,7 @@ namespace ConversationEditor
             if (conversationData == null || string.IsNullOrEmpty(filePath)) return false;
             try
             {
-                string json = JsonUtility.ToJson(conversationData, true);
+                string json = ConversationNodeUtility.SerializeWithoutEmptyValues(conversationData);
                 File.WriteAllText(filePath, json);
                 isDirty = false;
                 AssetDatabase.Refresh();
