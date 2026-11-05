@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Plastic.Newtonsoft.Json;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEngine;
 namespace ConversationScheme
 {
@@ -140,6 +142,49 @@ namespace ConversationScheme
         {
             if (string.IsNullOrWhiteSpace(audioChannelTypeValue)) return AudioChannelType.BackgroundMusic;
             return System.Enum.TryParse(audioChannelTypeValue, true, out AudioChannelType parsedAudioChannelType) ? parsedAudioChannelType : AudioChannelType.BackgroundMusic;
+        }
+        #endregion
+
+        #region JSON Serialization Helper
+        public static string SerializeWithoutEmptyValues(object obj)
+        {
+            string json = JsonUtility.ToJson(obj, true);
+            if (string.IsNullOrEmpty(json)) return json;
+            JToken rootToken = JToken.Parse(json);
+            PruneEmptyValues(rootToken);
+            return rootToken.ToString(Formatting.Indented);
+        }
+        private static bool PruneEmptyValues(JToken token)
+        {
+            if (token == null) return true;
+            switch (token.Type)
+            {
+                case JTokenType.Object:
+                    JObject tokenObject = (JObject)token;
+                    var properties = tokenObject.Properties().ToList();
+                    foreach (var property in properties)
+                    {
+                        bool mustRemove = PruneEmptyValues(property.Value);
+                        if (mustRemove) property.Remove();
+                    }
+                    return !tokenObject.Properties().Any();
+                case JTokenType.Array:
+                    JArray tokenArray = (JArray)token;
+                    for (int index = tokenArray.Count - 1; index >= 0; index--)
+                    {
+                        bool mustRemove = PruneEmptyValues(tokenArray[index]);
+                        if (mustRemove) tokenArray[index].Remove();
+                    }
+                    return !tokenArray.Any();
+                case JTokenType.String:
+                    string stringValue = token.Value<string>();
+                    return string.IsNullOrEmpty(stringValue);
+                case JTokenType.Null:
+                case JTokenType.Undefined:
+                    return true;
+                default:
+                    return false;
+            }
         }
         #endregion
     }
