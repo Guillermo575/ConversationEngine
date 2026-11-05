@@ -70,6 +70,22 @@ namespace ConversationScheme
                 nodes.Insert(0, startNode);
             }
         }
+        public static void ValidateEmptyElements(ConversationData conversationData)
+        {
+            if (conversationData?.ConversationManager == null) return;
+            var conversationManager = conversationData.ConversationManager;
+            var nodesToValidate = Enumerable.Empty<Node>();
+            if (conversationManager.Nodes != null)
+            {
+                nodesToValidate = nodesToValidate
+                    .Concat(conversationManager.Nodes.Cast<Node>())
+                    .Concat(conversationManager.Nodes.Where(node => node?.Options != null).SelectMany(node => node.Options).Cast<Node>());
+            }
+            if (conversationManager.Observations != null)
+                nodesToValidate = nodesToValidate.Concat(conversationManager.Observations.Cast<Node>());
+            foreach (var node in nodesToValidate.Where(node => node?.lstAlternateText != null))
+                node.lstAlternateText.RemoveAll(alternateText => alternateText == null || string.IsNullOrWhiteSpace(alternateText.Text));
+        }
         #endregion
 
         #region Parsing Helper

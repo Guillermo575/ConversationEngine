@@ -431,6 +431,7 @@ namespace ConversationEditor
         private void SaveConversation()
         {
             if (IsReadOnlyMode()) return;
+            ConversationNodeUtility.ValidateEmptyElements(conversationData);
             if (string.IsNullOrEmpty(currentFilePath))
             {
                 SaveConversationAs();
