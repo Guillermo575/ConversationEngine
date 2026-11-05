@@ -575,11 +575,13 @@ namespace ConversationEditor.Panel
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(new GUIContent("Alternate Title", "Configure title entries by language."), EditorStyles.boldLabel);
             Language selectedLanguage = GetSelectedAlternateTitleLanguage(node);
-            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("Language", "Language to edit in alternate titles."), selectedLanguage, GUILayout.ExpandWidth(true));
+            EditorGUILayout.BeginHorizontal();
+            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("", "Language to edit in alternate titles."), selectedLanguage, GUILayout.Width(140f));
             if (newSelectedLanguage != selectedLanguage) selectedAlternateLanguageByTitleNode[node] = newSelectedLanguage;
             AlternateText selectedAlternateTitle = GetOrCreateAlternateTitle(node, selectedAlternateLanguageByTitleNode[node]);
             string oldTitle = selectedAlternateTitle.Text ?? "";
-            string newTitle = EditorGUILayout.TextField(new GUIContent("Text", "Alternate title text for the selected language."), oldTitle, GUILayout.ExpandWidth(true));
+            string newTitle = EditorGUILayout.TextField(new GUIContent("", "Alternate title text for the selected language."), oldTitle, GUILayout.ExpandWidth(true));
+            EditorGUILayout.EndHorizontal();
             if (newTitle == oldTitle) return;
             RegisterUndoState("Edit Alternate Title");
             selectedAlternateTitle.Text = newTitle;
