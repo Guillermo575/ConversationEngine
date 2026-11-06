@@ -16,6 +16,8 @@ namespace ConversationEditorActor.Helper
             Actor actor = new Actor
             {
                 Id = "new_actor",
+                Name = "",
+                lstAlternateName = new List<AlternateText>(),
                 Path = "",
                 IconPath = "",
                 IconPathGUID = "",
@@ -37,6 +39,7 @@ namespace ConversationEditorActor.Helper
         public static string SerializeActor(Actor actor)
         {
             EnsureActorDefaults(actor);
+            ConversationNodeUtility.ValidateEmptyActorElements(actor);
             return ConversationNodeUtility.SerializeWithoutEmptyValues(actor);
         }
         public static Actor DeserializeActor(string json)
@@ -50,6 +53,8 @@ namespace ConversationEditorActor.Helper
         public static void EnsureActorDefaults(Actor actor)
         {
             if (actor == null) return;
+            if (actor.Name == null) actor.Name = "";
+            if (actor.lstAlternateName == null) actor.lstAlternateName = new List<AlternateText>();
             if (actor.IconPath == null) actor.IconPath = "";
             if (actor.IconPathGUID == null) actor.IconPathGUID = "";
             if (actor.SoundEffects == null) actor.SoundEffects = new List<AudioBackground>();

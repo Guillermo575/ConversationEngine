@@ -90,6 +90,11 @@ namespace ConversationScheme
             foreach (var node in conversationManager.Nodes.Where(node => node?.lstAlternateTitle != null))
                 node.lstAlternateTitle.RemoveAll(alternateTitle => alternateTitle == null || string.IsNullOrWhiteSpace(alternateTitle.Text));
         }
+        public static void ValidateEmptyActorElements(Actor actor)
+        {
+            if (actor?.lstAlternateName == null) return;
+            actor.lstAlternateName.RemoveAll(alternateName => alternateName == null || string.IsNullOrWhiteSpace(alternateName.Text));
+        }
         #endregion
 
         #region Parsing Helper

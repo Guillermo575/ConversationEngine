@@ -55,6 +55,8 @@ namespace ConversationScheme
     [Serializable]
     public class Actor : Resource
     {
+        public string Name;
+        public List<AlternateText> lstAlternateName;
         public string IconPath;
         public string IconPathGUID;
         public List<AudioBackground> SoundEffects = new List<AudioBackground>();

@@ -13,6 +13,7 @@ namespace ConversationEditorActor.Panel
     {
         #region State
         private Vector2 scrollPosition;
+        private readonly Dictionary<Actor, Language> selectedAlternateLanguageByActor = new Dictionary<Actor, Language>();
         #endregion
 
         #region Draw
@@ -37,6 +38,7 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.LabelField(new GUIContent("Actor", "Main actor properties."), EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
             actor.Id = EditorGUILayout.TextField(new GUIContent("Id", "Unique actor id."), actor.Id);
+            changed |= DrawActorNameSection(actor);
             actor.Size = EditorGUILayout.Vector2Field(new GUIContent("Canvas Size", "Actor canvas size. Its center is the main pivot point."), actor.Size);
             if (EditorGUI.EndChangeCheck()) changed = true;
             EditorGUILayout.BeginHorizontal();
@@ -134,6 +136,59 @@ namespace ConversationEditorActor.Panel
             }
             EditorGUILayout.EndVertical();
             return changed;
+        }
+        private bool DrawActorNameSection(Actor actor)
+        {
+            if (actor == null) return false;
+            bool changed = false;
+            string oldName = actor.Name ?? "";
+            string newName = EditorGUILayout.TextField(new GUIContent("Name", "Display name shown for this actor."), oldName, GUILayout.ExpandWidth(true));
+            if (newName != oldName)
+            {
+                actor.Name = newName;
+                changed = true;
+            }
+            changed |= DrawAlternateNameSection(actor);
+            return changed;
+        }
+        private bool DrawAlternateNameSection(Actor actor)
+        {
+            if (actor == null) return false;
+            if (actor.lstAlternateName == null) actor.lstAlternateName = new List<AlternateText>();
+            bool changed = false;
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(new GUIContent("Alternate Name", "Configure actor name entries by language."), EditorStyles.boldLabel);
+            Language selectedLanguage = GetSelectedAlternateNameLanguage(actor);
+            EditorGUILayout.BeginHorizontal();
+            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("", "Language to edit in alternate actor names."), selectedLanguage, GUILayout.Width(140f));
+            if (newSelectedLanguage != selectedLanguage) selectedAlternateLanguageByActor[actor] = newSelectedLanguage;
+            AlternateText selectedAlternateName = GetOrCreateAlternateName(actor, selectedAlternateLanguageByActor[actor], ref changed);
+            string oldName = selectedAlternateName.Text ?? "";
+            string newName = EditorGUILayout.TextField(new GUIContent("", "Alternate actor name for the selected language."), oldName, GUILayout.ExpandWidth(true));
+            EditorGUILayout.EndHorizontal();
+            if (newName == oldName) return changed;
+            selectedAlternateName.Text = newName;
+            changed = true;
+            return changed;
+        }
+        private Language GetSelectedAlternateNameLanguage(Actor actor)
+        {
+            if (selectedAlternateLanguageByActor.TryGetValue(actor, out var selectedLanguage)) return selectedLanguage;
+            selectedAlternateLanguageByActor[actor] = Language.English;
+            return Language.English;
+        }
+        private AlternateText GetOrCreateAlternateName(Actor actor, Language language, ref bool changed)
+        {
+            AlternateText alternateName = actor.lstAlternateName.FirstOrDefault(x => x != null && x.language == language.ToString());
+            if (alternateName != null) return alternateName;
+            AlternateText newAlternateName = new AlternateText
+            {
+                language = language.ToString(),
+                Text = ""
+            };
+            actor.lstAlternateName.Add(newAlternateName);
+            changed = true;
+            return newAlternateName;
         }
         private bool DrawBodyPartList(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
         {
