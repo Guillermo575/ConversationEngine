@@ -154,7 +154,6 @@ namespace ConversationEditorActor.Panel
         private bool DrawAlternateNameSection(Actor actor)
         {
             if (actor == null) return false;
-            if (actor.lstAlternateName == null) actor.lstAlternateName = new List<AlternateText>();
             bool changed = false;
             EditorGUILayout.Space();
             EditorGUILayout.LabelField(new GUIContent("Alternate Name", "Configure actor name entries by language."), EditorStyles.boldLabel);
@@ -162,11 +161,23 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.BeginHorizontal();
             Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("", "Language to edit in alternate actor names."), selectedLanguage, GUILayout.Width(140f));
             if (newSelectedLanguage != selectedLanguage) selectedAlternateLanguageByActor[actor] = newSelectedLanguage;
-            AlternateText selectedAlternateName = GetOrCreateAlternateName(actor, selectedAlternateLanguageByActor[actor], ref changed);
-            string oldName = selectedAlternateName.Text ?? "";
+            AlternateText selectedAlternateName = GetAlternateName(actor, selectedAlternateLanguageByActor[actor]);
+            string oldName = selectedAlternateName?.Text ?? "";
             string newName = EditorGUILayout.TextField(new GUIContent("", "Alternate actor name for the selected language."), oldName, GUILayout.ExpandWidth(true));
             EditorGUILayout.EndHorizontal();
             if (newName == oldName) return changed;
+            if (selectedAlternateName == null)
+            {
+                if (string.IsNullOrWhiteSpace(newName)) return false;
+                if (actor.lstAlternateName == null) actor.lstAlternateName = new List<AlternateText>();
+                actor.lstAlternateName.Add(new AlternateText { language = selectedAlternateLanguageByActor[actor].ToString(), Text = newName });
+                return true;
+            }
+            if (string.IsNullOrWhiteSpace(newName))
+            {
+                actor.lstAlternateName.Remove(selectedAlternateName);
+                return true;
+            }
             selectedAlternateName.Text = newName;
             changed = true;
             return changed;
@@ -177,18 +188,11 @@ namespace ConversationEditorActor.Panel
             selectedAlternateLanguageByActor[actor] = Language.English;
             return Language.English;
         }
-        private AlternateText GetOrCreateAlternateName(Actor actor, Language language, ref bool changed)
+        private AlternateText GetAlternateName(Actor actor, Language language)
         {
+            if (actor?.lstAlternateName == null) return null;
             AlternateText alternateName = actor.lstAlternateName.FirstOrDefault(x => x != null && x.language == language.ToString());
-            if (alternateName != null) return alternateName;
-            AlternateText newAlternateName = new AlternateText
-            {
-                language = language.ToString(),
-                Text = ""
-            };
-            actor.lstAlternateName.Add(newAlternateName);
-            changed = true;
-            return newAlternateName;
+            return alternateName;
         }
         private bool DrawBodyPartList(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
         {
