@@ -3,6 +3,6 @@ namespace ConversationActorBuilder
 {
     public interface IActorSpriteProvider
     {
-        Sprite LoadSprite(string resourcePath);
+        Sprite LoadSprite(string resourceGuid, string resourcePath);
     }
 }

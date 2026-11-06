@@ -11,19 +11,19 @@ namespace ConversationActorBuilder
     {
         private class DelegateSpriteProvider : IActorSpriteProvider
         {
-            private readonly Func<string, Sprite> spriteResolver;
-            public DelegateSpriteProvider(Func<string, Sprite> spriteResolver)
+            private readonly Func<string, string, Sprite> spriteResolver;
+            public DelegateSpriteProvider(Func<string, string, Sprite> spriteResolver)
             {
                 this.spriteResolver = spriteResolver;
             }
-            public Sprite LoadSprite(string resourcePath)
+            public Sprite LoadSprite(string resourceGuid, string resourcePath)
             {
                 if (spriteResolver == null) return null;
-                return spriteResolver(resourcePath);
+                return spriteResolver(resourceGuid, resourcePath);
             }
         }
         #region Build Entry
-        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, Func<string, Sprite> spriteResolver)
+        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, Func<string, string, Sprite> spriteResolver)
         {
             ActorBuildOptions options = new ActorBuildOptions
             {
@@ -165,7 +165,7 @@ namespace ConversationActorBuilder
                 resourceObject.transform.localPosition = Vector3.zero;
                 resourceObject.transform.localRotation = Quaternion.identity;
                 resourceObject.transform.localScale = Vector3.one;
-                Sprite sprite = spriteProvider == null ? null : spriteProvider.LoadSprite(nestedResource.Path ?? "");
+                Sprite sprite = spriteProvider == null ? null : spriteProvider.LoadSprite(nestedResource.GUID ?? "", nestedResource.Path ?? "");
                 ConfigureVisual(resourceObject, sprite, options.TargetType, scale, sortingOrder);
                 List<PivotPoint> overridePivots = nestedResource.PivotPoints == null ? new List<PivotPoint>() : nestedResource.PivotPoints.Where(x => x != null).Select(x => new PivotPoint { Id = x.Id, Name = x.Name, X = x.X, Y = x.Y }).ToList();
                 builtBodyPart.RegisterResource(nestedResource.Id, resourceObject, overridePivots);
@@ -253,14 +253,14 @@ namespace ConversationActorBuilder
             BodyPartResource currentResource = bodyPart.NestedResources.FirstOrDefault(x => x != null && x.Id == (bodyPart.CurrentResourceId ?? ""));
             if (currentResource != null)
             {
-                Sprite currentSprite = spriteProvider.LoadSprite(currentResource.Path ?? "");
+                Sprite currentSprite = spriteProvider.LoadSprite(currentResource.GUID ?? "", currentResource.Path ?? "");
                 if (currentSprite != null) return currentSprite;
             }
             for (int i = 0; i < bodyPart.NestedResources.Count; i++)
             {
                 BodyPartResource nestedResource = bodyPart.NestedResources[i];
                 if (nestedResource == null) continue;
-                Sprite nestedSprite = spriteProvider.LoadSprite(nestedResource.Path ?? "");
+                Sprite nestedSprite = spriteProvider.LoadSprite(nestedResource.GUID ?? "", nestedResource.Path ?? "");
                 if (nestedSprite != null) return nestedSprite;
             }
             return null;

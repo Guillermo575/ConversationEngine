@@ -43,7 +43,7 @@ namespace ConversationEditorActor.Export
             if (builderType == null) return null;
             MethodInfo buildMethod = builderType.GetMethod("BuildActorRoot", BindingFlags.Public | BindingFlags.Static);
             if (buildMethod == null) return null;
-            Func<string, Sprite> spriteResolver = path => LoadSprite(actorAssetPath, path);
+            Func<string, string, Sprite> spriteResolver = (guid, path) => LoadSprite(actorAssetPath, guid, path);
             object[] args = new object[]
             {
                 actorData,
@@ -70,10 +70,9 @@ namespace ConversationEditorActor.Export
             if (parentTransform != null) return;
             Undo.RegisterCreatedObjectUndo(parentCanvas.gameObject, "Create Export Canvas");
         }
-        private static Sprite LoadSprite(string actorAssetPath, string resourcePath)
+        private static Sprite LoadSprite(string actorAssetPath, string resourceGuid, string resourcePath)
         {
-            if (string.IsNullOrWhiteSpace(resourcePath)) return null;
-            string resolvedAssetPath = global::ConversationEditorActor.Helper.ActorEditorHelpers.ResolveResourceAssetPath(actorAssetPath, resourcePath);
+            if (!global::ConversationEditorActor.Helper.ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resourceGuid, resourcePath, out string resolvedAssetPath, out bool _)) return null;
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
             if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = global::ConversationEditorActor.Helper.ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
