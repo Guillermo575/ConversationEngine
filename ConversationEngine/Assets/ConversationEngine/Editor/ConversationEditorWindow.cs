@@ -26,7 +26,9 @@ namespace ConversationEditor
 
         #region Panel Sizes
         private float leftPanelWidth = 250f;
-        private float rightPanelWidth = 300f;
+        private float rightPanelWidth = 460f;
+        private const float minInspectorPanelWidth = 460f;
+        private const float minCenterPanelWidth = 300f;
         private bool isDraggingLeftSplitter = false;
         private bool isDraggingRightSplitter = false;
         private bool showInspector = false;
@@ -37,11 +39,12 @@ namespace ConversationEditor
         public static void ShowWindow()
         {
             var window = GetWindow<ConversationEditorWindow>("Conversation Editor");
-            window.minSize = new Vector2(800, 600);
+            window.minSize = new Vector2(960f, 600f);
         }
         public static void OpenConversationFile(string filePath)
         {
             var window = GetWindow<ConversationEditorWindow>("Conversation Editor");
+            window.minSize = new Vector2(960f, 600f);
             window.LoadConversation(filePath);
             window.maximized = true;
             window.Show();
@@ -134,7 +137,12 @@ namespace ConversationEditor
                 centerPanelX = leftPanelWidth + 5f;
                 centerPanelWidth -= leftPanelWidth + 5f;
             }
-            if (showInspector) centerPanelWidth -= rightPanelWidth + 5f;
+            if (showInspector)
+            {
+                float maxInspectorWidth = totalWidth - centerPanelX - 5f - minCenterPanelWidth;
+                rightPanelWidth = Mathf.Clamp(rightPanelWidth, minInspectorPanelWidth, Mathf.Max(minInspectorPanelWidth, maxInspectorWidth));
+                centerPanelWidth -= rightPanelWidth + 5f;
+            }
             if (!isResourcePanelVisible)
             {
                 Rect showButtonRect = new Rect(10f, toolbarHeight + 6f, 130f, 22f);
@@ -151,7 +159,7 @@ namespace ConversationEditor
             if (!showInspector) return;
             float rightSplitterX = centerPanelX + centerPanelWidth;
             Rect rightSplitterRect = new Rect(rightSplitterX, toolbarHeight, 5f, totalHeight);
-            DrawSplitter(rightSplitterRect, ref isDraggingRightSplitter, ref rightPanelWidth, 200f, totalWidth * 0.5f);
+            DrawFixedDivider(rightSplitterRect);
             Rect rightPanelRect = new Rect(rightSplitterX + 5f, toolbarHeight, rightPanelWidth, totalHeight);
             GUILayout.BeginArea(rightPanelRect);
             editorInspector.DrawInspectorPanel();
@@ -159,6 +167,7 @@ namespace ConversationEditor
         }
         private void DrawSplitter(Rect splitterRect, ref bool isDragging, ref float panelWidth, float minWidth, float maxWidth)
         {
+            maxWidth = Mathf.Max(minWidth, maxWidth);
             EditorGUIUtility.AddCursorRect(splitterRect, MouseCursor.ResizeHorizontal);
             GUI.Box(splitterRect, "", EditorStyles.toolbar);
             Event e = Event.current;
@@ -179,6 +188,11 @@ namespace ConversationEditor
                 e.Use();
                 Repaint();
             }
+        }
+
+        private void DrawFixedDivider(Rect dividerRect)
+        {
+            GUI.Box(dividerRect, "", EditorStyles.toolbar);
         }
         #endregion
 
@@ -542,7 +556,7 @@ namespace ConversationEditor
             conversationData.EditorSettings.IsResourcePanelHidden = false;
             conversationData.EditorSettings.IsReadOnly = false;
             leftPanelWidth = 250f;
-            rightPanelWidth = 300f;
+            rightPanelWidth = 450f;
             showInspector = false;
             graphView?.SetConversationData(conversationData);
             ApplyReadOnlyModeFromSettings();

@@ -64,6 +64,8 @@ namespace ConversationEditor.Panel
 
         #region UI State
         private Vector2 inspectorScrollPos;
+        private const float inspectorMaxComponentWidth = 460f;
+        private float inspectorCurrentContentWidth = inspectorMaxComponentWidth;
         private readonly Dictionary<Node, Language> selectedAlternateLanguageByNode = new Dictionary<Node, Language>();
         private readonly Dictionary<ConversationNode, Language> selectedAlternateLanguageByTitleNode = new Dictionary<ConversationNode, Language>();
         #endregion
@@ -88,7 +90,9 @@ namespace ConversationEditor.Panel
 
         public void DrawInspectorPanel()
         {
-            inspectorScrollPos = EditorGUILayout.BeginScrollView(inspectorScrollPos);
+            inspectorScrollPos = EditorGUILayout.BeginScrollView(inspectorScrollPos, false, false);
+            inspectorCurrentContentWidth = Mathf.Min(inspectorMaxComponentWidth, Mathf.Max(0f, EditorGUIUtility.currentViewWidth - 70f));
+            EditorGUILayout.BeginVertical(GUILayout.MaxWidth(inspectorCurrentContentWidth), GUILayout.ExpandWidth(true));
             EditorGUI.BeginDisabledGroup(isReadOnly);
             var graphSelectedNode = graphView?.SelectedNode;
             var graphSelectedOption = graphView?.SelectedOption;
@@ -111,6 +115,7 @@ namespace ConversationEditor.Panel
                 EditorGUILayout.HelpBox("Select a node to edit its properties", MessageType.Info);
             }
             EditorGUI.EndDisabledGroup();
+            EditorGUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
         }
 
@@ -120,7 +125,7 @@ namespace ConversationEditor.Panel
             EditorGUILayout.LabelField("Node Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 100f;
+            EditorGUIUtility.labelWidth = GetResponsiveLabelWidth();
             EditorGUI.BeginChangeCheck();
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.IntField(new GUIContent("ID", "Unique node identifier."), node.Id, GUILayout.ExpandWidth(true));
@@ -232,7 +237,7 @@ namespace ConversationEditor.Panel
             EditorGUILayout.LabelField("Option Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 100f;
+            EditorGUIUtility.labelWidth = GetResponsiveLabelWidth();
             EditorGUI.BeginChangeCheck();
             int selectedOptionIndex = (graphView?.SelectedNode as ConversationNode)?.Options?.IndexOf(option) ?? 0;
             EnsureOptionEditorData(graphView?.SelectedNode as ConversationNode, option, Mathf.Max(0, selectedOptionIndex));
@@ -258,7 +263,7 @@ namespace ConversationEditor.Panel
             EditorGUILayout.LabelField("Branch Inspector", EditorStyles.boldLabel);
             EditorGUILayout.Space();
             float oldLabelWidth = EditorGUIUtility.labelWidth;
-            EditorGUIUtility.labelWidth = 100f;
+            EditorGUIUtility.labelWidth = GetResponsiveLabelWidth();
             EditorGUI.BeginChangeCheck();
             branch.NextNodeIdTrue = DrawNodeIdDropdown("Next Node (True)", branch.NextNodeIdTrue, graphView?.SelectedNode as ConversationNode, "Target node when branch evaluates true.");
             branch.NextNodeIdFalse = DrawNodeIdDropdown("Next Node (False)", branch.NextNodeIdFalse, graphView?.SelectedNode as ConversationNode, "Target node when branch evaluates false.");
@@ -278,7 +283,7 @@ namespace ConversationEditor.Panel
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
                 if (node.NodeType == ConversationNodeType.Start.ToString() || node == excludeNode) continue;
-                nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
+                nodeOptions.Add(GetInspectorCompactText(ConversationEditorHelpers.GetNodeDropdownText(node), 40));
                 nodeIds.Add(node.Id);
             }
             int currentIndex = nodeIds.IndexOf(currentNodeId);
@@ -297,7 +302,7 @@ namespace ConversationEditor.Panel
             foreach (var node in conversationData.ConversationManager.Nodes)
             {
                 if (node.NodeType == ConversationNodeType.Start.ToString() || node == excludeNode) continue;
-                nodeOptions.Add(ConversationEditorHelpers.GetNodeDropdownText(node));
+                nodeOptions.Add(GetInspectorCompactText(ConversationEditorHelpers.GetNodeDropdownText(node), 32));
                 nodeIds.Add(node.Id);
             }
             int currentIndex = nodeIds.IndexOf(currentNodeId);
@@ -589,7 +594,8 @@ namespace ConversationEditor.Panel
             EditorGUILayout.LabelField(new GUIContent("Alternate Title", "Configure title entries by language."), EditorStyles.boldLabel);
             Language selectedLanguage = GetSelectedAlternateTitleLanguage(node);
             EditorGUILayout.BeginHorizontal();
-            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("", "Language to edit in alternate titles."), selectedLanguage, GUILayout.Width(140f));
+            float languageFieldWidth = Mathf.Clamp(GetResponsiveLabelWidth() + 28f, 96f, 140f);
+            Language newSelectedLanguage = (Language)EditorGUILayout.EnumPopup(new GUIContent("", "Language to edit in alternate titles."), selectedLanguage, GUILayout.Width(languageFieldWidth));
             if (newSelectedLanguage != selectedLanguage) selectedAlternateLanguageByTitleNode[node] = newSelectedLanguage;
             AlternateText selectedAlternateTitle = GetAlternateTitle(node, selectedAlternateLanguageByTitleNode[node]);
             string oldTitle = selectedAlternateTitle?.Text ?? "";
@@ -906,6 +912,18 @@ namespace ConversationEditor.Panel
             Rect separatorRect = EditorGUILayout.GetControlRect(false, 1f);
             EditorGUI.DrawRect(separatorRect, new Color(0.35f, 0.35f, 0.35f, 1f));
             EditorGUILayout.Space(6);
+        }
+
+        private string GetInspectorCompactText(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value) || maxLength <= 3) return value;
+            if (value.Length <= maxLength) return value;
+            return value.Substring(0, maxLength - 3) + "...";
+        }
+
+        private float GetResponsiveLabelWidth()
+        {
+            return Mathf.Clamp(inspectorCurrentContentWidth * 0.30f, 78f, 100f);
         }
 
         private void MarkDirty()
