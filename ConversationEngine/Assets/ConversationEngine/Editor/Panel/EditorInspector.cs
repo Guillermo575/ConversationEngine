@@ -74,7 +74,7 @@ namespace ConversationEditor.Panel
         public System.Action OnDirty;
         #endregion
 
-        #region Inspector Panel
+        #region Panel Lifecycle
         public EditorInspector(EditorWindow ownerWindow, ConversationGraphView graphView, bool isReadOnly = false, bool useGlobalCore = true)
         {
             this.ownerWindow = ownerWindow;
@@ -118,7 +118,9 @@ namespace ConversationEditor.Panel
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
         }
+        #endregion
 
+        #region Node Inspector UI
         private void DrawNodeInspector(Node node)
         {
             var conversationNode = node as ConversationNode;
@@ -273,7 +275,9 @@ namespace ConversationEditor.Panel
             if (EditorGUI.EndChangeCheck()) MarkDirty();
             EditorGUIUtility.labelWidth = oldLabelWidth;
         }
+        #endregion
 
+        #region Node Linking UI
         private int DrawNodeIdDropdown(string label, int currentNodeId, ConversationNode excludeNode, string tooltip = "")
         {
             var nodeOptions = new List<string>();
@@ -310,7 +314,9 @@ namespace ConversationEditor.Panel
             int newIndex = EditorGUILayout.Popup(new GUIContent(label, tooltip), currentIndex, nodeOptions.ToArray(), GUILayout.ExpandWidth(true));
             return nodeIds[newIndex];
         }
+        #endregion
 
+        #region Option Helpers
         private void DrawOptionSection(ConversationNode node)
         {
             if (node.Options == null) node.Options = new List<ConversationOption>();
@@ -394,7 +400,9 @@ namespace ConversationEditor.Panel
             float y = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
             return new Vector2(x, y);
         }
+        #endregion
 
+        #region Node Size Rules
         private bool RequiresSquareNodeSize(ConversationNodeType nodeType)
         {
             switch (nodeType)
@@ -408,7 +416,9 @@ namespace ConversationEditor.Panel
                     return false;
             }
         }
+        #endregion
 
+        #region Conditional UI
         private void DrawConditionalBranchSection(ConversationNode node)
         {
             // Ensure singular conditionalBranch exists for conditional nodes
@@ -540,7 +550,9 @@ namespace ConversationEditor.Panel
                     return true;
             }
         }
+        #endregion
 
+        #region Localization UI
         private void DrawAlternateTextSection(Node node)
         {
             if (node == null) return;
@@ -661,7 +673,9 @@ namespace ConversationEditor.Panel
             }
             return null;
         }
+        #endregion
 
+        #region Legacy Condition UI
         private void DrawConditionList(List<ConditionRule> conditions)
         {
             if (conditions == null) return;
@@ -699,7 +713,9 @@ namespace ConversationEditor.Panel
                 MarkDirty();
             }
         }
+        #endregion
 
+        #region Function UI
         private void DrawFunctionList(List<ConversationFunction> functions)
         {
             if (functions == null) return;
@@ -905,7 +921,9 @@ namespace ConversationEditor.Panel
             }
             return function.Parameters.Keys.OrderBy(key => key).ToList();
         }
+        #endregion
 
+        #region Inspector Helpers
         private void DrawSectionSeparator()
         {
             EditorGUILayout.Space(4);
