@@ -193,7 +193,7 @@ namespace ConversationEditor.Panel
             {
                 case ConversationNodeType.Dialogue:
                     DrawSpeakerAndTextFields(node);
-                    node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
+                    if (!HasNodeOptions(node)) node.NextNodeId = DrawNodeIdDropdown("Next Node", node.NextNodeId, node, "Default target node for flow continuation.");
                     DrawSectionSeparator();
                     DrawTitleSection(node);
                     DrawSectionSeparator();
@@ -399,6 +399,11 @@ namespace ConversationEditor.Panel
             float x = node.EditorSize.x + optionDefaultSpacing + Random.Range(10f, 45f);
             float y = (optionDefaultHeight + optionDefaultSpacing) * optionIndex + Random.Range(-20f, 20f);
             return new Vector2(x, y);
+        }
+
+        private bool HasNodeOptions(ConversationNode node)
+        {
+            return node?.Options != null && node.Options.Any();
         }
         #endregion
 
