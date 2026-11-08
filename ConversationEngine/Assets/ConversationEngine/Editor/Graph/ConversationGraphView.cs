@@ -301,11 +301,14 @@ namespace ConversationEditor.Graph
                     DrawNodeStartEnd(node, nodeRect);
                     break;
                 case ConversationNodeType.Function:
-                    GUI.Box(nodeRect, "", style);
+                    GUI.Box(nodeRect, GUIContent.none, style);
                     DrawCenteredNodeTitle(nodeRect, "FUNCTION", node);
                     break;
                 default:
-                    GUI.Box(nodeRect, "", style);
+                    GUIContent nodeContent = ConversationNodeUtility.ParseConversationNodeType(node.NodeType) == ConversationNodeType.Dialogue
+                        ? new GUIContent(string.Empty, node.Text ?? string.Empty)
+                        : GUIContent.none;
+                    GUI.Box(nodeRect, nodeContent, style);
                     GUILayout.BeginArea(nodeRect);
                     DrawNodeContent(node);
                     GUILayout.EndArea();
