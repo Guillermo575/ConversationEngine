@@ -216,18 +216,25 @@ namespace ConversationEditor.Panel
 
         private void DrawSpeakerAndTextFields(ConversationNode node)
         {
-            if (conversationData.ResourceManager.Actors.Count > 0)
+            var actorIds = new List<string> { "" };
+            if (conversationData?.ResourceManager?.Actors != null)
             {
-                var actorIds = conversationData.ResourceManager.Actors.Select(a => a.Id).ToList();
-                actorIds.Insert(0, "(None)");
-                int currentIndex = string.IsNullOrEmpty(node.SpeakerActorId) ? 0 : actorIds.IndexOf(node.SpeakerActorId);
-                if (currentIndex < 0) currentIndex = 0;
-                int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor", "Actor speaking in this node."), currentIndex, actorIds.ToArray(), GUILayout.ExpandWidth(true));
-                node.SpeakerActorId = newIndex == 0 ? "" : actorIds[newIndex];
+                actorIds.AddRange(conversationData.ResourceManager.Actors
+                    .Where(actor => actor != null && !string.IsNullOrWhiteSpace(actor.Id))
+                    .Select(actor => actor.Id)
+                    .Distinct());
             }
-            else
+            if (!string.IsNullOrWhiteSpace(node.SpeakerActorId) && !actorIds.Contains(node.SpeakerActorId)) actorIds.Add(node.SpeakerActorId);
+            var actorDisplayOptions = actorIds.Select(actorId => string.IsNullOrWhiteSpace(actorId) ? "(None)" : actorId).ToArray();
+            int currentIndex = actorIds.IndexOf(node.SpeakerActorId ?? "");
+            if (currentIndex < 0) currentIndex = 0;
+            int newIndex = EditorGUILayout.Popup(new GUIContent("Speaker Actor ID", "Actor speaking in this node."), currentIndex, actorDisplayOptions, GUILayout.ExpandWidth(true));
+            if (newIndex != currentIndex)
             {
-                node.SpeakerActorId = EditorGUILayout.TextField(new GUIContent("Speaker Actor ID", "Actor identifier for this node."), node.SpeakerActorId, GUILayout.ExpandWidth(true));
+                string selectedActorId = actorIds[newIndex];
+                node.SpeakerActorId = selectedActorId;
+                if (string.IsNullOrWhiteSpace(selectedActorId)) node.Title = "";
+                else if (string.IsNullOrWhiteSpace(node.Title)) node.Title = "[@Actor]";
             }
             EditorGUILayout.LabelField(new GUIContent("Text", "Dialogue text shown to the player."));
             node.Text = EditorGUILayout.TextArea(node.Text, GUILayout.MinHeight(60), GUILayout.ExpandWidth(true));
