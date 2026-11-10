@@ -2,6 +2,21 @@
   "Title": "EJEMPLO",
   "Description": "ASI FUNCIONA EL EDITOR DE CONVERSACIONES",
   "language": "Italian",
+  "ResourceManager": {
+    "Actors": [
+      {
+        "Id": "Actor1",
+        "Path": "Assets/Resources/Actor1/actor1.prefab",
+        "GUID": "3e4b662415ea48a44ac81727869eca05",
+        "IconPath": "Assets/Resources/Actor1/actor1.png",
+        "IconPathGUID": "2e8d71af4db20b24681f9f564e23418c",
+        "Size": {
+          "x": 0.0,
+          "y": 0.0
+        }
+      }
+    ]
+  },
   "ConversationManager": {
     "Nodes": [
       {

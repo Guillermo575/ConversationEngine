@@ -222,7 +222,9 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
 
 #### Scene Backgrounds
 - Manage background images and scenes
-- ID and Path-based reference system
+- ID and GUID + Path double reference system
+- Path is read-only and selected with file picker (`...`)
+- Selected path is stored from project root (`Assets/...`)
 
 #### Audio Backgrounds
 - Support for multiple audio types:
@@ -230,9 +232,13 @@ All Next Node ID fields now use dropdowns instead of manual text entry:
   - Sound Effects
   - Voice
 - Per-resource audio type configuration
+- Path is read-only and selected with file picker (`...`)
+- Selected path is stored from project root (`Assets/...`)
 
 #### Actors
-- Actor definition via `.actor` or legacy `.json` files
+- Actor definition via `.actor` files or `.prefab` files with `ActorBuiltActor` in the prefab root
+- Actor and icon paths are read-only and selected with file picker (`...`)
+- Selected paths are stored from project root (`Assets/...`)
 - Icon paths for visual representation
 - Sound effect associations
 - Body part composition system (for complex character assembly)

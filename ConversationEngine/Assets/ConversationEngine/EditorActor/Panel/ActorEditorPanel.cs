@@ -14,6 +14,8 @@ namespace ConversationEditorActor.Panel
         #region State
         private Vector2 scrollPosition;
         private readonly Dictionary<Actor, Language> selectedAlternateLanguageByActor = new Dictionary<Actor, Language>();
+        private const float iconPathLabelWidth = 76f;
+        private const float compactPathLabelWidth = 48f;
         #endregion
 
         #region Draw
@@ -42,7 +44,7 @@ namespace ConversationEditorActor.Panel
             actor.Size = EditorGUILayout.Vector2Field(new GUIContent("Canvas Size", "Actor canvas size. Its center is the main pivot point."), actor.Size);
             if (EditorGUI.EndChangeCheck()) changed = true;
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(new GUIContent("Icon Path", "Icon path used by conversation resources."), GUILayout.Width(60f));
+            EditorGUILayout.LabelField(new GUIContent("Icon Path", "Icon path used by conversation resources."), GUILayout.Width(iconPathLabelWidth));
             string iconPathLabel = string.IsNullOrEmpty(actor.IconPath) ? "(no file selected)" : actor.IconPath;
             string iconPathTooltip = "Read-only icon path relative to the .actor root folder. GUID: " + (string.IsNullOrWhiteSpace(actor.IconPathGUID) ? "(empty)" : actor.IconPathGUID);
             EditorGUILayout.LabelField(new GUIContent(iconPathLabel, iconPathTooltip), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
@@ -98,7 +100,7 @@ namespace ConversationEditorActor.Panel
                 EditorGUI.BeginChangeCheck();
                 soundEffect.Id = EditorGUILayout.TextField(new GUIContent("Id", "Sound effect id."), soundEffect.Id);
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(new GUIContent("Path", "Sound effect path relative to the .actor root folder."), GUILayout.Width(36f));
+                EditorGUILayout.LabelField(new GUIContent("Path", "Sound effect path relative to the .actor root folder."), GUILayout.Width(compactPathLabelWidth));
                 string soundPathLabel = string.IsNullOrEmpty(soundEffect.Path) ? "(no file selected)" : soundEffect.Path;
                 string soundPathTooltip = "Read-only sound path relative to the .actor root folder. GUID: " + (string.IsNullOrWhiteSpace(soundEffect.GUID) ? "(empty)" : soundEffect.GUID);
                 EditorGUILayout.LabelField(new GUIContent(soundPathLabel, soundPathTooltip), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));

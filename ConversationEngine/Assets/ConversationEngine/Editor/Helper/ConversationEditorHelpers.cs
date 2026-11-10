@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
@@ -384,6 +385,39 @@ namespace ConversationEditor.Helper
         public static bool IsMissingResource(string conversationFilePath, string resourceGuid, string resourcePath)
         {
             return !TryResolveResourceAssetPath(conversationFilePath, resourceGuid, resourcePath, out string _, out bool _);
+        }
+        public static bool IsValidActorAssetReference(string conversationFilePath, string actorGuid, string actorPath, out string validationMessage)
+        {
+            validationMessage = "";
+            bool hasReferenceData = !string.IsNullOrWhiteSpace(actorGuid) || !string.IsNullOrWhiteSpace(actorPath);
+            if (!hasReferenceData) return true;
+            if (!TryResolveResourceAssetPath(conversationFilePath, actorGuid, actorPath, out string resolvedAssetPath, out bool _))
+            {
+                validationMessage = "Missing actor file: the asset cannot be resolved by GUID or Path.";
+                return false;
+            }
+            string extension = Path.GetExtension(resolvedAssetPath).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".actor":
+                    return true;
+                case ".prefab":
+                    GameObject prefabRoot = AssetDatabase.LoadAssetAtPath<GameObject>(resolvedAssetPath);
+                    if (prefabRoot == null)
+                    {
+                        validationMessage = "Invalid actor file: prefab root object could not be loaded.";
+                        return false;
+                    }
+                    if (prefabRoot.GetComponent("ActorBuiltActor") == null)
+                    {
+                        validationMessage = "Invalid actor file: prefab root must contain ActorBuiltActor.";
+                        return false;
+                    }
+                    return true;
+                default:
+                    validationMessage = "Invalid actor file: only .actor or .prefab files are allowed.";
+                    return false;
+            }
         }
         private static bool TryGetPathRelativeToConversation(string conversationFilePath, string resolvedAssetPath, out string relativePath)
         {

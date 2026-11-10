@@ -26,10 +26,10 @@ namespace ConversationEditor
 
         #region Panel Sizes
         private float leftPanelWidth = 250f;
+        private const float fixedLeftPanelWidth = 350f;
         private float rightPanelWidth = 460f;
         private const float minInspectorPanelWidth = 460f;
         private const float minCenterPanelWidth = 300f;
-        private bool isDraggingLeftSplitter = false;
         private bool isDraggingRightSplitter = false;
         private bool showInspector = false;
         #endregion
@@ -128,12 +128,13 @@ namespace ConversationEditor
             float centerPanelWidth = totalWidth;
             if (isResourcePanelVisible)
             {
+                leftPanelWidth = fixedLeftPanelWidth;
                 Rect leftPanelRect = new Rect(0f, toolbarHeight, leftPanelWidth, totalHeight);
                 GUILayout.BeginArea(leftPanelRect);
                 DrawResourceManager();
                 GUILayout.EndArea();
                 Rect leftSplitterRect = new Rect(leftPanelWidth, toolbarHeight, 5f, totalHeight);
-                DrawSplitter(leftSplitterRect, ref isDraggingLeftSplitter, ref leftPanelWidth, 150f, totalWidth * 0.5f);
+                DrawFixedDivider(leftSplitterRect);
                 centerPanelX = leftPanelWidth + 5f;
                 centerPanelWidth -= leftPanelWidth + 5f;
             }
@@ -555,7 +556,7 @@ namespace ConversationEditor
             conversationData.EditorSettings.CameraPosition = Vector2.zero;
             conversationData.EditorSettings.IsResourcePanelHidden = false;
             conversationData.EditorSettings.IsReadOnly = false;
-            leftPanelWidth = 250f;
+            leftPanelWidth = fixedLeftPanelWidth;
             rightPanelWidth = 450f;
             showInspector = false;
             graphView?.SetConversationData(conversationData);
