@@ -1,11 +1,14 @@
 using ConversationEditor.Graph;
+using ConversationEditor.Graph;
 using ConversationEditor.Helper;
 using ConversationScheme;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using BodyPartData = ConversationScheme.BodyPart;
 namespace ConversationEditor.Panel
 {
     public class EditorInspector
@@ -33,6 +36,7 @@ namespace ConversationEditor.Panel
         private string pendingCustomParameterValue = "";
         private int pendingFunctionTimestamp = 0;
         private readonly Dictionary<ConversationFunction, bool> functionParameterFoldouts = new Dictionary<ConversationFunction, bool>();
+        private readonly Dictionary<string, Actor> actorDataByAssetPath = new Dictionary<string, Actor>();
         private readonly Dictionary<ConversationNode, ConversationOption> pendingOptionsByNode = new Dictionary<ConversationNode, ConversationOption>();
         private readonly Dictionary<ConditionalBranch, ConditionRule> pendingConditionsByBranch = new Dictionary<ConditionalBranch, ConditionRule>();
         private static readonly ComparisonOperator[] comparisonOperatorValues =
@@ -754,7 +758,8 @@ namespace ConversationEditor.Panel
                         EditorGUI.BeginDisabledGroup(true);
                         EditorGUILayout.TextField(new GUIContent("", "Parameter name."), parameterName, GUILayout.Width(130));
                         EditorGUI.EndDisabledGroup();
-                        func.Parameters[parameterName] = EditorGUILayout.TextField(new GUIContent("", "Parameter value."), func.Parameters[parameterName] ?? "", GUILayout.ExpandWidth(true));
+                        string parameterTooltip = GetFunctionParameterTooltip(func.MethodName, parameterName);
+                        func.Parameters[parameterName] = DrawFunctionParameterValueField("", func.MethodName, parameterName, parameterTooltip, func.Parameters[parameterName] ?? "", func.Parameters);
                         EditorGUILayout.EndHorizontal();
                     }
                 }
@@ -862,7 +867,7 @@ namespace ConversationEditor.Panel
                         foreach (var parameterDefinition in parameterDefinitions)
                         {
                             if (!pendingFunctionParameters.ContainsKey(parameterDefinition.Key)) pendingFunctionParameters[parameterDefinition.Key] = "";
-                            pendingFunctionParameters[parameterDefinition.Key] = EditorGUILayout.TextField(new GUIContent(parameterDefinition.Key, parameterDefinition.Value), pendingFunctionParameters[parameterDefinition.Key] ?? "", GUILayout.ExpandWidth(true));
+                            pendingFunctionParameters[parameterDefinition.Key] = DrawFunctionParameterValueField(selectedFunctionCategory, selectedFunctionName, parameterDefinition.Key, parameterDefinition.Value, pendingFunctionParameters[parameterDefinition.Key] ?? "", pendingFunctionParameters);
                         }
                     }
                 }
@@ -904,6 +909,338 @@ namespace ConversationEditor.Panel
                 pendingFunctionTimestamp = 0;
                 MarkDirty();
             }
+        }
+
+        private string GetFunctionParameterTooltip(string functionName, string parameterName)
+        {
+            var definitions = ConversationFunctionLibrary.GetFunctionParameters(functionName);
+            if (definitions == null) return "Parameter value.";
+            return definitions.TryGetValue(parameterName, out string description) ? description : "Parameter value.";
+        }
+
+        private string DrawFunctionParameterValueField(string selectedCategory, string functionName, string parameterName, string parameterTooltip, string currentValue, Dictionary<string, string> parameters)
+        {
+            if (!IsBodyPartsFunction(selectedCategory, functionName)) return EditorGUILayout.TextField(new GUIContent(parameterName, parameterTooltip), currentValue ?? "", GUILayout.ExpandWidth(true));
+            switch (GetBodyPartParameterType(parameterName))
+            {
+                case "actor":
+                    return DrawActorParameterDropdown(new GUIContent(parameterName, parameterTooltip), currentValue);
+                case "bodypart":
+                    return DrawBodyPartParameterDropdown(new GUIContent(parameterName, parameterTooltip), currentValue, parameters);
+                case "pivot":
+                    return DrawPivotPointParameterDropdown(new GUIContent(parameterName, parameterTooltip), currentValue, parameters);
+                case "resource":
+                    return DrawNestedResourceParameterDropdown(new GUIContent(parameterName, parameterTooltip), currentValue, parameters);
+                default:
+                    return EditorGUILayout.TextField(new GUIContent(parameterName, parameterTooltip), currentValue ?? "", GUILayout.ExpandWidth(true));
+            }
+        }
+
+        private bool IsBodyPartsFunction(string selectedCategory, string functionName)
+        {
+            if (selectedCategory == "Body Parts") return true;
+            var bodyPartsFunctions = ConversationFunctionLibrary.GetFunctionsForCategory("Body Parts");
+            return bodyPartsFunctions.Contains(functionName);
+        }
+
+        private string GetBodyPartParameterType(string parameterName)
+        {
+            string normalized = NormalizeParameterName(parameterName);
+            if (normalized.Contains("actor")) return "actor";
+            if (normalized.Contains("bodypart")) return "bodypart";
+            if (normalized.Contains("pivot")) return "pivot";
+            if (normalized.Contains("nestedresource") || normalized.Contains("resource")) return "resource";
+            return "text";
+        }
+
+        private string NormalizeParameterName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return "";
+            return new string(value.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+        }
+
+        private string DrawActorParameterDropdown(GUIContent label, string currentValue)
+        {
+            var actorValues = new List<string> { "" };
+            var actorLabels = new List<string> { "(None)" };
+            if (conversationData?.ResourceManager?.Actors != null)
+            {
+                var actors = conversationData.ResourceManager.Actors
+                    .Where(actor => actor != null && !string.IsNullOrWhiteSpace(actor.Id))
+                    .GroupBy(actor => actor.Id)
+                    .Select(group => group.First())
+                    .OrderBy(actor => actor.Id)
+                    .ToList();
+                foreach (var actor in actors)
+                {
+                    actorValues.Add(actor.Id);
+                    actorLabels.Add(actor.Id);
+                }
+            }
+            return DrawDropdownField(label, currentValue, actorValues, actorLabels, true);
+        }
+
+        private string DrawBodyPartParameterDropdown(GUIContent label, string currentValue, Dictionary<string, string> parameters)
+        {
+            string selectedActorId = GetParameterValue(parameters, "actorId", "actor");
+            var bodyParts = GetBodyPartsForActor(selectedActorId);
+            var values = new List<string> { "" };
+            var labels = new List<string> { "(None)" };
+            foreach (var bodyPart in bodyParts)
+            {
+                values.Add(bodyPart.Id.ToString(CultureInfo.InvariantCulture));
+                labels.Add($"{bodyPart.Id} - {bodyPart.Name}");
+            }
+            bool hasActor = !string.IsNullOrWhiteSpace(selectedActorId);
+            return DrawDropdownField(label, currentValue, values, labels, hasActor);
+        }
+
+        private string DrawPivotPointParameterDropdown(GUIContent label, string currentValue, Dictionary<string, string> parameters)
+        {
+            string selectedActorId = GetParameterValue(parameters, "actorId", "actor");
+            string selectedBodyPartId = GetParameterValue(parameters, "bodyPartId", "bodypart");
+            BodyPartData selectedBodyPart = GetSelectedBodyPart(selectedActorId, selectedBodyPartId);
+            var values = new List<string> { "" };
+            var labels = new List<string> { "(None)" };
+            if (selectedBodyPart != null)
+            {
+                var pivotPoints = new List<PivotPoint>();
+                if (selectedBodyPart.PivotPoints != null) pivotPoints.AddRange(selectedBodyPart.PivotPoints.Where(pivot => pivot != null));
+                if (selectedBodyPart.NestedResources != null)
+                {
+                    foreach (var nestedResource in selectedBodyPart.NestedResources.Where(resource => resource != null && resource.PivotPoints != null))
+                    {
+                        foreach (var pivotPoint in nestedResource.PivotPoints.Where(pivot => pivot != null && pivotPoints.All(existing => existing.Id != pivot.Id))) pivotPoints.Add(pivotPoint);
+                    }
+                }
+                foreach (var pivotPoint in pivotPoints.OrderBy(pivot => pivot.Id))
+                {
+                    values.Add(pivotPoint.Id.ToString(CultureInfo.InvariantCulture));
+                    labels.Add($"{pivotPoint.Id} - {pivotPoint.Name}");
+                }
+            }
+            bool canEdit = !string.IsNullOrWhiteSpace(selectedActorId) && selectedBodyPart != null;
+            return DrawDropdownField(label, currentValue, values, labels, canEdit);
+        }
+
+        private string DrawNestedResourceParameterDropdown(GUIContent label, string currentValue, Dictionary<string, string> parameters)
+        {
+            string selectedActorId = GetParameterValue(parameters, "actorId", "actor");
+            string selectedBodyPartId = GetParameterValue(parameters, "bodyPartId", "bodypart");
+            BodyPartData selectedBodyPart = GetSelectedBodyPart(selectedActorId, selectedBodyPartId);
+            var values = new List<string> { "" };
+            var labels = new List<string> { "(None)" };
+            if (selectedBodyPart?.NestedResources != null)
+            {
+                foreach (var resource in selectedBodyPart.NestedResources.Where(resource => resource != null && !string.IsNullOrWhiteSpace(resource.Id)).GroupBy(resource => resource.Id).Select(group => group.First()).OrderBy(resource => resource.Id))
+                {
+                    values.Add(resource.Id);
+                    labels.Add(resource.Id);
+                }
+            }
+            bool canEdit = !string.IsNullOrWhiteSpace(selectedActorId) && selectedBodyPart != null;
+            return DrawDropdownField(label, currentValue, values, labels, canEdit);
+        }
+
+        private string DrawDropdownField(GUIContent label, string currentValue, List<string> values, List<string> labels, bool enabled)
+        {
+            if (values == null || labels == null || values.Count != labels.Count || values.Count == 0) return EditorGUILayout.TextField(label, currentValue ?? "", GUILayout.ExpandWidth(true));
+            string safeCurrentValue = currentValue ?? "";
+            int currentIndex = values.IndexOf(safeCurrentValue);
+            if (currentIndex < 0)
+            {
+                values.Add(safeCurrentValue);
+                labels.Add(string.IsNullOrWhiteSpace(safeCurrentValue) ? "(None)" : safeCurrentValue);
+                currentIndex = values.Count - 1;
+            }
+            EditorGUI.BeginDisabledGroup(!enabled);
+            int newIndex = EditorGUILayout.Popup(label, currentIndex, labels.ToArray(), GUILayout.ExpandWidth(true));
+            EditorGUI.EndDisabledGroup();
+            if (newIndex < 0 || newIndex >= values.Count) return safeCurrentValue;
+            return values[newIndex];
+        }
+
+        private string GetParameterValue(Dictionary<string, string> parameters, params string[] aliases)
+        {
+            if (parameters == null || aliases == null || aliases.Length == 0) return "";
+            foreach (var alias in aliases)
+            {
+                string normalizedAlias = NormalizeParameterName(alias);
+                var keyMatch = parameters.Keys.FirstOrDefault(key => NormalizeParameterName(key) == normalizedAlias);
+                if (string.IsNullOrWhiteSpace(keyMatch)) continue;
+                return parameters[keyMatch] ?? "";
+            }
+            return "";
+        }
+
+        private BodyPartData GetSelectedBodyPart(string actorId, string bodyPartIdValue)
+        {
+            var bodyParts = GetBodyPartsForActor(actorId);
+            if (!bodyParts.Any()) return null;
+            if (int.TryParse(bodyPartIdValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out int bodyPartId))
+            {
+                return bodyParts.FirstOrDefault(bodyPart => bodyPart != null && bodyPart.Id == bodyPartId);
+            }
+            return bodyParts.FirstOrDefault(bodyPart => bodyPart != null && string.Equals(bodyPart.Name, bodyPartIdValue, System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        private List<BodyPartData> GetBodyPartsForActor(string actorId)
+        {
+            if (string.IsNullOrWhiteSpace(actorId)) return new List<BodyPartData>();
+            Actor actorResource = conversationData?.ResourceManager?.Actors?.FirstOrDefault(actor => actor != null && actor.Id == actorId);
+            if (actorResource == null) return new List<BodyPartData>();
+            if (actorResource.BodyParts != null && actorResource.BodyParts.Any(bodyPart => bodyPart != null)) return actorResource.BodyParts.Where(bodyPart => bodyPart != null).ToList();
+            Actor actorFromAsset = LoadActorFromAsset(actorResource);
+            if (actorFromAsset?.BodyParts == null) return new List<BodyPartData>();
+            return actorFromAsset.BodyParts.Where(bodyPart => bodyPart != null).ToList();
+        }
+
+        private Actor LoadActorFromAsset(Actor actorResource)
+        {
+            string assetPath = ResolveActorAssetPath(actorResource);
+            if (string.IsNullOrWhiteSpace(assetPath)) return null;
+            if (actorDataByAssetPath.TryGetValue(assetPath, out var cachedActor) && cachedActor != null) return cachedActor;
+            Actor loadedActor = null;
+            string extension = Path.GetExtension(assetPath).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".actor":
+                    loadedActor = LoadActorFromActorAsset(assetPath);
+                    break;
+                case ".prefab":
+                    loadedActor = LoadActorFromPrefabAsset(assetPath, actorResource);
+                    break;
+            }
+            if (loadedActor != null) actorDataByAssetPath[assetPath] = loadedActor;
+            return loadedActor;
+        }
+
+        private string ResolveActorAssetPath(Actor actorResource)
+        {
+            if (actorResource == null) return "";
+            string assetPath = "";
+            if (!string.IsNullOrWhiteSpace(actorResource.GUID)) assetPath = AssetDatabase.GUIDToAssetPath(actorResource.GUID);
+            if (!string.IsNullOrWhiteSpace(assetPath)) return assetPath;
+            if (string.IsNullOrWhiteSpace(actorResource.Path)) return "";
+            string normalizedPath = actorResource.Path.Replace("\\", "/");
+            if (normalizedPath.StartsWith("Assets/")) return normalizedPath;
+            if (!Path.IsPathRooted(normalizedPath)) return "";
+            string dataPath = Application.dataPath.Replace("\\", "/");
+            if (!normalizedPath.StartsWith(dataPath, System.StringComparison.OrdinalIgnoreCase)) return "";
+            return "Assets" + normalizedPath.Substring(dataPath.Length);
+        }
+
+        private Actor LoadActorFromActorAsset(string assetPath)
+        {
+            TextAsset actorAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
+            if (actorAsset == null || string.IsNullOrWhiteSpace(actorAsset.text)) return null;
+            try
+            {
+                var actorData = JsonUtility.FromJson<Actor>(actorAsset.text);
+                if (actorData == null) return null;
+                if (actorData.BodyParts == null) actorData.BodyParts = new List<BodyPartData>();
+                return actorData;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private Actor LoadActorFromPrefabAsset(string assetPath, Actor actorResource)
+        {
+            GameObject prefabRoot = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefabRoot == null) return null;
+            Component actorBuiltActorComponent = prefabRoot.GetComponent("ActorBuiltActor");
+            if (actorBuiltActorComponent == null) return null;
+            var actorData = new Actor
+            {
+                Id = actorResource?.Id ?? "",
+                BodyParts = new List<BodyPartData>()
+            };
+            SerializedObject actorSerializedObject = new SerializedObject(actorBuiltActorComponent);
+            SerializedProperty bodyPartsProperty = actorSerializedObject.FindProperty("bodyParts");
+            if (bodyPartsProperty == null || !bodyPartsProperty.isArray) return actorData;
+            for (int i = 0; i < bodyPartsProperty.arraySize; i++)
+            {
+                Object bodyPartObject = bodyPartsProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                if (!(bodyPartObject is Component bodyPartComponent)) continue;
+                BodyPartData bodyPart = ParseBodyPartFromBuiltComponent(bodyPartComponent);
+                if (bodyPart != null) actorData.BodyParts.Add(bodyPart);
+            }
+            return actorData;
+        }
+
+        private BodyPartData ParseBodyPartFromBuiltComponent(Component bodyPartComponent)
+        {
+            SerializedObject bodyPartSerializedObject = new SerializedObject(bodyPartComponent);
+            SerializedProperty idProperty = bodyPartSerializedObject.FindProperty("bodyPartId");
+            SerializedProperty nameProperty = bodyPartSerializedObject.FindProperty("bodyPartName");
+            SerializedProperty attachToPivotProperty = bodyPartSerializedObject.FindProperty("attachToPivotId");
+            SerializedProperty currentResourceProperty = bodyPartSerializedObject.FindProperty("currentResourceId");
+            var bodyPart = new BodyPartData
+            {
+                Id = idProperty == null ? 0 : idProperty.intValue,
+                Name = nameProperty == null ? "" : nameProperty.stringValue,
+                AttachToPivotId = attachToPivotProperty == null ? 0 : attachToPivotProperty.intValue,
+                CurrentResourceId = currentResourceProperty == null ? "" : currentResourceProperty.stringValue,
+                NestedResources = new List<BodyPartResource>(),
+                PivotPoints = new List<PivotPoint>()
+            };
+            SerializedProperty pivotsProperty = bodyPartSerializedObject.FindProperty("pivotPoints");
+            if (pivotsProperty != null && pivotsProperty.isArray)
+            {
+                for (int i = 0; i < pivotsProperty.arraySize; i++)
+                {
+                    Object pivotObject = pivotsProperty.GetArrayElementAtIndex(i).objectReferenceValue;
+                    if (!(pivotObject is Component pivotComponent)) continue;
+                    SerializedObject pivotSerializedObject = new SerializedObject(pivotComponent);
+                    SerializedProperty pivotIdProperty = pivotSerializedObject.FindProperty("pivotId");
+                    SerializedProperty pivotNameProperty = pivotSerializedObject.FindProperty("pivotName");
+                    bodyPart.PivotPoints.Add(new PivotPoint
+                    {
+                        Id = pivotIdProperty == null ? 0 : pivotIdProperty.intValue,
+                        Name = pivotNameProperty == null ? "" : pivotNameProperty.stringValue,
+                        X = 0f,
+                        Y = 0f
+                    });
+                }
+            }
+            SerializedProperty resourcesProperty = bodyPartSerializedObject.FindProperty("resources");
+            if (resourcesProperty == null || !resourcesProperty.isArray) return bodyPart;
+            for (int i = 0; i < resourcesProperty.arraySize; i++)
+            {
+                SerializedProperty resourceElement = resourcesProperty.GetArrayElementAtIndex(i);
+                if (resourceElement == null) continue;
+                SerializedProperty resourceIdProperty = resourceElement.FindPropertyRelative("ResourceId");
+                var nestedResource = new BodyPartResource
+                {
+                    Id = resourceIdProperty == null ? "" : resourceIdProperty.stringValue,
+                    PivotPoints = new List<PivotPoint>()
+                };
+                SerializedProperty overridePivotProperty = resourceElement.FindPropertyRelative("OverridePivotPoints");
+                if (overridePivotProperty != null && overridePivotProperty.isArray)
+                {
+                    for (int pivotIndex = 0; pivotIndex < overridePivotProperty.arraySize; pivotIndex++)
+                    {
+                        SerializedProperty pivotElement = overridePivotProperty.GetArrayElementAtIndex(pivotIndex);
+                        if (pivotElement == null) continue;
+                        SerializedProperty idValue = pivotElement.FindPropertyRelative("Id");
+                        SerializedProperty nameValue = pivotElement.FindPropertyRelative("Name");
+                        SerializedProperty xValue = pivotElement.FindPropertyRelative("X");
+                        SerializedProperty yValue = pivotElement.FindPropertyRelative("Y");
+                        nestedResource.PivotPoints.Add(new PivotPoint
+                        {
+                            Id = idValue == null ? 0 : idValue.intValue,
+                            Name = nameValue == null ? "" : nameValue.stringValue,
+                            X = xValue == null ? 0f : xValue.floatValue,
+                            Y = yValue == null ? 0f : yValue.floatValue
+                        });
+                    }
+                }
+                bodyPart.NestedResources.Add(nestedResource);
+            }
+            return bodyPart;
         }
 
         private void RegisterUndoState(string actionName)
