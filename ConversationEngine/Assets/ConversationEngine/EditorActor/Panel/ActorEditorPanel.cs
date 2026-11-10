@@ -18,7 +18,7 @@ namespace ConversationEditorActor.Panel
         private const float compactPathLabelWidth = 48f;
         #endregion
 
-        #region Draw
+        #region Panel Draw
         public bool Draw(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds, string actorAssetPath, System.Action<int, int> onPreviewResourceRequested)
         {
             if (actor == null) return false;
@@ -33,6 +33,9 @@ namespace ConversationEditorActor.Panel
             EditorGUILayout.EndScrollView();
             return changed;
         }
+        #endregion
+
+        #region Actor Fields
         private bool DrawActorFields(Actor actor, string actorAssetPath)
         {
             bool changed = false;
@@ -196,6 +199,9 @@ namespace ConversationEditorActor.Panel
             AlternateText alternateName = actor.lstAlternateName.FirstOrDefault(x => x != null && x.language == language.ToString());
             return alternateName;
         }
+        #endregion
+
+        #region Body Part UI
         private bool DrawBodyPartList(Actor actor, ref int selectedBodyPartId, HashSet<int> hiddenBodyPartIds)
         {
             bool changed = false;
@@ -493,6 +499,9 @@ namespace ConversationEditorActor.Panel
             }
             return changed;
         }
+        #endregion
+
+        #region UI Buttons
         private bool DrawAddButton(string tooltip)
         {
             Color previousColor = GUI.color;
@@ -518,6 +527,9 @@ namespace ConversationEditorActor.Panel
         {
             return GUILayout.Button(new GUIContent(label, tooltip), GUILayout.Width(42f));
         }
+        #endregion
+
+        #region Body Part Helpers
         private bool IsMainBodyPart(BodyPartData bodyPart)
         {
             if (bodyPart == null) return false;
@@ -547,6 +559,9 @@ namespace ConversationEditorActor.Panel
             bodyParts[indexA] = bodyParts[indexB];
             bodyParts[indexB] = temp;
         }
+        #endregion
+
+        #region Path Selection
         private List<string> SelectMultipleResourcePaths(string actorAssetPath)
         {
             List<string> selectedPaths = new List<string>();
@@ -635,12 +650,18 @@ namespace ConversationEditorActor.Panel
             }
             return relativePath;
         }
+        #endregion
+
+        #region Resource Helpers
         private string BuildSoundEffectId(string relativePath, int index)
         {
             string resourceId = ActorEditorHelpers.BuildResourceIdFromPath(relativePath);
             if (string.IsNullOrWhiteSpace(resourceId)) resourceId = "soundeffect_" + index;
             return resourceId;
         }
+        #endregion
+
+        #region Attach Pivot Options
         private void BuildAttachPivotOptions(Actor actor, List<int> pivotIds, List<string> pivotLabels)
         {
             pivotIds.Clear();

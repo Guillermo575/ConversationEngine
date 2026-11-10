@@ -36,7 +36,7 @@ namespace ConversationEditor.Panel
         private const float actorPathLabelWidth = 84f;
         #endregion
 
-        #region Resource Manager
+        #region Lifecycle
         public EditorProperties(EditorWindow ownerWindow, bool isReadOnly = false, bool useGlobalCore = true)
         {
             this.ownerWindow = ownerWindow;
@@ -47,6 +47,9 @@ namespace ConversationEditor.Panel
         {
             isReadOnly = readOnly;
         }
+        #endregion
+
+        #region Resource Manager UI
         public void DrawResourceManager()
         {
             if (GUILayout.Button("Hide", GUILayout.Width(80f)))
@@ -99,7 +102,9 @@ namespace ConversationEditor.Panel
             EditorGUIUtility.labelWidth = oldLabelWidth;
             EditorGUILayout.EndScrollView();
         }
+        #endregion
 
+        #region Metadata UI
         private void DrawConversationMetadataEditor()
         {
             EditorGUILayout.BeginVertical("box");
@@ -120,7 +125,9 @@ namespace ConversationEditor.Panel
             }
             EditorGUILayout.EndVertical();
         }
+        #endregion
 
+        #region Resource Lists
         private void DrawResourceList<T>(List<T> resources, string typeName) where T : Resource, new()
         {
             EditorGUI.indentLevel++;
@@ -334,6 +341,9 @@ namespace ConversationEditor.Panel
             }
             EditorGUI.indentLevel--;
         }
+        #endregion
+
+        #region UI Buttons
         private bool DrawAddButton(string tooltip)
         {
             Color previousColor = GUI.color;
@@ -355,6 +365,9 @@ namespace ConversationEditor.Panel
             GUI.color = previousColor;
             return clicked;
         }
+        #endregion
+
+        #region Asset Selection
         private string SelectAssetPathFromProject(string dialogTitle, string currentAssetPath, string[] filters)
         {
             string assetsAbsolutePath = Application.dataPath.Replace("\\", "/");
@@ -382,6 +395,9 @@ namespace ConversationEditor.Panel
             }
             return "Assets" + normalizedAbsolutePath.Substring(assetsAbsolutePath.Length);
         }
+        #endregion
+
+        #region Layout Helpers
         private float GetResponsiveLabelWidth()
         {
             return Mathf.Clamp(propertiesCurrentContentWidth * 0.26f, 56f, 84f);
@@ -396,7 +412,9 @@ namespace ConversationEditor.Panel
             int tailLength = Mathf.Clamp(fileName.Length + 12, 16, maxLength - 3);
             return "..." + path.Substring(path.Length - tailLength);
         }
+        #endregion
 
+        #region Editor State
         private void RegisterUndoState(string actionName)
         {
             if (ownerWindow is ConversationEditorWindow editorWindow) editorWindow.RegisterUndoState(actionName);
