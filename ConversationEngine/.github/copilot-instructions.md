@@ -164,6 +164,7 @@ Trabaja SOLO dentro de estas carpetas de `ConversationEngine/Assets/Conversation
 - `Editor/`
 - `EditorActor/`
 - `ActorBuilder/`
+- `GameHelper/`
 - `System/`
 - `Icons/` (solo imagenes para iconos)
 
@@ -187,6 +188,9 @@ Cualquier carpeta/archivo fuera de esta lista queda fuera de alcance, salvo soli
 
 - `ActorBuilder/`
   Construccion de actores en objetos de escena para uso en runtime y herramientas.
+
+- `GameHelper/`
+  Utilidades runtime para evaluar condiciones y ejecutar funciones dinamicas en flujo de conversacion.
 
 - `System/`  
   Estado global y variables de juego usadas por el runtime.
@@ -216,6 +220,7 @@ Si existe logica similar:
 - UI del editor de actores y flujos de autoria `.actor` -> `EditorActor/`
 - Ejecucion runtime de conversacion/UI -> `ConversationBox/`
 - Construccion runtime de actores exportados a escena -> `ActorBuilder/`
+- Helpers runtime de condiciones/funciones -> `GameHelper/`
 - Estado/variables globales de juego -> `System/`
 - Imagenes de iconos -> `Icons/`
 
@@ -240,6 +245,7 @@ Mantener coherencia entre:
 Si modificas `ConversationScheme/`, debes revisar y ajustar (si aplica):
 - `Editor/` (inspector, graph, serializacion/deserializacion, dropdowns)
 - `ConversationBox/` (consumo runtime de datos)
+- `GameHelper/` (evaluacion de condiciones y ejecucion de funciones)
 - `System/` (si depende de condiciones/variables del esquema)
 
 No dar por terminado un cambio de esquema sin validar impacto en esos modulos.
@@ -251,6 +257,7 @@ No dar por terminado un cambio de esquema sin validar impacto en esos modulos.
 - `Editor`: estable en uso, en evolucion
 - `ConversationBox`: en construccion
 - `ActorBuilder`: en evolucion
+- `GameHelper`: en evolucion
 - `System`: en construccion
 - `Icons`: estable (visual)
 
@@ -282,6 +289,7 @@ No refactorizar codigo no tocado solo por estilo, salvo solicitud explicita.
 - [ ] Reutilice logica existente antes de crear nueva.
 - [ ] Evite duplicacion de funciones/utilidades.
 - [ ] Si cambie `.actor`, revise impacto en `EditorActor/` y su importador/helpers.
+- [ ] Si cambie `GameHelper/`, revise impacto en `ConversationBox/` y `System/`.
 - [ ] Si cambie esquema, revise impacto en Editor/Runtime/System.
 - [ ] Si el cambio fue significativo, actualice estas instrucciones (documento vivo).
 

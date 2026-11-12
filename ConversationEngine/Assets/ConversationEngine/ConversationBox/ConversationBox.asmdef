@@ -4,6 +4,7 @@
     "references": [
         "ConversationEngine",
         "ConversationEngine.System",
+        "ConversationEngine.GameHelper",
         "Unity.TextMeshPro"
     ],
     "includePlatforms": [],

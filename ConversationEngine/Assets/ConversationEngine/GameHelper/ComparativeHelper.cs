@@ -1,8 +1,8 @@
 using ConversationScheme;
 using System;
-namespace ConversationBox
+namespace GameHelper
 {
-    public static class Helper
+    public class ComparativeHelper
     {
         #region Parsers
         public static Int32 ParseInt(string input) => Int32.TryParse(input, out var result) ? result : 0;
@@ -93,6 +93,5 @@ namespace ConversationBox
             return false;
         }
         #endregion
-
     }
 }

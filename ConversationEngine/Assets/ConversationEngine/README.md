@@ -16,6 +16,12 @@ This project provides Unity Editor interfaces for authoring conversations visual
 - Includes resource and inspector panels.
 - Handles conversation asset creation, opening, editing, and saving workflows.
 
+### `ConversationEngine.GameHelper` (Runtime Logic Helpers)
+This project provides runtime helpers used to evaluate conversation conditions and execute configured functions.
+- Evaluates conditional rules using supported value types and comparison operators.
+- Resolves variable values through global game state access.
+- Invokes runtime functions dynamically from conversation function definitions.
+
 ## User Guide
 
 ### 1) Create or open a conversation file
@@ -46,6 +52,8 @@ This project provides Unity Editor interfaces for authoring conversations visual
 - Quest and mission dialogue trees.
 - Tutorial flows with conditional progression.
 - Event-driven narrative sequences linked to gameplay systems.
+- Runtime condition evaluation for dynamic branching.
+- Runtime function invocation to trigger gameplay side effects from dialogue flow.
 
 ## Compatibility
 

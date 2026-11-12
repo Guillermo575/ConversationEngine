@@ -108,7 +108,7 @@ namespace ConversationBox
         public void ProcessConditionalBranch(ConditionalBranch conditionalBranch)
         {
             if (conditionalBranch == null) return;
-            if (Helper.ProcessConditions(conditionalBranch))
+            if (GameHelper.ComparativeHelper.ProcessConditions(conditionalBranch))
             {
                 ProcessNode(conditionalBranch.NextNodeTrue);
             }
