@@ -3,7 +3,7 @@ using System.Linq;
 using Unity.Plastic.Newtonsoft.Json;
 using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEngine;
-namespace ConversationScheme
+namespace ConversationEngine.ConversationScheme
 {
     public static class ConversationNodeUtility
     {

@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
-using ConversationEditor.Graph;
-using ConversationEditor.Helper;
-using ConversationEditor.JSON;
-using ConversationEditor.Panel;
-using ConversationScheme;
+using ConversationEngine.ConversationEditor.Graph;
+using ConversationEngine.ConversationEditor.Helper;
+using ConversationEngine.ConversationEditor.Panel;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditor
+namespace ConversationEngine.ConversationEditor
 {
     /// <summary>
     /// Main editor window for visual conversation editing with node-based graph

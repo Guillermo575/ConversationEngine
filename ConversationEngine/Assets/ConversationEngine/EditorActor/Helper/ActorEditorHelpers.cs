@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-using BodyPartData = ConversationScheme.BodyPart;
-namespace ConversationEditorActor.Helper
+using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
+namespace ConversationEngine.EditorActor.Helper
 {
     public static class ActorEditorHelpers
     {

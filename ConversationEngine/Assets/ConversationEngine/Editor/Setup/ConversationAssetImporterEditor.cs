@@ -1,11 +1,10 @@
 using System.IO;
-using ConversationEditor.Graph;
-using ConversationEditor.JSON;
-using ConversationScheme;
+using ConversationEngine.ConversationEditor.Graph;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
-namespace ConversationEditor.Setup
+namespace ConversationEngine.ConversationEditor.Setup
 {
     [CustomEditor(typeof(ConversationAssetImporter))]
     public class ConversationAssetImporterEditor : ScriptedImporterEditor

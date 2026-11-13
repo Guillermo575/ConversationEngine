@@ -1,11 +1,10 @@
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using System.Collections.Generic;
 using System.IO;
-using ConversationEditor.Helper;
-using ConversationScheme;
+using ConversationEngine.ConversationEditor.Helper;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditor.Panel
+namespace ConversationEngine.ConversationEditor.Panel
 {
     public class EditorProperties
     {

@@ -1,11 +1,12 @@
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using System;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-namespace ConversationEditorActor.Export
+using ConversationEngine.EditorActor.Helper;
+namespace ConversationEngine.EditorActor.Export
 {
     public enum ActorExportTargetType
     {
@@ -26,7 +27,7 @@ namespace ConversationEditorActor.Export
     public static class ActorSceneExportService
     {
         #region Export
-        public static GameObject ExportToScene(ConversationScheme.Actor actorData, string actorAssetPath, ActorExportRequest request)
+        public static GameObject ExportToScene(Actor actorData, string actorAssetPath, ActorExportRequest request)
         {
             if (actorData == null) return null;
             GameObject actorRoot = ExportWithReflection(actorData, actorAssetPath, request);
@@ -37,9 +38,9 @@ namespace ConversationEditorActor.Export
             if (actorRoot.scene.IsValid()) EditorSceneManager.MarkSceneDirty(actorRoot.scene);
             return actorRoot;
         }
-        private static GameObject ExportWithReflection(ConversationScheme.Actor actorData, string actorAssetPath, ActorExportRequest request)
+        private static GameObject ExportWithReflection(Actor actorData, string actorAssetPath, ActorExportRequest request)
         {
-            Type builderType = Type.GetType("ConversationActorBuilder.ActorSceneBuilder, ConversationEngine.ActorBuilder");
+            Type builderType = Type.GetType("ConversationEngine.ActorBuilder.ActorSceneBuilder, ConversationEngine.ActorBuilder");
             if (builderType == null) return null;
             MethodInfo buildMethod = builderType.GetMethod("BuildActorRoot", BindingFlags.Public | BindingFlags.Static);
             if (buildMethod == null) return null;
@@ -72,9 +73,9 @@ namespace ConversationEditorActor.Export
         }
         private static Sprite LoadSprite(string actorAssetPath, string resourceGuid, string resourcePath)
         {
-            if (!global::ConversationEditorActor.Helper.ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resourceGuid, resourcePath, out string resolvedAssetPath, out bool _)) return null;
+            if (!global::ConversationEngine.EditorActor.Helper.ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resourceGuid, resourcePath, out string resolvedAssetPath, out bool _)) return null;
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
-            if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = global::ConversationEditorActor.Helper.ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
+            if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = global::ConversationEngine.EditorActor.Helper.ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(resolvedAssetPath);
             if (sprite != null) return sprite;

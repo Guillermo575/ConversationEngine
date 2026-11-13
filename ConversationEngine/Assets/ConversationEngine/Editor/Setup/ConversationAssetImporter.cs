@@ -4,9 +4,8 @@ using UnityEditor.Callbacks;
 using UnityEngine;
 using System;
 using System.IO;
-using ConversationScheme;
-using ConversationEditor.JSON;
-namespace ConversationEditor.Setup
+using ConversationEngine.ConversationScheme;
+namespace ConversationEngine.ConversationEditor.Setup
 {
     /// <summary>
     /// Custom asset importer for conversation JSON files

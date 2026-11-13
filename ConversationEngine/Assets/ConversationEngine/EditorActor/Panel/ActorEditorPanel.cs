@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using ConversationEditorActor.Helper;
-using ConversationScheme;
+using ConversationEngine.EditorActor.Helper;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-using BodyPartData = ConversationScheme.BodyPart;
-namespace ConversationEditorActor.Panel
+using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
+namespace ConversationEngine.EditorActor.Panel
 {
     public class ActorEditorPanel
     {

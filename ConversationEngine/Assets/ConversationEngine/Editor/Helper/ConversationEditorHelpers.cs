@@ -1,11 +1,10 @@
 using UnityEngine;
-using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using ConversationScheme;
-namespace ConversationEditor.Helper
+using ConversationEngine.ConversationScheme;
+namespace ConversationEngine.ConversationEditor.Helper
 {
     /// <summary>
     /// Helper methods for the Conversation Editor Window

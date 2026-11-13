@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEngine;
-namespace ConversationActorBuilder
+namespace ConversationEngine.ActorBuilder
 {
     public class ActorBuiltBodyPart : MonoBehaviour
     {

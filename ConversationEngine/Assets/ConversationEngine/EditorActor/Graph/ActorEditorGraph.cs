@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using ConversationEditorActor.Helper;
-using ConversationScheme;
+using ConversationEngine.EditorActor.Helper;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-using BodyPartData = ConversationScheme.BodyPart;
-namespace ConversationEditorActor.Graph
+using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
+namespace ConversationEngine.EditorActor.Graph
 {
     public class ActorEditorGraph
     {

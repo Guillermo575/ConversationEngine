@@ -1,10 +1,10 @@
 using System.IO;
-using ConversationEditorActor.Export;
-using ConversationEditorActor.Helper;
-using ConversationScheme;
+using ConversationEngine.EditorActor.Export;
+using ConversationEngine.EditorActor.Helper;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditorActor.Setup
+namespace ConversationEngine.EditorActor.Setup
 {
     public static class ActorMenuItems
     {

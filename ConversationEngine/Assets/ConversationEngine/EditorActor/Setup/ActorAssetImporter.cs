@@ -1,13 +1,13 @@
 using System;
 using System.IO;
-using ConversationEditorActor.Graph;
-using ConversationEditorActor.Helper;
-using ConversationScheme;
+using ConversationEngine.EditorActor.Graph;
+using ConversationEngine.EditorActor.Helper;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEditor.Callbacks;
 using UnityEngine;
-namespace ConversationEditorActor.Setup
+namespace ConversationEngine.EditorActor.Setup
 {
     [ScriptedImporter(1, "actor")]
     public class ActorAssetImporter : ScriptedImporter

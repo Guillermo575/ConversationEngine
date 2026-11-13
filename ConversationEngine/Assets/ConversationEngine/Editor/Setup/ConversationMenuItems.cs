@@ -1,9 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 using System.IO;
-using ConversationScheme;
-using ConversationEditor.JSON;
-namespace ConversationEditor.Setup
+using ConversationEngine.ConversationScheme;
+namespace ConversationEngine.ConversationEditor.Setup
 {
     /// <summary>
     /// Menu items for creating conversation engine assets

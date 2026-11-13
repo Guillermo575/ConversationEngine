@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditorActor.Export
+namespace ConversationEngine.EditorActor.Export
 {
     public class ActorExportWindow : EditorWindow
     {

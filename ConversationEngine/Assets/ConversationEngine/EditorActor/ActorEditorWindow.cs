@@ -1,13 +1,13 @@
 using System.IO;
 using System.Collections.Generic;
-using ConversationEditorActor.Export;
-using ConversationEditorActor.Graph;
-using ConversationEditorActor.Helper;
-using ConversationEditorActor.Panel;
-using ConversationScheme;
+using ConversationEngine.EditorActor.Export;
+using ConversationEngine.EditorActor.Graph;
+using ConversationEngine.EditorActor.Helper;
+using ConversationEngine.EditorActor.Panel;
+using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEditorActor
+namespace ConversationEngine.EditorActor
 {
     public class ActorEditorWindow : EditorWindow
     {

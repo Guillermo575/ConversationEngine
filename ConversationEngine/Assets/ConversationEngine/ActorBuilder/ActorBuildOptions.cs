@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace ConversationActorBuilder
+namespace ConversationEngine.ActorBuilder
 {
     public enum ActorRenderTargetType
     {

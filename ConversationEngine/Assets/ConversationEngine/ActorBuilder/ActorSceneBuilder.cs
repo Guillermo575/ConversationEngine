@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System;
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEngine;
 using UnityEngine.UI;
-using BodyPartData = ConversationScheme.BodyPart;
-namespace ConversationActorBuilder
+using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
+namespace ConversationEngine.ActorBuilder
 {
     public static class ActorSceneBuilder
     {

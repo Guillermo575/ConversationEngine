@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using Unity.Plastic.Newtonsoft.Json;
 using UnityEngine;
-
-namespace ConversationScheme
+namespace ConversationEngine.ConversationScheme
 {
     [Serializable]
     public class ConversationData

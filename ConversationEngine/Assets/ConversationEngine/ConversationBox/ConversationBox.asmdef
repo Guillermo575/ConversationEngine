@@ -2,7 +2,7 @@
     "name": "ConversationEngine.Box",
     "rootNamespace": "ConversationBox",
     "references": [
-        "ConversationEngine",
+        "ConversationEngine.ConversationScheme",
         "ConversationEngine.System",
         "ConversationEngine.GameHelper",
         "Unity.TextMeshPro"

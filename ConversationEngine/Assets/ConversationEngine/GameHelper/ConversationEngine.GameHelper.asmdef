@@ -1,9 +1,9 @@
 {
     "name": "ConversationEngine.GameHelper",
-    "rootNamespace": "GameHelper",
+    "rootNamespace": "ConversationEngine.GameHelper",
     "references": [
-        "ConversationEngine",
-		"ConversationActorBuilder",
+        "ConversationEngine.ConversationScheme",
+		"ConversationEngine.ActorBuilder",
         "ConversationEngine.System"
     ],
     "includePlatforms": [],

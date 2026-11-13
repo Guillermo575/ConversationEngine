@@ -1,15 +1,14 @@
-using ConversationEditor.Graph;
-using ConversationEditor.Graph;
-using ConversationEditor.Helper;
-using ConversationScheme;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using BodyPartData = ConversationScheme.BodyPart;
-namespace ConversationEditor.Panel
+using ConversationEngine.ConversationEditor.Graph;
+using ConversationEngine.ConversationEditor.Helper;
+using ConversationEngine.ConversationScheme;
+using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
+namespace ConversationEngine.ConversationEditor.Panel
 {
     public class EditorInspector
     {

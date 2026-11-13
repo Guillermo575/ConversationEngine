@@ -1,10 +1,10 @@
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-namespace GameHelper
+namespace ConversationEngine.GameHelper
 {
     public class FunctionHelper
     {

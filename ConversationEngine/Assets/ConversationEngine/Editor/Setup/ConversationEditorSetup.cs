@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
-namespace ConversationEditor.Setup
+namespace ConversationEngine.ConversationEditor.Setup
 {
     /// <summary>
     /// Setup verification tool for Conversation Editor

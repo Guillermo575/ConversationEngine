@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEngine;
-namespace ConversationEditor.JSON
+namespace ConversationEngine.ConversationEditor.JSON
 {
     public static class SimpleJsonSerializer
     {

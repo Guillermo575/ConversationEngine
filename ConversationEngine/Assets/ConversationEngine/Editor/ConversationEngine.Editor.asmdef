@@ -1,8 +1,8 @@
 {
     "name": "ConversationEngine.Editor",
-    "rootNamespace": "ConversationEditor",
+    "rootNamespace": "ConversationEngine.ConversationEditor",
     "references": [
-        "ConversationEngine",
+        "ConversationEngine.ConversationScheme",
         "Unity.Newtonsoft.Json"
     ],
     "includePlatforms": [

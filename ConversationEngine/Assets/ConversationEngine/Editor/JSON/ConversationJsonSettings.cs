@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace ConversationEditor.JSON
+namespace ConversationEngine.ConversationEditor.JSON
 {
     public static class ConversationJsonSettings
     {

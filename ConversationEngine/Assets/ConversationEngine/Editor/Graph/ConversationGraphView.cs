@@ -1,12 +1,10 @@
-using Codice.CM.Common.Tree;
-using ConversationEditor.Helper;
-using ConversationScheme;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-
-namespace ConversationEditor.Graph
+using ConversationEngine.ConversationEditor.Helper;
+using ConversationEngine.ConversationScheme;
+namespace ConversationEngine.ConversationEditor.Graph
 {
     public class ConversationGraphView
     {

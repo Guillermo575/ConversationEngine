@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEditor;
-namespace ConversationEditor
+namespace ConversationEngine.ConversationEditor
 {
     internal class ZoomController
     {

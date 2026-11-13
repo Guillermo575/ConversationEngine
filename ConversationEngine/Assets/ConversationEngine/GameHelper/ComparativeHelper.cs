@@ -1,6 +1,6 @@
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using System;
-namespace GameHelper
+namespace ConversationEngine.GameHelper
 {
     public class ComparativeHelper
     {

@@ -1,8 +1,8 @@
 {
     "name": "ConversationEngine.EditorActor",
-    "rootNamespace": "ConversationEditorActor",
+    "rootNamespace": "ConversationEngine.EditorActor",
     "references": [
-        "ConversationEngine",
+        "ConversationEngine.ConversationScheme",
         "ConversationEngine.ActorBuilder"
     ],
     "includePlatforms": [

@@ -1,6 +1,4 @@
-using ConversationScheme;
-using System;
-using System.Collections;
+using ConversationEngine.ConversationScheme;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -33,11 +31,11 @@ namespace ConversationBox
         {
             if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished && !TypingOptions)
             {
-                LoadOptions(new List<ConversationScheme.ConversationOption>
+                LoadOptions(new List<ConversationOption>
                 {
-                    new ConversationScheme.ConversationOption { Text = "Option 1" },
-                    new ConversationScheme.ConversationOption { Text = "Option 2" },
-                    new ConversationScheme.ConversationOption { Text = "Option 3" }
+                    new ConversationOption { Text = "Option 1" },
+                    new ConversationOption { Text = "Option 2" },
+                    new ConversationOption { Text = "Option 3" }
                 });
                 TypingOptions = true;
             }
@@ -108,7 +106,7 @@ namespace ConversationBox
         public void ProcessConditionalBranch(ConditionalBranch conditionalBranch)
         {
             if (conditionalBranch == null) return;
-            if (GameHelper.ComparativeHelper.ProcessConditions(conditionalBranch))
+            if (ConversationEngine.GameHelper.ComparativeHelper.ProcessConditions(conditionalBranch))
             {
                 ProcessNode(conditionalBranch.NextNodeTrue);
             }

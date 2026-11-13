@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using ConversationEditor.JSON;
-using ConversationScheme;
+using ConversationEngine.ConversationScheme;
 using UnityEngine;
-namespace ConversationEditor
+namespace ConversationEngine.ConversationEditor
 {
     public class ConversationEditorCore
     {

@@ -1,6 +1,6 @@
 {
-    "name": "ConversationEngine",
-    "rootNamespace": "ConversationScheme",
+    "name": "ConversationEngine.ConversationScheme",
+    "rootNamespace": "ConversationEngine.ConversationScheme",
     "references": [
         "Unity.Newtonsoft.Json"
     ],
