@@ -1,6 +1,6 @@
 {
     "name": "ConversationEngine.Box",
-    "rootNamespace": "ConversationBox",
+    "rootNamespace": "ConversationEngine.Box",
     "references": [
         "ConversationEngine.ConversationScheme",
         "ConversationEngine.System",

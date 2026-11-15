@@ -4,7 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-namespace ConversationBox
+namespace ConversationEngine.Box
 {
     public class ContainerManager : MonoBehaviour
     {

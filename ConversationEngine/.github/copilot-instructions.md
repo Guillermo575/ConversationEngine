@@ -173,26 +173,26 @@ Cualquier carpeta/archivo fuera de esta lista queda fuera de alcance, salvo soli
 ---
 
 ## 2) Rol de cada modulo
-- `ConversationScheme/`  
+- `ConversationScheme/` (`ConversationEngine.ConversationScheme`)  
   Modelo de datos canonico de conversaciones y utilidades de nodos.  
   Cualquier cambio aqui impacta Editor y Runtime.
 
-- `Editor/`  
+- `Editor/` (`ConversationEngine.ConversationEditor`)  
   Herramientas de autoria visual (window, graph, inspector, properties, helpers, json).
 
-- `EditorActor/`  
+- `EditorActor/` (`ConversationEngine.EditorActor`)  
   Herramientas de autoria visual para archivos `.actor` (window, panel, graph, importador y helpers propios).
 
-- `ConversationBox/`  
+- `ConversationBox/` (`ConversationEngine.Box`)  
   Runtime/UI de dialogos en juego (actualmente en evolucion).
 
-- `ActorBuilder/`
+- `ActorBuilder/` (`ConversationEngine.ActorBuilder`)
   Construccion de actores en objetos de escena para uso en runtime y herramientas.
 
-- `GameHelper/`
+- `GameHelper/` (`ConversationEngine.GameHelper`)
   Utilidades runtime para evaluar condiciones y ejecutar funciones dinamicas en flujo de conversacion.
 
-- `System/`  
+- `System/` (`ConversationEngine.System`)  
   Estado global y variables de juego usadas por el runtime.
 
 - `Icons/`  
@@ -215,13 +215,13 @@ Si existe logica similar:
 ---
 
 ## 4) Reglas de ubicacion de codigo
-- Contratos de datos, validaciones, integridad de grafo -> `ConversationScheme/`
-- UI del editor y flujos de autoria -> `Editor/`
-- UI del editor de actores y flujos de autoria `.actor` -> `EditorActor/`
-- Ejecucion runtime de conversacion/UI -> `ConversationBox/`
-- Construccion runtime de actores exportados a escena -> `ActorBuilder/`
-- Helpers runtime de condiciones/funciones -> `GameHelper/`
-- Estado/variables globales de juego -> `System/`
+- Contratos de datos, validaciones, integridad de grafo -> `ConversationScheme/` (`ConversationEngine.ConversationScheme`)
+- UI del editor y flujos de autoria -> `Editor/` (`ConversationEngine.ConversationEditor`)
+- UI del editor de actores y flujos de autoria `.actor` -> `EditorActor/` (`ConversationEngine.EditorActor`)
+- Ejecucion runtime de conversacion/UI -> `ConversationBox/` (`ConversationEngine.Box`)
+- Construccion runtime de actores exportados a escena -> `ActorBuilder/` (`ConversationEngine.ActorBuilder`)
+- Helpers runtime de condiciones/funciones -> `GameHelper/` (`ConversationEngine.GameHelper`)
+- Estado/variables globales de juego -> `System/` (`ConversationEngine.System`)
 - Imagenes de iconos -> `Icons/`
 
 ---
@@ -242,27 +242,27 @@ Mantener coherencia entre:
 ---
 
 ## 6) Reglas de impacto por cambios de esquema
-Si modificas `ConversationScheme/`, debes revisar y ajustar (si aplica):
-- `Editor/` (inspector, graph, serializacion/deserializacion, dropdowns)
-- `ConversationBox/` (consumo runtime de datos)
-- `GameHelper/` (evaluacion de condiciones y ejecucion de funciones)
-- `System/` (si depende de condiciones/variables del esquema)
+Si modificas `ConversationScheme/` (`ConversationEngine.ConversationScheme`), debes revisar y ajustar (si aplica):
+- `Editor/` (`ConversationEngine.ConversationEditor`) (inspector, graph, serializacion/deserializacion, dropdowns)
+- `ConversationBox/` (`ConversationEngine.Box`) (consumo runtime de datos)
+- `GameHelper/` (`ConversationEngine.GameHelper`) (evaluacion de condiciones y ejecucion de funciones)
+- `System/` (`ConversationEngine.System`) (si depende de condiciones/variables del esquema)
 
 No dar por terminado un cambio de esquema sin validar impacto en esos modulos.
 
 ---
 
 ## 7) Estado de madurez (guia de criterio)
-- `ConversationScheme`: estable (base del contrato)
-- `Editor`: estable en uso, en evolucion
-- `ConversationBox`: en construccion
-- `ActorBuilder`: en evolucion
-- `GameHelper`: en evolucion
-- `System`: en construccion
+- `ConversationEngine.ConversationScheme` (`ConversationScheme/`): estable (base del contrato)
+- `ConversationEngine.ConversationEditor` (`Editor/`): estable en uso, en evolucion
+- `ConversationEngine.Box`(`ConversationBox/`): en construccion
+- `ConversationEngine.ActorBuilder` (`ActorBuilder/`): en evolucion
+- `ConversationEngine.GameHelper` (`GameHelper/`): en evolucion
+- `ConversationEngine.System` (`System/`): en construccion
 - `Icons`: estable (visual)
 
 Notas:
-- `ConversationBox` puede contener flujos incompletos.
+- `ConversationEngine.Box` (`ConversationBox/`) puede contener flujos incompletos.
 - `SimpleJsonSerializer` puede estar en evolucion; validar persistencia de campos complejos antes de asumir completitud.
 
 ---
@@ -288,9 +288,9 @@ No refactorizar codigo no tocado solo por estilo, salvo solicitud explicita.
 - [ ] Trabaje solo en carpetas permitidas.
 - [ ] Reutilice logica existente antes de crear nueva.
 - [ ] Evite duplicacion de funciones/utilidades.
-- [ ] Si cambie `.actor`, revise impacto en `EditorActor/` y su importador/helpers.
-- [ ] Si cambie `GameHelper/`, revise impacto en `ConversationBox/` y `System/`.
-- [ ] Si cambie esquema, revise impacto en Editor/Runtime/System.
+- [ ] Si cambie `.actor`, revise impacto en `EditorActor/` (`ConversationEngine.EditorActor`) y su importador/helpers.
+- [ ] Si cambie `GameHelper/` (`ConversationEngine.GameHelper`), revise impacto en (`ConversationEngine.Box`) y `System/` (`ConversationEngine.System`).
+- [ ] Si cambie esquema, revise impacto en `ConversationEngine.ConversationEditor`, `ConversationEngine.Box`, `ConversationEngine.GameHelper` y `ConversationEngine.System`.
 - [ ] Si el cambio fue significativo, actualice estas instrucciones (documento vivo).
 
 ---

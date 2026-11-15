@@ -1,5 +1,5 @@
 {
-    "name": "ConversationEngine.Editor",
+    "name": "ConversationEngine.ConversationEditor",
     "rootNamespace": "ConversationEngine.ConversationEditor",
     "references": [
         "ConversationEngine.ConversationScheme",

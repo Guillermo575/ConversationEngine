@@ -1,8 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
-namespace ConversationBox
+namespace ConversationEngine.Box
 {
     public class ContainerMain : MonoBehaviour
     {
