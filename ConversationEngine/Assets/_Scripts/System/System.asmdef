@@ -1,6 +1,6 @@
 {
-    "name": "ConversationEngine.System",
-    "rootNamespace": "ConversationEngine.System",
+    "name": "System",
+    "rootNamespace": "System",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
