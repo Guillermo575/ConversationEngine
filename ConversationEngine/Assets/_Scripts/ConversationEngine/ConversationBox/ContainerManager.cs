@@ -19,7 +19,6 @@ namespace ConversationEngine.Box
         private List<ConversationNode> lstNodes = new List<ConversationNode>();
         private ConversationNode CursorNode;
         private bool Finalizado = false;
-        private GameManager gameManager;
         #endregion
 
         #region Unity Methods
