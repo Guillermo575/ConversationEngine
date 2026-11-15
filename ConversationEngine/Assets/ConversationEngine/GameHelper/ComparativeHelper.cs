@@ -38,7 +38,7 @@ namespace ConversationEngine.GameHelper
         public static string getDict(string input)
         {
             GameManager gameManager = GameManager.GetSingleton();
-            return gameManager.getValueDict(input);
+            return GameHelper.DictionaryHelper.getValueDict(input);
         }
         public static bool CompareInteger(ConditionRule conditionRule)
         {

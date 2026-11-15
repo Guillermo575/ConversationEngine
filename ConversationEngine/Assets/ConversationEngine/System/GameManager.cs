@@ -3,24 +3,6 @@ using System.Linq;
 using System.Collections.Generic;
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] private Dictionary<string, string> myDictionary;
-    void Start()
-    {
-    }
-
-    void Update()
-    {
-    }
-
-    public string getValueDict(string name)
-    {
-        if (myDictionary != null && myDictionary.ContainsKey(name))
-        {
-            return myDictionary[name];
-        }
-        return null;
-    }
-
     #region Singleton
     private static GameManager SingletonGameManager;
     private GameManager() { }
@@ -38,6 +20,15 @@ public class GameManager : MonoBehaviour
     public static GameManager GetSingleton()
     {
         return SingletonGameManager;
+    }
+    #endregion
+
+    #region Start & Update
+    void Start()
+    {
+    }
+    void Update()
+    {
     }
     #endregion
 }
