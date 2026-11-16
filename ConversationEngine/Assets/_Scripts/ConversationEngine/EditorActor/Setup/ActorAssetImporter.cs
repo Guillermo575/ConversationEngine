@@ -155,7 +155,6 @@ namespace ConversationEngine.EditorActor.Setup
     [InitializeOnLoad]
     public static class ActorProjectIconHandler
     {
-        private const string ActorIconPath = "Assets/_Scripts/ConversationEngine/Icons/actor.png";
         private static Texture2D actorIcon;
         static ActorProjectIconHandler()
         {
@@ -164,7 +163,27 @@ namespace ConversationEngine.EditorActor.Setup
         }
         private static void LoadIcons()
         {
-            if (actorIcon == null) actorIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(ActorIconPath);
+            if (actorIcon != null) return;
+            string iconPath = GetIconPathFromScriptFolder();
+            if (string.IsNullOrEmpty(iconPath)) return;
+            actorIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+        }
+        private static string GetIconPathFromScriptFolder()
+        {
+            string[] scriptGuids = AssetDatabase.FindAssets("ActorAssetImporter t:Script");
+            for (int i = 0; i < scriptGuids.Length; i++)
+            {
+                string scriptPath = AssetDatabase.GUIDToAssetPath(scriptGuids[i]);
+                if (!scriptPath.EndsWith("ActorAssetImporter.cs", StringComparison.OrdinalIgnoreCase)) continue;
+                string scriptDirectory = Path.GetDirectoryName(scriptPath);
+                if (string.IsNullOrEmpty(scriptDirectory)) return string.Empty;
+                string iconsPath = Path.Combine(scriptDirectory, "Icons", "actor.png").Replace("\\", "/");
+                if (AssetDatabase.LoadAssetAtPath<Texture2D>(iconsPath) != null) return iconsPath;
+                string iconsLowerPath = Path.Combine(scriptDirectory, "icons", "actor.png").Replace("\\", "/");
+                if (AssetDatabase.LoadAssetAtPath<Texture2D>(iconsLowerPath) != null) return iconsLowerPath;
+                return string.Empty;
+            }
+            return string.Empty;
         }
         private static void OnProjectWindowItemGUI(string guid, Rect selectionRect)
         {

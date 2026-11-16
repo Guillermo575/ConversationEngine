@@ -71,7 +71,6 @@ namespace ConversationEngine.ConversationEditor.Setup
     [InitializeOnLoad]
     public static class ConversationProjectIconHandler
     {
-        private const string ConversationIconPath = "Assets/_Scripts/ConversationEngine/Icons/conversation.png";
         private static Texture2D conversationIcon;
         static ConversationProjectIconHandler()
         {
@@ -80,7 +79,27 @@ namespace ConversationEngine.ConversationEditor.Setup
         }
         private static void LoadIcons()
         {
-            if (conversationIcon == null) conversationIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(ConversationIconPath);
+            if (conversationIcon != null) return;
+            string iconPath = GetIconPathFromScriptFolder();
+            if (string.IsNullOrEmpty(iconPath)) return;
+            conversationIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+        }
+        private static string GetIconPathFromScriptFolder()
+        {
+            string[] scriptGuids = AssetDatabase.FindAssets("ConversationAssetImporter t:Script");
+            for (int i = 0; i < scriptGuids.Length; i++)
+            {
+                string scriptPath = AssetDatabase.GUIDToAssetPath(scriptGuids[i]);
+                if (!scriptPath.EndsWith("ConversationAssetImporter.cs", StringComparison.OrdinalIgnoreCase)) continue;
+                string scriptDirectory = Path.GetDirectoryName(scriptPath);
+                if (string.IsNullOrEmpty(scriptDirectory)) return string.Empty;
+                string iconsPath = Path.Combine(scriptDirectory, "Icons", "conversation.png").Replace("\\", "/");
+                if (AssetDatabase.LoadAssetAtPath<Texture2D>(iconsPath) != null) return iconsPath;
+                string iconsLowerPath = Path.Combine(scriptDirectory, "icons", "conversation.png").Replace("\\", "/");
+                if (AssetDatabase.LoadAssetAtPath<Texture2D>(iconsLowerPath) != null) return iconsLowerPath;
+                return string.Empty;
+            }
+            return string.Empty;
         }
         private static void OnProjectWindowItemGUI(string guid, Rect selectionRect)
         {
