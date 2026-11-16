@@ -356,7 +356,7 @@ namespace ConversationEngine.EditorActor.Helper
                 case ".bmp":
                 case ".gif":
                 case ".psd":
-                case ".asset":
+                case ".prefab":
                     return true;
                 default:
                     return false;

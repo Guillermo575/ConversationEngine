@@ -71,7 +71,7 @@ namespace ConversationEngine.ConversationEditor.Setup
     [InitializeOnLoad]
     public static class ConversationProjectIconHandler
     {
-        private const string ConversationIconPath = "Assets/ConversationEngine/Icons/conversation.png";
+        private const string ConversationIconPath = "Assets/_Scripts/ConversationEngine/Icons/conversation.png";
         private static Texture2D conversationIcon;
         static ConversationProjectIconHandler()
         {

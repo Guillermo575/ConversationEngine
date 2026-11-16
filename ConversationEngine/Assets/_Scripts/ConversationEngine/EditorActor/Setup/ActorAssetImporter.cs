@@ -155,7 +155,7 @@ namespace ConversationEngine.EditorActor.Setup
     [InitializeOnLoad]
     public static class ActorProjectIconHandler
     {
-        private const string ActorIconPath = "Assets/ConversationEngine/Icons/actor.png";
+        private const string ActorIconPath = "Assets/_Scripts/ConversationEngine/Icons/actor.png";
         private static Texture2D actorIcon;
         static ActorProjectIconHandler()
         {
