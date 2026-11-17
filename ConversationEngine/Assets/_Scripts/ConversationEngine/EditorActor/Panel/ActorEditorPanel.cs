@@ -575,7 +575,7 @@ namespace ConversationEngine.EditorActor.Panel
                 EditorUtility.DisplayDialog("Invalid Actor Path", "Could not resolve the .actor root folder.", "OK");
                 return selectedPaths;
             }
-            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Resource File", actorFolderAbsolutePath, new[] { "Image or Asset", "png,jpg,jpeg,tga,bmp,gif,psd,asset" });
+            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Resource File", actorFolderAbsolutePath, new[] { "Image or Asset", "png,jpg,jpeg,tga,bmp,gif,psd,prefab" });
             if (string.IsNullOrEmpty(absolutePath)) return selectedPaths;
             if (!ActorEditorHelpers.TryGetResourcePathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string errorMessage))
             {
@@ -608,7 +608,7 @@ namespace ConversationEngine.EditorActor.Panel
                     if (!string.IsNullOrWhiteSpace(currentDirectory)) startFolder = currentDirectory;
                 }
             }
-            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Resource File", startFolder, new[] { "Image or Asset", "png,jpg,jpeg,tga,bmp,gif,psd,asset" });
+            string absolutePath = EditorUtility.OpenFilePanelWithFilters("Select Resource File", startFolder, new[] { "Image or Asset", "png,jpg,jpeg,tga,bmp,gif,psd,prefab" });
             if (string.IsNullOrEmpty(absolutePath)) return "";
             if (!ActorEditorHelpers.TryGetResourcePathRelativeToActor(actorAssetPath, absolutePath, out string relativePath, out string errorMessage))
             {

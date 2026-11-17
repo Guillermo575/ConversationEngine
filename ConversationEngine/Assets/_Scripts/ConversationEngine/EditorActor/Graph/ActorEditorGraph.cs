@@ -25,6 +25,7 @@ namespace ConversationEngine.EditorActor.Graph
             public Rect Rect;
             public Vector2 Center;
             public Texture2D Texture;
+            public Sprite Sprite;
         }
         private class PivotHandleInfo
         {
@@ -32,6 +33,11 @@ namespace ConversationEngine.EditorActor.Graph
             public int BodyPartId;
             public Vector2 Position;
             public Rect HitRect;
+        }
+        private class PreviewVisualCacheEntry
+        {
+            public Texture2D Texture;
+            public Sprite Sprite;
         }
         #endregion
 
@@ -42,6 +48,7 @@ namespace ConversationEngine.EditorActor.Graph
         private bool hasPivotDragMoved;
         private bool undoSnapshotRequested;
         private readonly Dictionary<int, int> previewResourceIndexByBodyPart = new Dictionary<int, int>();
+        private readonly Dictionary<string, PreviewVisualCacheEntry> previewVisualCacheByPath = new Dictionary<string, PreviewVisualCacheEntry>();
         #endregion
 
         #region Undo Helpers
@@ -76,7 +83,7 @@ namespace ConversationEngine.EditorActor.Graph
         {
             if (actor == null) return false;
             if (hiddenBodyPartIds == null) hiddenBodyPartIds = new HashSet<int>();
-            CleanupPreviewResourceState(actor);
+            CleanupPreviewResourceState(actor, actorAssetPath);
             bool changed = false;
             Rect controlsRect = new Rect(contentRect.x, contentRect.y, contentRect.width, 28f);
             Rect graphRect = new Rect(contentRect.x, contentRect.y + 30f, contentRect.width, contentRect.height - 30f);
@@ -201,7 +208,17 @@ namespace ConversationEngine.EditorActor.Graph
         }
         private void DrawBodyPart(BodyPartRenderInfo renderInfo, bool selected, bool showSupportVisuals, bool isReadOnly)
         {
-            if (renderInfo.Texture != null) GUI.DrawTexture(renderInfo.Rect, renderInfo.Texture, ScaleMode.StretchToFill, true);
+            if (renderInfo.Sprite != null && renderInfo.Sprite.texture != null)
+            {
+                Rect spriteRect = renderInfo.Sprite.textureRect;
+                Texture2D spriteTexture = renderInfo.Sprite.texture;
+                Rect uvRect = new Rect(spriteRect.x / spriteTexture.width, spriteRect.y / spriteTexture.height, spriteRect.width / spriteTexture.width, spriteRect.height / spriteTexture.height);
+                GUI.DrawTextureWithTexCoords(renderInfo.Rect, spriteTexture, uvRect, true);
+            }
+            else if (renderInfo.Texture != null)
+            {
+                GUI.DrawTexture(renderInfo.Rect, renderInfo.Texture, ScaleMode.StretchToFill, true);
+            }
             if (!showSupportVisuals) return;
             Color borderColor = selected ? new Color(0.1f, 1f, 0.1f, 1f) : new Color(0.1f, 1f, 0.1f, 0.5f);
             Handles.color = borderColor;
@@ -266,18 +283,29 @@ namespace ConversationEngine.EditorActor.Graph
             }
             return ActorEditorHelpers.GetActiveResource(bodyPart);
         }
-        private void CleanupPreviewResourceState(Actor actor)
+        private void CleanupPreviewResourceState(Actor actor, string actorAssetPath)
         {
             if (actor?.BodyParts == null)
             {
                 previewResourceIndexByBodyPart.Clear();
+                previewVisualCacheByPath.Clear();
                 return;
             }
             HashSet<int> existingIds = new HashSet<int>();
+            HashSet<string> existingPaths = new HashSet<string>();
             foreach (var bodyPart in actor.BodyParts)
             {
                 if (bodyPart == null) continue;
                 existingIds.Add(bodyPart.Id);
+                if (bodyPart.NestedResources == null) continue;
+                for (int i = 0; i < bodyPart.NestedResources.Count; i++)
+                {
+                    BodyPartResource nestedResource = bodyPart.NestedResources[i];
+                    if (nestedResource == null) continue;
+                    if (!ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, nestedResource.GUID, nestedResource.Path, out string resolvedPath, out bool _)) continue;
+                    if (string.IsNullOrWhiteSpace(resolvedPath)) continue;
+                    existingPaths.Add(resolvedPath);
+                }
             }
             List<int> idsToRemove = new List<int>();
             foreach (var bodyPartId in previewResourceIndexByBodyPart.Keys)
@@ -286,6 +314,13 @@ namespace ConversationEngine.EditorActor.Graph
                 idsToRemove.Add(bodyPartId);
             }
             foreach (var bodyPartId in idsToRemove) previewResourceIndexByBodyPart.Remove(bodyPartId);
+            List<string> pathsToRemove = new List<string>();
+            foreach (var path in previewVisualCacheByPath.Keys)
+            {
+                if (existingPaths.Contains(path)) continue;
+                pathsToRemove.Add(path);
+            }
+            foreach (var path in pathsToRemove) previewVisualCacheByPath.Remove(path);
         }
         #endregion
 
@@ -304,8 +339,8 @@ namespace ConversationEngine.EditorActor.Graph
                     if (renderMap.ContainsKey(bodyPart.Id)) continue;
                     if (!resolvedPivots.TryGetValue(bodyPart.AttachToPivotId, out var attachPosition)) continue;
                     BodyPartResource activeResource = GetPreviewActiveResource(bodyPart);
-                    Texture2D texture = LoadTexture(activeResource, actorAssetPath);
-                    Vector2 size = GetBodyPartSize(texture);
+                    LoadPreviewVisual(activeResource, actorAssetPath, out Texture2D texture, out Sprite sprite);
+                    Vector2 size = GetBodyPartSize(sprite, texture);
                     size *= zoom;
                     Rect rect = new Rect(attachPosition - size * 0.5f, size);
                     BodyPartRenderInfo renderInfo = new BodyPartRenderInfo
@@ -314,7 +349,8 @@ namespace ConversationEngine.EditorActor.Graph
                         ActiveResource = activeResource,
                         Rect = rect,
                         Center = attachPosition,
-                        Texture = texture
+                        Texture = texture,
+                        Sprite = sprite
                     };
                     renderMap[bodyPart.Id] = renderInfo;
                     foreach (var pivot in ActorEditorHelpers.GetEffectivePivotPoints(bodyPart, activeResource)) resolvedPivots[pivot.Id] = new Vector2(attachPosition.x + pivot.X * zoom, attachPosition.y - pivot.Y * zoom);
@@ -326,8 +362,8 @@ namespace ConversationEngine.EditorActor.Graph
             {
                 if (renderMap.ContainsKey(bodyPart.Id)) continue;
                 BodyPartResource activeResource = GetPreviewActiveResource(bodyPart);
-                Texture2D texture = LoadTexture(activeResource, actorAssetPath);
-                Vector2 size = GetBodyPartSize(texture);
+                LoadPreviewVisual(activeResource, actorAssetPath, out Texture2D texture, out Sprite sprite);
+                Vector2 size = GetBodyPartSize(sprite, texture);
                 size *= zoom;
                 Rect rect = new Rect(actorMainPivot - size * 0.5f, size);
                 renderMap[bodyPart.Id] = new BodyPartRenderInfo
@@ -336,20 +372,78 @@ namespace ConversationEngine.EditorActor.Graph
                     ActiveResource = activeResource,
                     Rect = rect,
                     Center = actorMainPivot,
-                    Texture = texture
+                    Texture = texture,
+                    Sprite = sprite
                 };
             }
             return renderMap;
         }
-        private Texture2D LoadTexture(BodyPartResource resource, string actorAssetPath)
+        private void LoadPreviewVisual(BodyPartResource resource, string actorAssetPath, out Texture2D texture, out Sprite sprite)
         {
-            if (resource == null) return null;
-            if (!ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resource.GUID, resource.Path, out string resolvedPath, out bool _)) return null;
-            if (string.IsNullOrWhiteSpace(resolvedPath)) return null;
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(resolvedPath);
+            texture = null;
+            sprite = null;
+            if (resource == null) return;
+            if (!ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resource.GUID, resource.Path, out string resolvedPath, out bool _)) return;
+            if (string.IsNullOrWhiteSpace(resolvedPath)) return;
+            if (previewVisualCacheByPath.TryGetValue(resolvedPath, out PreviewVisualCacheEntry cacheEntry))
+            {
+                texture = cacheEntry.Texture;
+                sprite = cacheEntry.Sprite;
+                return;
+            }
+            string extension = System.IO.Path.GetExtension(resolvedPath).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".prefab":
+                    sprite = LoadPrefabPreviewSprite(resolvedPath);
+                    if (sprite?.texture != null)
+                    {
+                        texture = sprite.texture;
+                        previewVisualCacheByPath[resolvedPath] = new PreviewVisualCacheEntry { Texture = texture, Sprite = sprite };
+                        return;
+                    }
+                    texture = LoadPrefabPreviewTexture(resolvedPath);
+                    if (texture != null) previewVisualCacheByPath[resolvedPath] = new PreviewVisualCacheEntry { Texture = texture, Sprite = null };
+                    return;
+                default:
+                    sprite = AssetDatabase.LoadAssetAtPath<Sprite>(resolvedPath);
+                    if (sprite?.texture != null)
+                    {
+                        texture = sprite.texture;
+                        previewVisualCacheByPath[resolvedPath] = new PreviewVisualCacheEntry { Texture = texture, Sprite = sprite };
+                        return;
+                    }
+                    texture = AssetDatabase.LoadAssetAtPath<Texture2D>(resolvedPath);
+                    previewVisualCacheByPath[resolvedPath] = new PreviewVisualCacheEntry { Texture = texture, Sprite = null };
+                    return;
+            }
         }
-        private Vector2 GetBodyPartSize(Texture2D texture)
+        private Sprite LoadPrefabPreviewSprite(string assetPath)
         {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null) return null;
+            SpriteRenderer rootRenderer = prefab.GetComponent<SpriteRenderer>();
+            if (rootRenderer?.sprite != null) return rootRenderer.sprite;
+            SpriteRenderer[] renderers = prefab.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer renderer = renderers[i];
+                if (renderer?.sprite == null) continue;
+                return renderer.sprite;
+            }
+            return null;
+        }
+        private Texture2D LoadPrefabPreviewTexture(string assetPath)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null) return null;
+            Texture2D preview = AssetPreview.GetAssetPreview(prefab);
+            if (preview != null) return preview;
+            return AssetPreview.GetMiniThumbnail(prefab);
+        }
+        private Vector2 GetBodyPartSize(Sprite sprite, Texture2D texture)
+        {
+            if (sprite != null) return new Vector2(sprite.rect.width, sprite.rect.height);
             if (texture == null) return new Vector2(160f, 160f);
             return new Vector2(texture.width, texture.height);
         }
