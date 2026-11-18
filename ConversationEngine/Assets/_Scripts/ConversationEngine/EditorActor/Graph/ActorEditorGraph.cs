@@ -4,6 +4,7 @@ using ConversationEngine.EditorActor.Helper;
 using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
 namespace ConversationEngine.EditorActor.Graph
 {
@@ -423,15 +424,60 @@ namespace ConversationEngine.EditorActor.Graph
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
             if (prefab == null) return null;
             SpriteRenderer rootRenderer = prefab.GetComponent<SpriteRenderer>();
-            if (rootRenderer?.sprite != null) return rootRenderer.sprite;
+            if (TryGetSpriteFromRenderer(rootRenderer, out Sprite rootRendererSprite)) return rootRendererSprite;
+            Image rootImage = prefab.GetComponent<Image>();
+            if (TryGetSpriteFromImage(rootImage, out Sprite rootImageSprite)) return rootImageSprite;
             SpriteRenderer[] renderers = prefab.GetComponentsInChildren<SpriteRenderer>(true);
             for (int i = 0; i < renderers.Length; i++)
             {
                 SpriteRenderer renderer = renderers[i];
-                if (renderer?.sprite == null) continue;
-                return renderer.sprite;
+                if (!TryGetSpriteFromRenderer(renderer, out Sprite rendererSprite)) continue;
+                return rendererSprite;
+            }
+            Image[] images = prefab.GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                Image image = images[i];
+                if (!TryGetSpriteFromImage(image, out Sprite imageSprite)) continue;
+                return imageSprite;
             }
             return null;
+        }
+        private bool TryGetSpriteFromRenderer(SpriteRenderer renderer, out Sprite sprite)
+        {
+            sprite = null;
+            if (renderer == null) return false;
+            try
+            {
+                sprite = renderer.sprite;
+                return sprite != null;
+            }
+            catch (MissingComponentException)
+            {
+                return false;
+            }
+            catch (System.NullReferenceException)
+            {
+                return false;
+            }
+        }
+        private bool TryGetSpriteFromImage(Image image, out Sprite sprite)
+        {
+            sprite = null;
+            if (image == null) return false;
+            try
+            {
+                sprite = image.sprite;
+                return sprite != null;
+            }
+            catch (MissingComponentException)
+            {
+                return false;
+            }
+            catch (System.NullReferenceException)
+            {
+                return false;
+            }
         }
         private Texture2D LoadPrefabPreviewTexture(string assetPath)
         {
