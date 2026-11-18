@@ -23,7 +23,7 @@ namespace ConversationEngine.ActorBuilder
             }
         }
         #region Build Entry
-        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, Func<string, string, Sprite> spriteResolver)
+        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, Func<string, string, Sprite> spriteResolver, Func<string, string, Transform, string, GameObject> prefabInstanceFactory)
         {
             ActorBuildOptions options = new ActorBuildOptions
             {
@@ -37,11 +37,11 @@ namespace ConversationEngine.ActorBuilder
                 CanvasAnchoredPosition = canvasAnchoredPosition
             };
             IActorSpriteProvider provider = new DelegateSpriteProvider(spriteResolver);
-            ActorBuiltActor builtActor = BuildActor(actorData, options, provider);
+            ActorBuiltActor builtActor = BuildActor(actorData, options, provider, prefabInstanceFactory);
             if (builtActor == null) return null;
             return builtActor.gameObject;
         }
-        public static ActorBuiltActor BuildActor(Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider)
+        public static ActorBuiltActor BuildActor(Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, Func<string, string, Transform, string, GameObject> prefabInstanceFactory = null)
         {
             if (actorData == null) return null;
             if (options == null) options = new ActorBuildOptions();
@@ -61,7 +61,7 @@ namespace ConversationEngine.ActorBuilder
                 {
                     BodyPartData bodyPart = pendingBodyParts[bodyPartIndex];
                     if (!attachTargets.TryGetValue(bodyPart.AttachToPivotId, out Transform attachTarget)) continue;
-                    ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, attachTarget, actorData, options, spriteProvider, scale, bodyPartIndex);
+                    ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, attachTarget, actorData, options, spriteProvider, prefabInstanceFactory, scale, bodyPartIndex);
                     if (builtBodyPart == null) continue;
                     builtActor.RegisterBodyPart(builtBodyPart);
                     List<ActorBuiltPivotPoint> pivots = builtBodyPart.GetPivots();
@@ -80,7 +80,7 @@ namespace ConversationEngine.ActorBuilder
             for (int i = 0; i < pendingBodyParts.Count; i++)
             {
                 BodyPartData bodyPart = pendingBodyParts[i];
-                ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, rootObject.transform, actorData, options, spriteProvider, scale, i);
+                ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, rootObject.transform, actorData, options, spriteProvider, prefabInstanceFactory, scale, i);
                 if (builtBodyPart == null) continue;
                 builtActor.RegisterBodyPart(builtBodyPart);
             }
@@ -144,7 +144,7 @@ namespace ConversationEngine.ActorBuilder
         #endregion
 
         #region BodyPart Build
-        private static ActorBuiltBodyPart CreateBodyPart(BodyPartData bodyPart, Transform attachTarget, Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, float scale, int sortingOrder)
+        private static ActorBuiltBodyPart CreateBodyPart(BodyPartData bodyPart, Transform attachTarget, Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, Func<string, string, Transform, string, GameObject> prefabInstanceFactory, float scale, int sortingOrder)
         {
             if (bodyPart == null || attachTarget == null) return null;
             GameObject bodyPartObject = new GameObject(string.IsNullOrWhiteSpace(bodyPart.Name) ? "bodypart_" + bodyPart.Id : bodyPart.Name);
@@ -160,13 +160,11 @@ namespace ConversationEngine.ActorBuilder
             {
                 BodyPartResource nestedResource = bodyPart.NestedResources[i];
                 if (nestedResource == null) continue;
-                GameObject resourceObject = new GameObject(string.IsNullOrWhiteSpace(nestedResource.Id) ? "resource_" + i : nestedResource.Id);
-                resourceObject.transform.SetParent(bodyPartObject.transform, false);
-                resourceObject.transform.localPosition = Vector3.zero;
-                resourceObject.transform.localRotation = Quaternion.identity;
-                resourceObject.transform.localScale = Vector3.one;
+                string resourceObjectName = string.IsNullOrWhiteSpace(nestedResource.Id) ? "resource_" + i : nestedResource.Id;
+                GameObject resourceObject = CreateResourceObject(nestedResource, bodyPartObject.transform, resourceObjectName, prefabInstanceFactory);
+                if (resourceObject == null) continue;
                 Sprite sprite = spriteProvider == null ? null : spriteProvider.LoadSprite(nestedResource.GUID ?? "", nestedResource.Path ?? "");
-                ConfigureVisual(resourceObject, sprite, options.TargetType, scale, sortingOrder);
+                if (!IsPrefabInstanceResource(resourceObject)) ConfigureVisual(resourceObject, sprite, options.TargetType, scale, sortingOrder);
                 List<PivotPoint> overridePivots = nestedResource.PivotPoints == null ? new List<PivotPoint>() : nestedResource.PivotPoints.Where(x => x != null).Select(x => new PivotPoint { Id = x.Id, Name = x.Name, X = x.X, Y = x.Y }).ToList();
                 builtBodyPart.RegisterResource(nestedResource.Id, resourceObject, overridePivots);
             }
@@ -184,6 +182,27 @@ namespace ConversationEngine.ActorBuilder
             }
             builtBodyPart.SetCurrentResource(bodyPart.CurrentResourceId);
             return builtBodyPart;
+        }
+        private static GameObject CreateResourceObject(BodyPartResource nestedResource, Transform parentTransform, string resourceObjectName, Func<string, string, Transform, string, GameObject> prefabInstanceFactory)
+        {
+            GameObject resourceObject = null;
+            if (prefabInstanceFactory != null) resourceObject = prefabInstanceFactory(nestedResource?.GUID ?? "", nestedResource?.Path ?? "", parentTransform, resourceObjectName);
+            if (resourceObject == null)
+            {
+                resourceObject = new GameObject(resourceObjectName);
+                resourceObject.transform.SetParent(parentTransform, false);
+            }
+            resourceObject.name = resourceObjectName;
+            return resourceObject;
+        }
+        private static bool IsPrefabInstanceResource(GameObject resourceObject)
+        {
+            if (resourceObject == null) return false;
+            if (resourceObject.GetComponent<Image>() != null) return false;
+            if (resourceObject.GetComponent<SpriteRenderer>() != null) return true;
+            if (resourceObject.GetComponentInChildren<SpriteRenderer>(true) != null) return true;
+            if (resourceObject.GetComponentInChildren<Image>(true) != null) return true;
+            return resourceObject.GetComponents<Component>().Length > 1;
         }
         private static List<PivotPoint> CollectAllPivotPoints(BodyPartData bodyPart)
         {
@@ -217,22 +236,29 @@ namespace ConversationEngine.ActorBuilder
         }
         private static void ConfigureVisual(GameObject resourceObject, Sprite sprite, ActorRenderTargetType targetType, float scale, int sortingOrder)
         {
+            if (resourceObject == null) return;
             switch (targetType)
             {
                 case ActorRenderTargetType.Canvas:
-                    RectTransform rectTransform = resourceObject.AddComponent<RectTransform>();
+                    RectTransform rectTransform = resourceObject.GetComponent<RectTransform>();
+                    if (rectTransform == null) rectTransform = resourceObject.AddComponent<RectTransform>();
+                    if (rectTransform == null) return;
                     rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
                     rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                     rectTransform.pivot = new Vector2(0.5f, 0.5f);
                     rectTransform.anchoredPosition = Vector2.zero;
                     Vector2 size = sprite == null ? new Vector2(160f, 160f) : new Vector2(sprite.rect.width, sprite.rect.height);
                     rectTransform.sizeDelta = size * scale;
-                    Image image = resourceObject.AddComponent<Image>();
+                    Image image = resourceObject.GetComponent<Image>();
+                    if (image == null) image = resourceObject.AddComponent<Image>();
+                    if (image == null) return;
                     image.sprite = sprite;
                     image.raycastTarget = false;
                     break;
                 default:
-                    SpriteRenderer spriteRenderer = resourceObject.AddComponent<SpriteRenderer>();
+                    SpriteRenderer spriteRenderer = resourceObject.GetComponent<SpriteRenderer>();
+                    if (spriteRenderer == null) spriteRenderer = resourceObject.AddComponent<SpriteRenderer>();
+                    if (spriteRenderer == null) return;
                     spriteRenderer.sprite = sprite;
                     spriteRenderer.sortingOrder = sortingOrder;
                     resourceObject.transform.localPosition = ResolveWorldSpriteOffset(sprite, scale);

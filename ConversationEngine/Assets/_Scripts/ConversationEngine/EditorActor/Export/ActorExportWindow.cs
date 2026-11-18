@@ -14,6 +14,7 @@ namespace ConversationEngine.EditorActor.Export
         private string rootName = "";
         private Vector2 actorSize = Vector2.zero;
         private float exportScale = 1f;
+        private bool unpackPrefabInstances;
         private Vector3 worldPosition = Vector3.zero;
         private Vector2 canvasPosition = Vector2.zero;
         private string newCanvasName = "ActorCanvas";
@@ -34,7 +35,7 @@ namespace ConversationEngine.EditorActor.Export
             if (window.actorSize.y <= 0f) window.actorSize.y = 400f;
             window.titleContent = new GUIContent("Actor Export", "Configure export options for scene build.");
             window.minSize = new Vector2(390f, 250f);
-            window.maxSize = new Vector2(390f, 340f);
+            window.maxSize = new Vector2(390f, 360f);
             window.RefreshCanvasOptions();
             window.ShowUtility();
         }
@@ -96,6 +97,7 @@ namespace ConversationEngine.EditorActor.Export
             EditorGUILayout.LabelField(new GUIContent("Scale", "Scale multiplier applied to exported visual resources."), GUILayout.Width(36f));
             exportScale = EditorGUILayout.FloatField(exportScale);
             EditorGUILayout.EndHorizontal();
+            unpackPrefabInstances = EditorGUILayout.Toggle(new GUIContent("Unpack Prefabs", "When enabled, exported prefab-based nested resources are unpacked after instantiation."), unpackPrefabInstances);
             if (exportScale <= 0f) exportScale = 1f;
             EditorGUILayout.EndVertical();
         }
@@ -117,6 +119,7 @@ namespace ConversationEngine.EditorActor.Export
                 RootName = rootName,
                 ActorSize = actorSize,
                 Scale = exportScale,
+                UnpackPrefabInstances = unpackPrefabInstances,
                 WorldPosition = worldPosition,
                 CanvasAnchoredPosition = canvasPosition,
                 NewCanvasName = string.IsNullOrWhiteSpace(newCanvasName) ? "ActorCanvas" : newCanvasName

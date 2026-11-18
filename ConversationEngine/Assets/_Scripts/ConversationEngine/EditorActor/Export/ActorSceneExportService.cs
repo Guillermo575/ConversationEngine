@@ -17,6 +17,7 @@ namespace ConversationEngine.EditorActor.Export
     {
         public ActorExportTargetType TargetType = ActorExportTargetType.Canvas;
         public Canvas TargetCanvas;
+        public bool UnpackPrefabInstances;
         public string NewCanvasName = "ActorCanvas";
         public string RootName = "";
         public Vector2 ActorSize = Vector2.zero;
@@ -45,6 +46,7 @@ namespace ConversationEngine.EditorActor.Export
             MethodInfo buildMethod = builderType.GetMethod("BuildActorRoot", BindingFlags.Public | BindingFlags.Static);
             if (buildMethod == null) return null;
             Func<string, string, Sprite> spriteResolver = (guid, path) => LoadSprite(actorAssetPath, guid, path);
+            Func<string, string, Transform, string, GameObject> prefabFactory = (guid, path, parent, objectName) => CreatePrefabInstance(actorAssetPath, guid, path, parent, objectName, request.UnpackPrefabInstances);
             object[] args = new object[]
             {
                 actorData,
@@ -56,7 +58,8 @@ namespace ConversationEngine.EditorActor.Export
                 request.Scale,
                 request.WorldPosition,
                 request.CanvasAnchoredPosition,
-                spriteResolver
+                spriteResolver,
+                prefabFactory
             };
             object result = buildMethod.Invoke(null, args);
             return result as GameObject;
@@ -77,11 +80,52 @@ namespace ConversationEngine.EditorActor.Export
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
             if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = global::ConversationEngine.EditorActor.Helper.ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
             if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
+            string extension = Path.GetExtension(resolvedAssetPath).ToLowerInvariant();
+            if (extension == ".prefab") return LoadSpriteFromPrefabAsset(resolvedAssetPath);
             Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(resolvedAssetPath);
             if (sprite != null) return sprite;
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(resolvedAssetPath);
             if (texture == null) return null;
             return Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        }
+        private static GameObject CreatePrefabInstance(string actorAssetPath, string resourceGuid, string resourcePath, Transform parent, string objectName, bool unpackPrefab)
+        {
+            if (!ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resourceGuid, resourcePath, out string resolvedAssetPath, out bool _)) return null;
+            if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
+            if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
+            if (!string.Equals(Path.GetExtension(resolvedAssetPath), ".prefab", StringComparison.OrdinalIgnoreCase)) return null;
+            GameObject prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(resolvedAssetPath);
+            if (prefabAsset == null) return null;
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefabAsset) as GameObject;
+            if (instance == null) return null;
+            if (parent != null) instance.transform.SetParent(parent, false);
+            instance.name = objectName;
+            if (unpackPrefab && PrefabUtility.IsPartOfPrefabInstance(instance)) PrefabUtility.UnpackPrefabInstance(instance, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+            return instance;
+        }
+        private static Sprite LoadSpriteFromPrefabAsset(string prefabAssetPath)
+        {
+            GameObject prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
+            if (prefabAsset == null) return null;
+            SpriteRenderer rootRenderer = prefabAsset.GetComponent<SpriteRenderer>();
+            if (rootRenderer != null && rootRenderer.sprite != null) return rootRenderer.sprite;
+            UnityEngine.UI.Image rootImage = prefabAsset.GetComponent<UnityEngine.UI.Image>();
+            if (rootImage != null && rootImage.sprite != null) return rootImage.sprite;
+            SpriteRenderer[] renderers = prefabAsset.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer renderer = renderers[i];
+                if (renderer == null || renderer.sprite == null) continue;
+                return renderer.sprite;
+            }
+            UnityEngine.UI.Image[] images = prefabAsset.GetComponentsInChildren<UnityEngine.UI.Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                UnityEngine.UI.Image image = images[i];
+                if (image == null || image.sprite == null) continue;
+                return image.sprite;
+            }
+            return null;
         }
         #endregion
     }
