@@ -161,10 +161,10 @@ namespace ConversationEngine.ActorBuilder
                 BodyPartResource nestedResource = bodyPart.NestedResources[i];
                 if (nestedResource == null) continue;
                 string resourceObjectName = string.IsNullOrWhiteSpace(nestedResource.Id) ? "resource_" + i : nestedResource.Id;
-                GameObject resourceObject = CreateResourceObject(nestedResource, bodyPartObject.transform, resourceObjectName, prefabInstanceFactory);
+                GameObject resourceObject = CreateResourceObject(nestedResource, bodyPartObject.transform, resourceObjectName, prefabInstanceFactory, out bool wasCreatedFromPrefab);
                 if (resourceObject == null) continue;
                 Sprite sprite = spriteProvider == null ? null : spriteProvider.LoadSprite(nestedResource.GUID ?? "", nestedResource.Path ?? "");
-                if (!IsPrefabInstanceResource(resourceObject)) ConfigureVisual(resourceObject, sprite, options.TargetType, scale, sortingOrder);
+                if (!IsPrefabInstanceResource(resourceObject)) ConfigureVisual(resourceObject, sprite, options.TargetType, scale, sortingOrder, wasCreatedFromPrefab);
                 List<PivotPoint> overridePivots = nestedResource.PivotPoints == null ? new List<PivotPoint>() : nestedResource.PivotPoints.Where(x => x != null).Select(x => new PivotPoint { Id = x.Id, Name = x.Name, X = x.X, Y = x.Y }).ToList();
                 builtBodyPart.RegisterResource(nestedResource.Id, resourceObject, overridePivots);
             }
@@ -183,15 +183,27 @@ namespace ConversationEngine.ActorBuilder
             builtBodyPart.SetCurrentResource(bodyPart.CurrentResourceId);
             return builtBodyPart;
         }
-        private static GameObject CreateResourceObject(BodyPartResource nestedResource, Transform parentTransform, string resourceObjectName, Func<string, string, Transform, string, GameObject> prefabInstanceFactory)
+        private static GameObject CreateResourceObject(BodyPartResource nestedResource, Transform parentTransform, string resourceObjectName, Func<string, string, Transform, string, GameObject> prefabInstanceFactory, out bool wasCreatedFromPrefab)
         {
+            wasCreatedFromPrefab = false;
             GameObject resourceObject = null;
-            if (prefabInstanceFactory != null) resourceObject = prefabInstanceFactory(nestedResource?.GUID ?? "", nestedResource?.Path ?? "", parentTransform, resourceObjectName);
+            if (prefabInstanceFactory != null)
+            {
+                resourceObject = prefabInstanceFactory(nestedResource?.GUID ?? "", nestedResource?.Path ?? "", parentTransform, resourceObjectName);
+                wasCreatedFromPrefab = resourceObject != null;
+            }
             if (resourceObject == null)
             {
                 resourceObject = new GameObject(resourceObjectName);
                 resourceObject.transform.SetParent(parentTransform, false);
             }
+            else if (resourceObject.transform.parent != parentTransform)
+            {
+                resourceObject.transform.SetParent(parentTransform, false);
+            }
+            resourceObject.transform.localPosition = Vector3.zero;
+            resourceObject.transform.localRotation = Quaternion.identity;
+            resourceObject.transform.localScale = Vector3.one;
             resourceObject.name = resourceObjectName;
             return resourceObject;
         }
@@ -234,7 +246,7 @@ namespace ConversationEngine.ActorBuilder
             }
             return pivotById.Values.ToList();
         }
-        private static void ConfigureVisual(GameObject resourceObject, Sprite sprite, ActorRenderTargetType targetType, float scale, int sortingOrder)
+        private static void ConfigureVisual(GameObject resourceObject, Sprite sprite, ActorRenderTargetType targetType, float scale, int sortingOrder, bool wasCreatedFromPrefab)
         {
             if (resourceObject == null) return;
             switch (targetType)
@@ -250,14 +262,14 @@ namespace ConversationEngine.ActorBuilder
                     Vector2 size = sprite == null ? new Vector2(160f, 160f) : new Vector2(sprite.rect.width, sprite.rect.height);
                     rectTransform.sizeDelta = size * scale;
                     Image image = resourceObject.GetComponent<Image>();
-                    if (image == null) image = resourceObject.AddComponent<Image>();
+                    if (image == null && !wasCreatedFromPrefab) image = resourceObject.AddComponent<Image>();
                     if (image == null) return;
                     image.sprite = sprite;
                     image.raycastTarget = false;
                     break;
                 default:
                     SpriteRenderer spriteRenderer = resourceObject.GetComponent<SpriteRenderer>();
-                    if (spriteRenderer == null) spriteRenderer = resourceObject.AddComponent<SpriteRenderer>();
+                    if (spriteRenderer == null && !wasCreatedFromPrefab) spriteRenderer = resourceObject.AddComponent<SpriteRenderer>();
                     if (spriteRenderer == null) return;
                     spriteRenderer.sprite = sprite;
                     spriteRenderer.sortingOrder = sortingOrder;
