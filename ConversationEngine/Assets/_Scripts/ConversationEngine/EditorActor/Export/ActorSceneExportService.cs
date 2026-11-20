@@ -47,6 +47,7 @@ namespace ConversationEngine.EditorActor.Export
             if (buildMethod == null) return null;
             Func<string, string, Sprite> spriteResolver = (guid, path) => LoadSprite(actorAssetPath, guid, path);
             Func<string, string, Transform, string, GameObject> prefabFactory = (guid, path, parent, objectName) => CreatePrefabInstance(actorAssetPath, guid, path, parent, objectName, request.UnpackPrefabInstances);
+            Func<string, string, UnityEngine.Object> objectResolver = (guid, path) => LoadObject(actorAssetPath, guid, path);
             object[] args = new object[]
             {
                 actorData,
@@ -59,7 +60,8 @@ namespace ConversationEngine.EditorActor.Export
                 request.WorldPosition,
                 request.CanvasAnchoredPosition,
                 spriteResolver,
-                prefabFactory
+                prefabFactory,
+                objectResolver
             };
             object result = buildMethod.Invoke(null, args);
             return result as GameObject;
@@ -87,6 +89,26 @@ namespace ConversationEngine.EditorActor.Export
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(resolvedAssetPath);
             if (texture == null) return null;
             return Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+        }
+        private static UnityEngine.Object LoadObject(string actorAssetPath, string resourceGuid, string resourcePath)
+        {
+            if (!ActorEditorHelpers.TryResolveResourceAssetPath(actorAssetPath, resourceGuid, resourcePath, out string resolvedAssetPath, out bool _)) return null;
+            if (Path.IsPathRooted(resolvedAssetPath)) resolvedAssetPath = ActorEditorHelpers.ToAssetPath(resolvedAssetPath);
+            if (string.IsNullOrWhiteSpace(resolvedAssetPath)) return null;
+            string extension = Path.GetExtension(resolvedAssetPath).ToLowerInvariant();
+            switch (extension)
+            {
+                case ".prefab":
+                    return AssetDatabase.LoadAssetAtPath<GameObject>(resolvedAssetPath);
+                default:
+                    UnityEngine.Object assetObject = AssetDatabase.LoadAssetAtPath<AudioClip>(resolvedAssetPath);
+                    if (assetObject != null) return assetObject;
+                    assetObject = AssetDatabase.LoadAssetAtPath<Sprite>(resolvedAssetPath);
+                    if (assetObject != null) return assetObject;
+                    assetObject = AssetDatabase.LoadAssetAtPath<Texture2D>(resolvedAssetPath);
+                    if (assetObject != null) return assetObject;
+                    return AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(resolvedAssetPath);
+            }
         }
         private static GameObject CreatePrefabInstance(string actorAssetPath, string resourceGuid, string resourcePath, Transform parent, string objectName, bool unpackPrefab)
         {

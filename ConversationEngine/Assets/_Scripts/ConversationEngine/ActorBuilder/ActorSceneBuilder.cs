@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
-using System;
 using ConversationEngine.ConversationScheme;
 using UnityEngine;
 using UnityEngine.UI;
 using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
+
 namespace ConversationEngine.ActorBuilder
 {
     public static class ActorSceneBuilder
     {
         private class DelegateSpriteProvider : IActorSpriteProvider
         {
-            private readonly Func<string, string, Sprite> spriteResolver;
-            public DelegateSpriteProvider(Func<string, string, Sprite> spriteResolver)
+            private readonly System.Func<string, string, Sprite> spriteResolver;
+            public DelegateSpriteProvider(System.Func<string, string, Sprite> spriteResolver)
             {
                 this.spriteResolver = spriteResolver;
             }
@@ -23,7 +23,7 @@ namespace ConversationEngine.ActorBuilder
             }
         }
         #region Build Entry
-        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, Func<string, string, Sprite> spriteResolver, Func<string, string, Transform, string, GameObject> prefabInstanceFactory)
+        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, System.Func<string, string, Sprite> spriteResolver, System.Func<string, string, Transform, string, GameObject> prefabInstanceFactory, System.Func<string, string, UnityEngine.Object> objectResolver)
         {
             ActorBuildOptions options = new ActorBuildOptions
             {
@@ -37,11 +37,11 @@ namespace ConversationEngine.ActorBuilder
                 CanvasAnchoredPosition = canvasAnchoredPosition
             };
             IActorSpriteProvider provider = new DelegateSpriteProvider(spriteResolver);
-            ActorBuiltActor builtActor = BuildActor(actorData, options, provider, prefabInstanceFactory);
+            ActorBuiltActor builtActor = BuildActor(actorData, options, provider, prefabInstanceFactory, objectResolver);
             if (builtActor == null) return null;
             return builtActor.gameObject;
         }
-        public static ActorBuiltActor BuildActor(Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, Func<string, string, Transform, string, GameObject> prefabInstanceFactory = null)
+        public static ActorBuiltActor BuildActor(Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, System.Func<string, string, Transform, string, GameObject> prefabInstanceFactory = null, System.Func<string, string, UnityEngine.Object> objectResolver = null)
         {
             if (actorData == null) return null;
             if (options == null) options = new ActorBuildOptions();
@@ -51,6 +51,7 @@ namespace ConversationEngine.ActorBuilder
             if (rootObject == null) return null;
             ActorBuiltActor builtActor = rootObject.GetComponent<ActorBuiltActor>();
             if (builtActor == null) builtActor = rootObject.AddComponent<ActorBuiltActor>();
+            ConfigureRootData(rootObject, actorData, spriteProvider, objectResolver);
             Dictionary<int, Transform> attachTargets = new Dictionary<int, Transform> { { 0, rootObject.transform } };
             List<BodyPartData> pendingBodyParts = actorData.BodyParts == null ? new List<BodyPartData>() : actorData.BodyParts.Where(x => x != null).ToList();
             int maxIterations = pendingBodyParts.Count + 1;
@@ -141,10 +142,45 @@ namespace ConversationEngine.ActorBuilder
             if (actorSize.y <= 0f) actorSize.y = 400f;
             return actorSize;
         }
+        private static void ConfigureRootData(GameObject rootObject, Actor actorData, IActorSpriteProvider spriteProvider, System.Func<string, string, UnityEngine.Object> objectResolver)
+        {
+            if (rootObject == null || actorData == null) return;
+            ActorData actorDataComponent = rootObject.GetComponent<ActorData>();
+            if (actorDataComponent == null) actorDataComponent = rootObject.AddComponent<ActorData>();
+            actorDataComponent.Id = actorData.Id ?? "";
+            actorDataComponent.Name = actorData.Name ?? "";
+            actorDataComponent.lstAlternateName = actorData.lstAlternateName == null ? new List<AlternateText>() : actorData.lstAlternateName.Where(x => x != null).Select(x => new AlternateText { language = x.language, Text = x.Text }).ToList();
+            actorDataComponent.IconObject = ResolveActorIcon(actorData, spriteProvider);
+            SoundLibrary soundLibrary = rootObject.GetComponent<SoundLibrary>();
+            if (soundLibrary == null) soundLibrary = rootObject.AddComponent<SoundLibrary>();
+            List<SoundLibraryEntry> soundEntries = new List<SoundLibraryEntry>();
+            if (actorData.SoundEffects != null)
+            {
+                for (int i = 0; i < actorData.SoundEffects.Count; i++)
+                {
+                    AudioBackground soundEffect = actorData.SoundEffects[i];
+                    if (soundEffect == null) continue;
+                    UnityEngine.Object soundObject = ResolveObjectByGuid(soundEffect.GUID ?? "", soundEffect.Path ?? "", objectResolver);
+                    soundEntries.Add(new SoundLibraryEntry { Id = soundEffect.Id ?? "", SoundObject = soundObject });
+                }
+            }
+            soundLibrary.SetEntries(soundEntries);
+        }
+        private static Sprite ResolveActorIcon(Actor actorData, IActorSpriteProvider spriteProvider)
+        {
+            if (actorData == null || spriteProvider == null) return null;
+            if (string.IsNullOrWhiteSpace(actorData.IconPathGUID)) return null;
+            return spriteProvider.LoadSprite(actorData.IconPathGUID ?? "", actorData.IconPath ?? "");
+        }
+        private static UnityEngine.Object ResolveObjectByGuid(string guid, string path, System.Func<string, string, UnityEngine.Object> objectResolver)
+        {
+            if (objectResolver == null) return null;
+            return objectResolver(guid ?? "", path ?? "");
+        }
         #endregion
 
         #region BodyPart Build
-        private static ActorBuiltBodyPart CreateBodyPart(BodyPartData bodyPart, Transform attachTarget, Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, Func<string, string, Transform, string, GameObject> prefabInstanceFactory, float scale, int sortingOrder)
+        private static ActorBuiltBodyPart CreateBodyPart(BodyPartData bodyPart, Transform attachTarget, Actor actorData, ActorBuildOptions options, IActorSpriteProvider spriteProvider, System.Func<string, string, Transform, string, GameObject> prefabInstanceFactory, float scale, int sortingOrder)
         {
             if (bodyPart == null || attachTarget == null) return null;
             GameObject bodyPartObject = new GameObject(string.IsNullOrWhiteSpace(bodyPart.Name) ? "bodypart_" + bodyPart.Id : bodyPart.Name);
@@ -183,7 +219,7 @@ namespace ConversationEngine.ActorBuilder
             builtBodyPart.SetCurrentResource(bodyPart.CurrentResourceId);
             return builtBodyPart;
         }
-        private static GameObject CreateResourceObject(BodyPartResource nestedResource, Transform parentTransform, string resourceObjectName, Func<string, string, Transform, string, GameObject> prefabInstanceFactory, out bool wasCreatedFromPrefab)
+        private static GameObject CreateResourceObject(BodyPartResource nestedResource, Transform parentTransform, string resourceObjectName, System.Func<string, string, Transform, string, GameObject> prefabInstanceFactory, out bool wasCreatedFromPrefab)
         {
             wasCreatedFromPrefab = false;
             GameObject resourceObject = null;
