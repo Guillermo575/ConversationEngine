@@ -49,9 +49,9 @@ namespace ConversationEngine.ActorBuilder
             Transform rootParent = ResolveRootParent(options);
             GameObject rootObject = CreateRootObject(actorData, options, rootParent);
             if (rootObject == null) return null;
+            ConfigureRootData(rootObject, actorData, spriteProvider, objectResolver);
             ActorBuiltActor builtActor = rootObject.GetComponent<ActorBuiltActor>();
             if (builtActor == null) builtActor = rootObject.AddComponent<ActorBuiltActor>();
-            ConfigureRootData(rootObject, actorData, spriteProvider, objectResolver);
             Dictionary<int, Transform> attachTargets = new Dictionary<int, Transform> { { 0, rootObject.transform } };
             List<BodyPartData> pendingBodyParts = actorData.BodyParts == null ? new List<BodyPartData>() : actorData.BodyParts.Where(x => x != null).ToList();
             int maxIterations = pendingBodyParts.Count + 1;
