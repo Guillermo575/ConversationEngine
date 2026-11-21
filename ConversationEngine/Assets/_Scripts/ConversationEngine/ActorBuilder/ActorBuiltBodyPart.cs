@@ -19,7 +19,7 @@ namespace ConversationEngine.ActorBuilder
         #region Metadata
         [SerializeField] private int bodyPartId;
         [SerializeField] private string bodyPartName;
-        [SerializeField] private int attachToPivotId;
+        [ReadOnlyInInspector][SerializeField] private int attachToPivotId;
         [SerializeField] private string currentResourceId;
         #endregion
 
