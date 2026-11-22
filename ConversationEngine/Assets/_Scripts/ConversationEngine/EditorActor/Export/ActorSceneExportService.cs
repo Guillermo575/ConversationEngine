@@ -24,6 +24,7 @@ namespace ConversationEngine.EditorActor.Export
         public float Scale = 1f;
         public Vector3 WorldPosition = Vector3.zero;
         public Vector2 CanvasAnchoredPosition = Vector2.zero;
+        public float WorldBodyPartZOffset = 0f;
     }
     public static class ActorSceneExportService
     {
@@ -59,6 +60,7 @@ namespace ConversationEngine.EditorActor.Export
                 request.Scale,
                 request.WorldPosition,
                 request.CanvasAnchoredPosition,
+                request.WorldBodyPartZOffset,
                 spriteResolver,
                 prefabFactory,
                 objectResolver

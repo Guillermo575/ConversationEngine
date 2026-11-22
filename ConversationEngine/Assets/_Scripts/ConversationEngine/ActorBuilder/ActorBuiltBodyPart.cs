@@ -4,6 +4,7 @@ using ConversationEngine.ConversationScheme;
 using UnityEngine;
 namespace ConversationEngine.ActorBuilder
 {
+    [ExecuteAlways]
     public class ActorBuiltBodyPart : MonoBehaviour
     {
         #region Types
@@ -20,6 +21,7 @@ namespace ConversationEngine.ActorBuilder
         [SerializeField] private int bodyPartId;
         [SerializeField] private string bodyPartName;
         [ReadOnlyInInspector][SerializeField] private int attachToPivotId;
+        [SerializeField] private GameObject attachPivotObject;
         [SerializeField] private string currentResourceId;
         #endregion
 
@@ -32,6 +34,7 @@ namespace ConversationEngine.ActorBuilder
         public int BodyPartId => bodyPartId;
         public string BodyPartName => bodyPartName;
         public int AttachToPivotId => attachToPivotId;
+        public GameObject AttachPivotObject => attachPivotObject;
         public string CurrentResourceId => currentResourceId;
         #endregion
 
@@ -41,6 +44,11 @@ namespace ConversationEngine.ActorBuilder
             bodyPartId = id;
             bodyPartName = name ?? "";
             attachToPivotId = attachPivotId;
+        }
+        public void SetAttachPivot(GameObject pivotObject, int pivotId)
+        {
+            attachPivotObject = pivotObject;
+            SyncToAttachPivot();
         }
         public void RegisterPivot(ActorBuiltPivotPoint pivotPoint)
         {
@@ -57,6 +65,21 @@ namespace ConversationEngine.ActorBuilder
                 OverridePivotPoints = overridePivotPoints == null ? new List<PivotPoint>() : overridePivotPoints.Select(x => x == null ? null : new PivotPoint { Id = x.Id, Name = x.Name, X = x.X, Y = x.Y }).Where(x => x != null).ToList()
             };
             resources.Add(resourceData);
+        }
+        #endregion
+
+        #region Unity Events
+        private void OnEnable()
+        {
+            SyncToAttachPivot();
+        }
+        private void LateUpdate()
+        {
+            SyncToAttachPivot();
+        }
+        private void OnValidate()
+        {
+            SyncToAttachPivot();
         }
         #endregion
 
@@ -110,6 +133,20 @@ namespace ConversationEngine.ActorBuilder
                 if (overridePivot == null) pivot.ClearOverride();
                 else pivot.SetOverride(new Vector2(overridePivot.X, overridePivot.Y));
             }
+        }
+        private void SyncToAttachPivot()
+        {
+            if (attachToPivotId <= 0) return;
+            if (attachPivotObject == null) return;
+            Transform pivotTransform = attachPivotObject.transform;
+            if (pivotTransform == null) return;
+            if (pivotTransform == transform) return;
+            if (pivotTransform.IsChildOf(transform)) return;
+            Vector3 targetPosition = pivotTransform.position;
+            Vector3 currentPosition = transform.position;
+            targetPosition.z = currentPosition.z;
+            if (currentPosition == targetPosition) return;
+            transform.position = targetPosition;
         }
         #endregion
     }

@@ -16,6 +16,7 @@ namespace ConversationEngine.EditorActor.Export
         private float exportScale = 1f;
         private bool unpackPrefabInstances;
         private Vector3 worldPosition = Vector3.zero;
+        private float worldBodyPartZOffset = 0.01f;
         private Vector2 canvasPosition = Vector2.zero;
         private string newCanvasName = "ActorCanvas";
         private int selectedCanvasIndex;
@@ -79,6 +80,7 @@ namespace ConversationEngine.EditorActor.Export
                     break;
                 default:
                     worldPosition = EditorGUILayout.Vector3Field(new GUIContent("World Position", "World position used by the exported actor root."), worldPosition);
+                    worldBodyPartZOffset = EditorGUILayout.FloatField(new GUIContent("BodyPart Z Offset", "Z offset step applied by body part list order when exporting to world."), worldBodyPartZOffset);
                     break;
             }
             EditorGUILayout.EndVertical();
@@ -122,6 +124,7 @@ namespace ConversationEngine.EditorActor.Export
                 UnpackPrefabInstances = unpackPrefabInstances,
                 WorldPosition = worldPosition,
                 CanvasAnchoredPosition = canvasPosition,
+                WorldBodyPartZOffset = worldBodyPartZOffset,
                 NewCanvasName = string.IsNullOrWhiteSpace(newCanvasName) ? "ActorCanvas" : newCanvasName
             };
             if (targetType == ActorExportTargetType.Canvas && selectedCanvasIndex > 0 && selectedCanvasIndex - 1 < canvasOptions.Count) options.TargetCanvas = canvasOptions[selectedCanvasIndex - 1];

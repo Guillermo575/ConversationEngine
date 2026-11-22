@@ -23,6 +23,7 @@ namespace ConversationEngine.ActorBuilder
         #region Positions
         public Vector3 WorldPosition = Vector3.zero;
         public Vector2 CanvasAnchoredPosition = Vector2.zero;
+        public float WorldBodyPartZOffset = 0f;
         #endregion
     }
 }

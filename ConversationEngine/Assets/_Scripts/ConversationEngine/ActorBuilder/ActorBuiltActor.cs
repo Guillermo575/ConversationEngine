@@ -57,6 +57,13 @@ namespace ConversationEngine.ActorBuilder
                     return transform;
             }
         }
+        public Transform GetPivotTransform(int pivotId)
+        {
+            if (pivotId <= 0) return null;
+            if (!pivotById.TryGetValue(pivotId, out ActorBuiltPivotPoint pivotPoint)) return null;
+            if (pivotPoint == null) return null;
+            return pivotPoint.transform;
+        }
         public bool SetBodyPartResource(int bodyPartId, string resourceId)
         {
             if (!bodyPartById.TryGetValue(bodyPartId, out ActorBuiltBodyPart bodyPart) || bodyPart == null) return false;

@@ -23,7 +23,7 @@ namespace ConversationEngine.ActorBuilder
             }
         }
         #region Build Entry
-        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, System.Func<string, string, Sprite> spriteResolver, System.Func<string, string, Transform, string, GameObject> prefabInstanceFactory, System.Func<string, string, UnityEngine.Object> objectResolver)
+        public static GameObject BuildActorRoot(Actor actorData, bool useCanvas, Canvas targetCanvas, string newCanvasName, string rootName, Vector2 actorSize, float scale, Vector3 worldPosition, Vector2 canvasAnchoredPosition, float worldBodyPartZOffset, System.Func<string, string, Sprite> spriteResolver, System.Func<string, string, Transform, string, GameObject> prefabInstanceFactory, System.Func<string, string, UnityEngine.Object> objectResolver)
         {
             ActorBuildOptions options = new ActorBuildOptions
             {
@@ -34,7 +34,8 @@ namespace ConversationEngine.ActorBuilder
                 ActorSize = actorSize,
                 Scale = scale,
                 WorldPosition = worldPosition,
-                CanvasAnchoredPosition = canvasAnchoredPosition
+                CanvasAnchoredPosition = canvasAnchoredPosition,
+                WorldBodyPartZOffset = worldBodyPartZOffset
             };
             IActorSpriteProvider provider = new DelegateSpriteProvider(spriteResolver);
             ActorBuiltActor builtActor = BuildActor(actorData, options, provider, prefabInstanceFactory, objectResolver);
@@ -52,40 +53,24 @@ namespace ConversationEngine.ActorBuilder
             ConfigureRootData(rootObject, actorData, spriteProvider, objectResolver);
             ActorBuiltActor builtActor = rootObject.GetComponent<ActorBuiltActor>();
             if (builtActor == null) builtActor = rootObject.AddComponent<ActorBuiltActor>();
-            Dictionary<int, Transform> attachTargets = new Dictionary<int, Transform> { { 0, rootObject.transform } };
-            List<BodyPartData> pendingBodyParts = actorData.BodyParts == null ? new List<BodyPartData>() : actorData.BodyParts.Where(x => x != null).ToList();
-            int maxIterations = pendingBodyParts.Count + 1;
-            for (int iteration = 0; iteration < maxIterations; iteration++)
+            List<KeyValuePair<ActorBuiltBodyPart, int>> bodyPartAttachRequests = new List<KeyValuePair<ActorBuiltBodyPart, int>>();
+            List<BodyPartData> bodyParts = actorData.BodyParts == null ? new List<BodyPartData>() : actorData.BodyParts.Where(x => x != null).ToList();
+            for (int bodyPartIndex = 0; bodyPartIndex < bodyParts.Count; bodyPartIndex++)
             {
-                bool progressed = false;
-                for (int bodyPartIndex = pendingBodyParts.Count - 1; bodyPartIndex >= 0; bodyPartIndex--)
-                {
-                    BodyPartData bodyPart = pendingBodyParts[bodyPartIndex];
-                    if (!attachTargets.TryGetValue(bodyPart.AttachToPivotId, out Transform attachTarget)) continue;
-                    ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, attachTarget, actorData, options, spriteProvider, prefabInstanceFactory, scale, bodyPartIndex);
-                    if (builtBodyPart == null) continue;
-                    builtActor.RegisterBodyPart(builtBodyPart);
-                    List<ActorBuiltPivotPoint> pivots = builtBodyPart.GetPivots();
-                    for (int i = 0; i < pivots.Count; i++)
-                    {
-                        ActorBuiltPivotPoint pivot = pivots[i];
-                        if (pivot == null) continue;
-                        if (attachTargets.ContainsKey(pivot.PivotId)) continue;
-                        attachTargets[pivot.PivotId] = pivot.transform;
-                    }
-                    pendingBodyParts.RemoveAt(bodyPartIndex);
-                    progressed = true;
-                }
-                if (!progressed) break;
-            }
-            for (int i = 0; i < pendingBodyParts.Count; i++)
-            {
-                BodyPartData bodyPart = pendingBodyParts[i];
-                ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, rootObject.transform, actorData, options, spriteProvider, prefabInstanceFactory, scale, i);
+                BodyPartData bodyPart = bodyParts[bodyPartIndex];
+                ActorBuiltBodyPart builtBodyPart = CreateBodyPart(bodyPart, rootObject.transform, actorData, options, spriteProvider, prefabInstanceFactory, scale, bodyPartIndex);
                 if (builtBodyPart == null) continue;
                 builtActor.RegisterBodyPart(builtBodyPart);
+                bodyPartAttachRequests.Add(new KeyValuePair<ActorBuiltBodyPart, int>(builtBodyPart, bodyPart.AttachToPivotId));
             }
             builtActor.RebuildCache();
+            for (int i = 0; i < bodyPartAttachRequests.Count; i++)
+            {
+                KeyValuePair<ActorBuiltBodyPart, int> request = bodyPartAttachRequests[i];
+                if (request.Key == null) continue;
+                Transform attachPivotTransform = builtActor.GetPivotTransform(request.Value);
+                request.Key.SetAttachPivot(attachPivotTransform == null ? null : attachPivotTransform.gameObject, request.Value);
+            }
             return builtActor;
         }
         #endregion
@@ -185,7 +170,8 @@ namespace ConversationEngine.ActorBuilder
             if (bodyPart == null || attachTarget == null) return null;
             GameObject bodyPartObject = new GameObject(string.IsNullOrWhiteSpace(bodyPart.Name) ? "bodypart_" + bodyPart.Id : bodyPart.Name);
             bodyPartObject.transform.SetParent(attachTarget, false);
-            bodyPartObject.transform.localPosition = Vector3.zero;
+            float zOffset = options.TargetType != ActorRenderTargetType.World ? 0f : sortingOrder * options.WorldBodyPartZOffset;
+            bodyPartObject.transform.localPosition = new Vector3(0f, 0f, zOffset);
             bodyPartObject.transform.localRotation = Quaternion.identity;
             bodyPartObject.transform.localScale = Vector3.one;
             ActorBuiltBodyPart builtBodyPart = bodyPartObject.AddComponent<ActorBuiltBodyPart>();
