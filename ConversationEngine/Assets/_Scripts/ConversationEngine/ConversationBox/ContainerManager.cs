@@ -1,4 +1,5 @@
 using ConversationEngine.ConversationScheme;
+using ConversationEngine.GameHelper;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -12,7 +13,7 @@ namespace ConversationEngine.Box
         public ContainerMain dialogueBox;
         public Transform optionContainer;
         public GameObject btnOption;
-        public TextAsset conversationFile;
+        [ConversationFileFilter] public TextAsset conversationFile;
         #endregion
 
         #region Private Variables
