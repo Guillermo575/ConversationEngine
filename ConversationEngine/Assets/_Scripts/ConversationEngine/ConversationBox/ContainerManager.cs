@@ -12,6 +12,7 @@ namespace ConversationEngine.Box
         public ContainerMain dialogueBox;
         public Transform optionContainer;
         public GameObject btnOption;
+        public TextAsset conversationFile;
         #endregion
 
         #region Private Variables
@@ -24,28 +25,22 @@ namespace ConversationEngine.Box
         #region Unity Methods
         private void Start()
         {
-            dialogueBox.StartTyping("adasdada adadadsasda aqeqw131 131231313123 123123131231 dasdadsdad qeqeqweqeqe 12312312312 123123123123123 asdad");
+            LoadConversationFromAsset();
         }
-        void Update()
+        private void LoadConversationFromAsset()
         {
-            if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished && !TypingOptions)
-            {
-                LoadOptions(new List<ConversationOption>
-                {
-                    new ConversationOption { Text = "Option 1" },
-                    new ConversationOption { Text = "Option 2" },
-                    new ConversationOption { Text = "Option 3" }
-                });
-                TypingOptions = true;
-            }
+            if (conversationFile == null) return;
+            ConversationData data = JsonUtility.FromJson<ConversationData>(conversationFile.text);
+            if (data == null || data.ConversationManager == null) return;
+            LoadConversation(data.ConversationManager);
         }
         #endregion
 
         #region General Methods
         public void LoadConversation(ConversationManager conversationManager)
         {
-            if (conversationManager == null || conversationManager.Nodes == null)
-                lstNodes = conversationManager.Nodes;
+            if (conversationManager == null || conversationManager.Nodes == null) return;
+            lstNodes = conversationManager.Nodes;
             Node CurrentNode = null;
             var StartNode = (from x in lstNodes where ConversationNodeUtility.ParseConversationNodeType(x.NodeType) == ConversationNodeType.Start select x).ToList();
             if (StartNode.Count == 0) return;
