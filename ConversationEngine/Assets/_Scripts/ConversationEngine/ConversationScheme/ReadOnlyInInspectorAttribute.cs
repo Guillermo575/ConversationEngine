@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.ConversationScheme
 {
     public class ReadOnlyInInspectorAttribute : PropertyAttribute { }
 }

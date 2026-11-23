@@ -1,8 +1,7 @@
 #if UNITY_EDITOR
-using ConversationEngine.ActorBuilder;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEngine.ConversationEditor
+namespace ConversationEngine.ConversationScheme
 {
     [CustomPropertyDrawer(typeof(ReadOnlyInInspectorAttribute))]
     public class ReadOnlyInInspectorDrawer : PropertyDrawer
