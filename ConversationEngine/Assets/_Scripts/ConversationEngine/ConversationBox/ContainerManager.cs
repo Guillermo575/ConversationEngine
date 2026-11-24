@@ -1,5 +1,4 @@
 using ConversationEngine.ConversationScheme;
-using ConversationEngine.GameHelper;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -10,10 +9,13 @@ namespace ConversationEngine.Box
     public class ContainerManager : MonoBehaviour
     {
         #region Public Variables
+        public TextMeshProUGUI txtTile;
         public ContainerMain dialogueBox;
         public Transform optionContainer;
         public GameObject btnOption;
-        [ConversationFileFilter] public TextAsset conversationFile;
+        public GameObject pnlNext;
+        //[ConversationFileFilter]
+        public TextAsset conversationFile;
         #endregion
 
         #region Private Variables
@@ -27,6 +29,18 @@ namespace ConversationEngine.Box
         private void Start()
         {
             LoadConversationFromAsset();
+        }
+        void Update()
+        {
+            pnlNext.SetActive(dialogueBox.IsTextFinished);
+            if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished && !TypingOptions)
+            {
+                if (CursorNode.Options != null && CursorNode.Options.Count > 0)
+                {
+                    LoadOptions(CursorNode.Options);
+                    TypingOptions = true;
+                }
+            }
         }
         private void LoadConversationFromAsset()
         {
@@ -42,7 +56,7 @@ namespace ConversationEngine.Box
         {
             if (conversationManager == null || conversationManager.Nodes == null) return;
             lstNodes = conversationManager.Nodes;
-            Node CurrentNode = null;
+            ConversationNode CurrentNode = null;
             var StartNode = (from x in lstNodes where ConversationNodeUtility.ParseConversationNodeType(x.NodeType) == ConversationNodeType.Start select x).ToList();
             if (StartNode.Count == 0) return;
             CurrentNode = StartNode.First();
@@ -65,11 +79,11 @@ namespace ConversationEngine.Box
                     }
                 }
             }
-            bool Finalizado = false;
-            while (!Finalizado)
-            {
-
-            }
+            ProcessNode(CurrentNode);
+            //bool Finalizado = false;
+            //while (!Finalizado)
+            //{
+            //}
         }
         public ConversationNode SearchNode(int Id)
         {
@@ -85,14 +99,15 @@ namespace ConversationEngine.Box
         #region Conversation Processing Methods
         public void ProcessNode(ConversationNode CursorNode)
         {
+            pnlNext.SetActive(false);
             if (CursorNode == null) return;
             this.CursorNode = CursorNode;
             switch (ConversationNodeUtility.ParseConversationNodeType(CursorNode.NodeType))
             {
-                case ConversationNodeType.Start: break;
-                case ConversationNodeType.Dialogue: break;
+                case ConversationNodeType.Start: ProcessNode(CursorNode.NextNode); break;
+                case ConversationNodeType.Dialogue: ProcessNodeText(CursorNode); break;
                 case ConversationNodeType.Conditional: ProcessConditionalBranch(CursorNode.conditionalBranch); break;
-                case ConversationNodeType.Function: break;
+                case ConversationNodeType.Function: ProcessNode(CursorNode.NextNode); break;
                 case ConversationNodeType.End: Finalizado = true; break;
                 case ConversationNodeType.Option: break;
                 case ConversationNodeType.Observation: break;
@@ -109,6 +124,11 @@ namespace ConversationEngine.Box
             {
                 ProcessNode(conditionalBranch.NextNodeFalse);
             }
+        }
+        public void ProcessNodeText(ConversationNode conversationNode)
+        {
+            txtTile.text = conversationNode.Title;
+            dialogueBox.StartTyping(CursorNode.Text);
         }
         #endregion
 

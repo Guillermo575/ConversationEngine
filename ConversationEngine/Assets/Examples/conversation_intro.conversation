@@ -93,7 +93,7 @@
           "NextNodeIdFalse": 0
         },
         "DefaultBranchNodeId": 0,
-        "Title": "1231231",
+        "Title": "Narrator",
         "lstAlternateTitle": [
           {
             "language": "Italian",
@@ -383,12 +383,12 @@
     ]
   },
   "EditorSettings": {
-    "Zoom": 0.25000017881393433,
+    "Zoom": 0.85000014305114746,
     "IsResourcePanelHidden": false,
     "IsReadOnly": false,
     "CameraPosition": {
-      "x": 3216.359375,
-      "y": 276.475341796875
+      "x": 287.03857421875,
+      "y": -542.347412109375
     }
   }
 }
