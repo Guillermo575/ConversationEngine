@@ -1,8 +1,12 @@
+using Codice.Client.BaseCommands;
 using UnityEngine;
-using System.Linq;
-using System.Collections.Generic;
+using UnityEngine.InputSystem;
 public class GameManager : MonoBehaviour
 {
+    #region Variables
+    [SerializeField] private InputActionAsset MainInput;
+    #endregion
+
     #region Singleton
     private static GameManager SingletonGameManager;
     private GameManager() { }
@@ -24,11 +28,41 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Start & Update
+    void Awake()
+    {
+        CreateSingleton();
+        EnableMainInputMap("UI", "Submit");
+    }
     void Start()
     {
     }
     void Update()
     {
+    }
+    #endregion
+
+    #region Get
+    public InputActionAsset GetMainInput() { return MainInput; }
+    public InputActionMap GetMainInputMap(string name = "UI")
+    {
+        return MainInput.FindActionMap(name);
+    }
+    public bool EnableMainInputMap(string map, string actionName)
+    {
+        InputActionMap inputMap = GetMainInputMap();
+        if (inputMap == null) return false;
+        InputAction submitAction = inputMap.FindAction(actionName);
+        if (submitAction == null) return false;
+        submitAction.Enable();
+        return true;
+    }
+    public bool IsTriggered(string actionName)
+    {
+        InputActionMap inputMap = GetMainInputMap();
+        if (inputMap == null) return false;
+        InputAction submitAction = inputMap.FindAction(actionName);
+        if (submitAction == null) return false;
+        return submitAction.WasPerformedThisFrame();
     }
     #endregion
 }

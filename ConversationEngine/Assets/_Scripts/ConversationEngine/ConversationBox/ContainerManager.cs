@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 namespace ConversationEngine.Box
 {
     public class ContainerManager : MonoBehaviour
@@ -23,22 +24,44 @@ namespace ConversationEngine.Box
         private List<ConversationNode> lstNodes = new List<ConversationNode>();
         private ConversationNode CursorNode;
         private bool Finalizado = false;
+        private GameManager gameManager;
         #endregion
 
         #region Unity Methods
         private void Start()
         {
+            gameManager = GameManager.GetSingleton();
             LoadConversationFromAsset();
         }
         void Update()
         {
+            var IsPressed = gameManager.IsTriggered("Submit");
+            Debug.Log($"IsPressed: {IsPressed}");
             pnlNext.SetActive(dialogueBox.IsTextFinished);
-            if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished && !TypingOptions)
+            if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished)
             {
                 if (CursorNode.Options != null && CursorNode.Options.Count > 0)
                 {
-                    LoadOptions(CursorNode.Options);
-                    TypingOptions = true;
+                    if (!TypingOptions)
+                    {
+                        LoadOptions(CursorNode.Options);
+                        TypingOptions = true;
+                    }
+                    if (IsPressed)
+                    {
+                        var objSelectedOption = GetCurrentSelectedOption();
+                        if (objSelectedOption != null)
+                        {
+                            objSelectedOption.onClick.Invoke();
+                        }
+                    }
+                }
+                else
+                {
+                    if (IsPressed)
+                    {
+                        ProcessNode(CursorNode.NextNode);
+                    }
                 }
             }
         }
@@ -99,6 +122,7 @@ namespace ConversationEngine.Box
         #region Conversation Processing Methods
         public void ProcessNode(ConversationNode CursorNode)
         {
+            TypingOptions = false;
             pnlNext.SetActive(false);
             if (CursorNode == null) return;
             this.CursorNode = CursorNode;
@@ -135,16 +159,7 @@ namespace ConversationEngine.Box
         #region Options Processing Methods
         public void LoadOptions(List<ConversationOption> lstOptions)
         {
-            for (int i = optionContainer.childCount - 1; i >= 0; i--)
-            {
-                Transform child = optionContainer.GetChild(i);
-                if (child.gameObject == btnOption)
-                {
-                    child.gameObject.SetActive(false);
-                    continue;
-                }
-                Destroy(child.gameObject);
-            }
+            ClearOptions();
             if (lstOptions == null) return;
             foreach (var obj in lstOptions)
             {
@@ -156,9 +171,39 @@ namespace ConversationEngine.Box
                 Button buttonComponent = optionObject.GetComponent<Button>();
                 if (buttonComponent != null)
                 {
-                    buttonComponent.onClick.AddListener(() => ProcessNode(obj.NextNode));
+                    buttonComponent.onClick.AddListener(() => ClearAndProcessOption(obj.NextNode));
                 }
             }
+        }
+        public void ClearOptions()
+        {
+            for (int i = optionContainer.childCount - 1; i >= 0; i--)
+            {
+                Transform child = optionContainer.GetChild(i);
+                if (child.gameObject == btnOption)
+                {
+                    child.gameObject.SetActive(false);
+                    continue;
+                }
+                Destroy(child.gameObject);
+            }
+        }
+        public void ClearAndProcessOption(ConversationNode conversationNode)
+        {
+            ClearOptions();
+            ProcessNode(conversationNode);
+        }
+        public Button GetCurrentSelectedOption()
+        {
+            if (EventSystem.current == null) return null;
+            if (optionContainer == null) return null;
+            GameObject selectedObject = EventSystem.current.currentSelectedGameObject;
+            if (selectedObject == null) return null;
+            Button selectedButton = selectedObject.GetComponent<Button>();
+            if (selectedButton == null) selectedButton = selectedObject.GetComponentInParent<Button>();
+            if (selectedButton == null) return null;
+            if (!selectedButton.transform.IsChildOf(optionContainer)) return null;
+            return selectedButton;
         }
         #endregion
     }

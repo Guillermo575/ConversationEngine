@@ -1,7 +1,9 @@
 {
     "name": "Game.System",
     "rootNamespace": "Game.System",
-    "references": [],
+    "references": [
+        "Unity.InputSystem"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
