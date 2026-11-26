@@ -35,6 +35,10 @@ namespace Game.ConversationBox
         }
         void Update()
         {
+            if (gameManager.IsTriggered("Pause"))
+            {
+                dialogueBox.PauseOrResumeTyping();
+            }
             var IsPressed = gameManager.IsTriggered("Submit");
             Debug.Log($"IsPressed: {IsPressed}");
             pnlNext.SetActive(dialogueBox.IsTextFinished);

@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
     {
         CreateSingleton();
         EnableMainInputMap("UI", "Submit");
+        EnableMainInputMap("UI", "Pause");
     }
     void Start()
     {

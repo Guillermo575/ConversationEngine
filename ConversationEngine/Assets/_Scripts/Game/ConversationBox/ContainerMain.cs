@@ -40,7 +40,7 @@ namespace Game.ConversationBox
         #region Manage Type
         public void PauseOrResumeTyping()
         {
-            isTyping = !isTyping;
+            isTyping = IsTextFinished ? false : !isTyping;
         }
         public void PauseTyping()
         {
@@ -48,7 +48,7 @@ namespace Game.ConversationBox
         }
         public void ResumeTyping()
         {
-            isTyping = true;
+            isTyping = IsTextFinished ? false : true;
         }
         public void StopTyping()
         {
