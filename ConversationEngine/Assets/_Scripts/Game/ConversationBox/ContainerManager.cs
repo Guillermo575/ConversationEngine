@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-namespace ConversationEngine.Box
+namespace Game.ConversationBox
 {
     public class ContainerManager : MonoBehaviour
     {

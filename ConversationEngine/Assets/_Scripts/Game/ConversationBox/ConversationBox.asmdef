@@ -1,6 +1,6 @@
 {
-    "name": "ConversationEngine.Box",
-    "rootNamespace": "ConversationEngine.Box",
+    "name": "Game.ConversationBox",
+    "rootNamespace": "Game.ConversationBox",
     "references": [
         "ConversationEngine.ConversationScheme",
         "Game.System",

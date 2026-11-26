@@ -1,7 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-namespace ConversationEngine.Box
+namespace Game.ConversationBox
 {
     public class ContainerMain : MonoBehaviour
     {
