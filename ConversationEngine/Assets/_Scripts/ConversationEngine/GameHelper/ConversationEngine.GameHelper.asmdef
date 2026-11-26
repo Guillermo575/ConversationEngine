@@ -3,8 +3,7 @@
     "rootNamespace": "ConversationEngine.GameHelper",
     "references": [
         "ConversationEngine.ConversationScheme",
-		"ConversationEngine.ActorBuilder",
-        "ConversationEngine.System"
+		"ConversationEngine.ActorBuilder"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

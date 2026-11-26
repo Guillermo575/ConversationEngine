@@ -1,9 +1,6 @@
 using ConversationEngine.ConversationScheme;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
-using UnityEngine;
 namespace ConversationEngine.GameHelper
 {
     public class FunctionHelper
@@ -14,13 +11,13 @@ namespace ConversationEngine.GameHelper
             MethodInfo method = type.GetMethod(function.MethodName, BindingFlags.Public | BindingFlags.Instance);
             if (method == null)
             {
-                Console.WriteLine($"Método '{function.MethodName}' no encontrado.");
+                Console.WriteLine($"Method '{function.MethodName}' not found.");
                 return;
             }
             ParameterInfo[] parameterInfos = method.GetParameters();
             if (parameterInfos.Length != function.Parameters.Count)
             {
-                Console.WriteLine("Número de parámetros no coincide con el método.");
+                Console.WriteLine("Number of parameters does not match the method.");
                 return;
             }
             object[] parameters = new object[parameterInfos.Length];
@@ -36,13 +33,13 @@ namespace ConversationEngine.GameHelper
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine($"No se pudo convertir el parámetro '{paramName}' al tipo '{paramInfo.ParameterType}'.");
+                        Console.WriteLine($"Could not convert parameter '{paramName}' to type '{paramInfo.ParameterType}'.");
                         return;
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"Falta el parámetro '{paramName}' en el diccionario.");
+                    Console.WriteLine($"Missing parameter '{paramName}' in the dictionary.");
                     return;
                 }
             }
@@ -50,7 +47,7 @@ namespace ConversationEngine.GameHelper
         }
         public void MyMethod(string name, int age)
         {
-            Console.WriteLine($"Nombre: {name}, Edad: {age}");
+            Console.WriteLine($"Name: {name}, Age: {age}");
         }
     }
 }
