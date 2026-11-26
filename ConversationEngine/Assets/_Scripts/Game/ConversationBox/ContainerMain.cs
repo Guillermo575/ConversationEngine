@@ -66,20 +66,34 @@ namespace Game.ConversationBox
         {
             textMeshPro.text = "";
             isTyping = true;
-            int l = 0;
-            while (!IsTextFinished)
+            string[] words = fullText.Split(' ');
+            foreach (var word in words)
             {
-                if (isTyping)
+                string currentText = textMeshPro.text;
+                if (!string.IsNullOrEmpty(currentText))
                 {
-                    char letter = fullText[l];
-                    textMeshPro.text += letter;
-                    l++;
-                    yield return new WaitForSeconds(typingSpeed);
+                    string tempText = currentText + " " + word;
+                    float textWidth = textMeshPro.GetPreferredValues(tempText).x;
+                    float containerWidth = rectTransform.rect.width;
+                    if (textWidth > containerWidth)
+                    {
+                        textMeshPro.text += "\n";
+                    }
                 }
-                else
+                for (int l = 0; l < word.Length;)
                 {
-                    yield return new WaitForSeconds(0.01f);
+                    if (isTyping)
+                    {
+                        textMeshPro.text += word[l++];
+                        yield return new WaitForSeconds(typingSpeed);
+                    }
+                    else
+                    {
+                        yield return new WaitForSeconds(0.01f);
+                    }
                 }
+                textMeshPro.text += " ";
+                yield return new WaitForSeconds(typingSpeed);
             }
             isTyping = false;
         }
