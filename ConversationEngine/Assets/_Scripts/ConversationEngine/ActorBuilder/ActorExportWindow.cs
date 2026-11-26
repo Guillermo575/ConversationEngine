@@ -3,8 +3,26 @@ using System.Collections.Generic;
 using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEngine.EditorActor.Export
+namespace ConversationEngine.ActorBuilder
 {
+    public class ActorExportRequest
+    {
+        public ActorExportTargetType TargetType = ActorExportTargetType.Canvas;
+        public Canvas TargetCanvas;
+        public bool UnpackPrefabInstances;
+        public string NewCanvasName = "ActorCanvas";
+        public string RootName = "";
+        public Vector2 ActorSize = Vector2.zero;
+        public float Scale = 1f;
+        public Vector3 WorldPosition = Vector3.zero;
+        public Vector2 CanvasAnchoredPosition = Vector2.zero;
+        public float WorldBodyPartZOffset = 0f;
+    }
+    public enum ActorExportTargetType
+    {
+        World,
+        Canvas
+    }
     public class ActorExportWindow : EditorWindow
     {
         #region State

@@ -8,28 +8,10 @@ using UnityEngine;
 using ConversationEngine.EditorActor.Helper;
 namespace ConversationEngine.EditorActor.Export
 {
-    public enum ActorExportTargetType
-    {
-        World,
-        Canvas
-    }
-    public class ActorExportRequest
-    {
-        public ActorExportTargetType TargetType = ActorExportTargetType.Canvas;
-        public Canvas TargetCanvas;
-        public bool UnpackPrefabInstances;
-        public string NewCanvasName = "ActorCanvas";
-        public string RootName = "";
-        public Vector2 ActorSize = Vector2.zero;
-        public float Scale = 1f;
-        public Vector3 WorldPosition = Vector3.zero;
-        public Vector2 CanvasAnchoredPosition = Vector2.zero;
-        public float WorldBodyPartZOffset = 0f;
-    }
     public static class ActorSceneExportService
     {
         #region Export
-        public static GameObject ExportToScene(Actor actorData, string actorAssetPath, ActorExportRequest request)
+        public static GameObject ExportToScene(Actor actorData, string actorAssetPath, ActorBuilder.ActorExportRequest request)
         {
             if (actorData == null) return null;
             GameObject actorRoot = ExportWithReflection(actorData, actorAssetPath, request);
@@ -40,7 +22,7 @@ namespace ConversationEngine.EditorActor.Export
             if (actorRoot.scene.IsValid()) EditorSceneManager.MarkSceneDirty(actorRoot.scene);
             return actorRoot;
         }
-        private static GameObject ExportWithReflection(Actor actorData, string actorAssetPath, ActorExportRequest request)
+        private static GameObject ExportWithReflection(Actor actorData, string actorAssetPath, ActorBuilder.ActorExportRequest request)
         {
             Type builderType = Type.GetType("ConversationEngine.ActorBuilder.ActorSceneBuilder, ConversationEngine.ActorBuilder");
             if (builderType == null) return null;
@@ -52,7 +34,7 @@ namespace ConversationEngine.EditorActor.Export
             object[] args = new object[]
             {
                 actorData,
-                request.TargetType == ActorExportTargetType.Canvas,
+                request.TargetType == ActorBuilder.ActorExportTargetType.Canvas,
                 request.TargetCanvas,
                 request.NewCanvasName,
                 request.RootName,

@@ -324,9 +324,9 @@ namespace ConversationEngine.EditorActor
                 EditorUtility.DisplayDialog("Actor Editor", "There is no actor data to export.", "OK");
                 return;
             }
-            ActorExportWindow.Open(actorData, ExecuteExportToScene);
+            ActorBuilder.ActorExportWindow.Open(actorData, ExecuteExportToScene);
         }
-        private void ExecuteExportToScene(ActorExportRequest options)
+        private void ExecuteExportToScene(ActorBuilder.ActorExportRequest options)
         {
             var actorRoot = ActorSceneExportService.ExportToScene(actorData, currentAssetPath, options);
             if (actorRoot == null)

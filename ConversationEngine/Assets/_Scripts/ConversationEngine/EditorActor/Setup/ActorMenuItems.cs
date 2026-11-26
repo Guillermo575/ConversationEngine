@@ -58,9 +58,9 @@ namespace ConversationEngine.EditorActor.Setup
                 EditorUtility.DisplayDialog("Actor Export", "Selected file is not a valid actor asset.", "OK");
                 return;
             }
-            ActorExportWindow.Open(actorData, options => ExecuteSceneExport(actorData, actorPath, options));
+            ActorBuilder.ActorExportWindow.Open(actorData, options => ExecuteSceneExport(actorData, actorPath, options));
         }
-        private static void ExecuteSceneExport(Actor actorData, string actorAssetPath, ActorExportRequest options)
+        private static void ExecuteSceneExport(Actor actorData, string actorAssetPath, ActorBuilder.ActorExportRequest options)
         {
             GameObject actorRoot = ActorSceneExportService.ExportToScene(actorData, actorAssetPath, options);
             if (actorRoot == null)
