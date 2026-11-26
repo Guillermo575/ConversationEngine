@@ -38,21 +38,31 @@ namespace ConversationEngine.Box
             var IsPressed = gameManager.IsTriggered("Submit");
             Debug.Log($"IsPressed: {IsPressed}");
             pnlNext.SetActive(dialogueBox.IsTextFinished);
-            if (!string.IsNullOrEmpty(dialogueBox.fullText) && dialogueBox.IsTextFinished)
+            if (!string.IsNullOrEmpty(dialogueBox.fullText))
             {
-                if (CursorNode.Options != null && CursorNode.Options.Count > 0)
+                if (dialogueBox.IsTextFinished)
                 {
-                    if (!TypingOptions)
+                    if (CursorNode.Options != null && CursorNode.Options.Count > 0)
                     {
-                        LoadOptions(CursorNode.Options);
-                        TypingOptions = true;
-                    }
-                    if (IsPressed)
-                    {
-                        var objSelectedOption = GetCurrentSelectedOption();
-                        if (objSelectedOption != null)
+                        if (!TypingOptions)
                         {
-                            objSelectedOption.onClick.Invoke();
+                            LoadOptions(CursorNode.Options);
+                            TypingOptions = true;
+                        }
+                        if (IsPressed)
+                        {
+                            var objSelectedOption = GetCurrentSelectedOption();
+                            if (objSelectedOption != null)
+                            {
+                                objSelectedOption.onClick.Invoke();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (IsPressed)
+                        {
+                            ProcessNode(CursorNode.NextNode);
                         }
                     }
                 }
@@ -60,7 +70,7 @@ namespace ConversationEngine.Box
                 {
                     if (IsPressed)
                     {
-                        ProcessNode(CursorNode.NextNode);
+                        dialogueBox.StopTyping();
                     }
                 }
             }
