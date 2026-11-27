@@ -25,15 +25,10 @@ namespace ConversationEngine.EditorActor.Export
         }
         private static GameObject ExportWithReflection(Actor actorData, string actorAssetPath, ActorExportRequest request)
         {
-            Type builderType = Type.GetType("ConversationEngine.ActorBuilder.ActorSceneBuilder, ConversationEngine.ActorBuilder");
-            if (builderType == null) return null;
-            MethodInfo buildMethod = builderType.GetMethod("BuildActorRoot", BindingFlags.Public | BindingFlags.Static);
-            if (buildMethod == null) return null;
             Func<string, string, Sprite> spriteResolver = (guid, path) => LoadSprite(actorAssetPath, guid, path);
             Func<string, string, Transform, string, GameObject> prefabFactory = (guid, path, parent, objectName) => CreatePrefabInstance(actorAssetPath, guid, path, parent, objectName, request.UnpackPrefabInstances);
             Func<string, string, UnityEngine.Object> objectResolver = (guid, path) => LoadObject(actorAssetPath, guid, path);
-            object[] args = new object[]
-            {
+            return ActorSceneBuilder.BuildActorRoot(
                 actorData,
                 request.TargetType == ActorExportTargetType.Canvas,
                 request.TargetCanvas,
@@ -46,10 +41,7 @@ namespace ConversationEngine.EditorActor.Export
                 request.WorldBodyPartZOffset,
                 spriteResolver,
                 prefabFactory,
-                objectResolver
-            };
-            object result = buildMethod.Invoke(null, args);
-            return result as GameObject;
+                objectResolver);
         }
         private static void RegisterUndoObjects(GameObject actorRoot)
         {

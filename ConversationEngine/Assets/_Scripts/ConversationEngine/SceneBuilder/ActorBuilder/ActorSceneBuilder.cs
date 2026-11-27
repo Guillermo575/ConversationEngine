@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using ConversationEngine.ConversationScheme;
-
 using UnityEngine;
 using UnityEngine.UI;
 using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
-
 namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
     public interface IActorSpriteProvider
