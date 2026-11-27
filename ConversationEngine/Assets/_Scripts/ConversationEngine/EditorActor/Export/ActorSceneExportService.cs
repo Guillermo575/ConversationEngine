@@ -6,12 +6,13 @@ using System.IO;
 using System.Reflection;
 using UnityEngine;
 using ConversationEngine.EditorActor.Helper;
+using ConversationEngine.SceneBuilder.ActorBuilder;
 namespace ConversationEngine.EditorActor.Export
 {
     public static class ActorSceneExportService
     {
         #region Export
-        public static GameObject ExportToScene(Actor actorData, string actorAssetPath, ActorBuilder.ActorExportRequest request)
+        public static GameObject ExportToScene(Actor actorData, string actorAssetPath, ActorExportRequest request)
         {
             if (actorData == null) return null;
             GameObject actorRoot = ExportWithReflection(actorData, actorAssetPath, request);
@@ -22,7 +23,7 @@ namespace ConversationEngine.EditorActor.Export
             if (actorRoot.scene.IsValid()) EditorSceneManager.MarkSceneDirty(actorRoot.scene);
             return actorRoot;
         }
-        private static GameObject ExportWithReflection(Actor actorData, string actorAssetPath, ActorBuilder.ActorExportRequest request)
+        private static GameObject ExportWithReflection(Actor actorData, string actorAssetPath, ActorExportRequest request)
         {
             Type builderType = Type.GetType("ConversationEngine.ActorBuilder.ActorSceneBuilder, ConversationEngine.ActorBuilder");
             if (builderType == null) return null;
@@ -34,7 +35,7 @@ namespace ConversationEngine.EditorActor.Export
             object[] args = new object[]
             {
                 actorData,
-                request.TargetType == ActorBuilder.ActorExportTargetType.Canvas,
+                request.TargetType == ActorExportTargetType.Canvas,
                 request.TargetCanvas,
                 request.NewCanvasName,
                 request.RootName,

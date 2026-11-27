@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using ConversationEngine.ConversationScheme;
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
     public class ActorData : MonoBehaviour
     {

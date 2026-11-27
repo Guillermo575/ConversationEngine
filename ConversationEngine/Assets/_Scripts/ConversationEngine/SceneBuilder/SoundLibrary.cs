@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder
 {
     [System.Serializable]
     public class SoundLibraryEntry

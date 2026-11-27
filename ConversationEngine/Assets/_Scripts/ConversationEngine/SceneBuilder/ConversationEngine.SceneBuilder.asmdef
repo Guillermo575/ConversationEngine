@@ -1,9 +1,8 @@
 {
-    "name": "ConversationEngine.ActorBuilder",
-    "rootNamespace": "ConversationEngine.ActorBuilder",
+    "name": "ConversationEngine.SceneBuilder",
+    "rootNamespace": "ConversationEngine.SceneBuilder",
     "references": [
-        "ConversationEngine.ConversationScheme",
-        "Unity.ugui"
+        "ConversationEngine.ConversationScheme"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
     public class ActorBuiltPivotPoint : MonoBehaviour
     {

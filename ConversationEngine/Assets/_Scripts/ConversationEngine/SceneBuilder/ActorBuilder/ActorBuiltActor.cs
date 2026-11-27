@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
     public class ActorBuiltActor : MonoBehaviour
     {

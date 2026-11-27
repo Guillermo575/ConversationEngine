@@ -4,6 +4,7 @@ using ConversationEngine.EditorActor.Helper;
 using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
+using ConversationEngine.SceneBuilder.ActorBuilder;
 namespace ConversationEngine.EditorActor.Setup
 {
     public static class ActorMenuItems
@@ -58,9 +59,9 @@ namespace ConversationEngine.EditorActor.Setup
                 EditorUtility.DisplayDialog("Actor Export", "Selected file is not a valid actor asset.", "OK");
                 return;
             }
-            ActorBuilder.ActorExportWindow.Open(actorData, options => ExecuteSceneExport(actorData, actorPath, options));
+            ActorExportWindow.Open(actorData, options => ExecuteSceneExport(actorData, actorPath, options));
         }
-        private static void ExecuteSceneExport(Actor actorData, string actorAssetPath, ActorBuilder.ActorExportRequest options)
+        private static void ExecuteSceneExport(Actor actorData, string actorAssetPath, ActorExportRequest options)
         {
             GameObject actorRoot = ActorSceneExportService.ExportToScene(actorData, actorAssetPath, options);
             if (actorRoot == null)

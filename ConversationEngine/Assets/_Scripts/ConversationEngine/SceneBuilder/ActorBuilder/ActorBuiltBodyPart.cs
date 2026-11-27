@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ConversationEngine.ConversationScheme;
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
     [ExecuteAlways]
     public class ActorBuiltBodyPart : MonoBehaviour

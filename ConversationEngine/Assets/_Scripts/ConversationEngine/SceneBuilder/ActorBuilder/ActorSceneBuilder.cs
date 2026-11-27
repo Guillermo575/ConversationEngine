@@ -1,12 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using ConversationEngine.ConversationScheme;
+
 using UnityEngine;
 using UnityEngine.UI;
 using BodyPartData = ConversationEngine.ConversationScheme.BodyPart;
 
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
+    public interface IActorSpriteProvider
+    {
+        Sprite LoadSprite(string resourceGuid, string resourcePath);
+    }
     public static class ActorSceneBuilder
     {
         private class DelegateSpriteProvider : IActorSpriteProvider

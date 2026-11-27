@@ -3,7 +3,7 @@
     "rootNamespace": "ConversationEngine.EditorActor",
     "references": [
         "ConversationEngine.ConversationScheme",
-        "ConversationEngine.ActorBuilder"
+        "ConversationEngine.SceneBuilder"
     ],
     "includePlatforms": [
         "Editor"

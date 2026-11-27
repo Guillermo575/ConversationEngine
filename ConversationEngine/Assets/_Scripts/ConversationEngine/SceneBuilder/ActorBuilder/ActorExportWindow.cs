@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
-namespace ConversationEngine.ActorBuilder
+namespace ConversationEngine.SceneBuilder.ActorBuilder
 {
     public class ActorExportRequest
     {

@@ -7,6 +7,7 @@ using ConversationEngine.EditorActor.Panel;
 using ConversationEngine.ConversationScheme;
 using UnityEditor;
 using UnityEngine;
+using ConversationEngine.SceneBuilder.ActorBuilder;
 namespace ConversationEngine.EditorActor
 {
     public class ActorEditorWindow : EditorWindow
@@ -324,9 +325,9 @@ namespace ConversationEngine.EditorActor
                 EditorUtility.DisplayDialog("Actor Editor", "There is no actor data to export.", "OK");
                 return;
             }
-            ActorBuilder.ActorExportWindow.Open(actorData, ExecuteExportToScene);
+            ActorExportWindow.Open(actorData, ExecuteExportToScene);
         }
-        private void ExecuteExportToScene(ActorBuilder.ActorExportRequest options)
+        private void ExecuteExportToScene(ActorExportRequest options)
         {
             var actorRoot = ActorSceneExportService.ExportToScene(actorData, currentAssetPath, options);
             if (actorRoot == null)
